@@ -1,0 +1,50 @@
+name: Homecare checks
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['22.13.0', '24']
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Check JavaScript
+        run: node scripts/check-source.mjs
+      - name: Test with synthetic data
+        run: node --test tests/*.test.mjs
+
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+        with:
+          version: 11.21.0
+      - name: Install locked development dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Core workflow
+        run: pnpm test:e2e
+      - name: APM brand and navigation
+        run: pnpm test:e2e:apm-cis
+      - name: Synthetic HTTPS Portal handoff
+        run: pnpm test:e2e:portal-sso

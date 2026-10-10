@@ -1,0 +1,2751 @@
+[
+  {
+    "id": "assessment-01",
+    "name": "開案表",
+    "evidenceStatus": "固定欄位已觀察；分組、選項、必填條件及計分待核對",
+    "sourceFiles": [
+      "notes/case-evidence.json"
+    ],
+    "sourceRoute": "/case/hcAssessmentForm/:caseId",
+    "fields": [
+      {
+        "name": "q001",
+        "label": "接案日期",
+        "sourceLabel": "接案日期",
+        "type": "date",
+        "help": ""
+      },
+      {
+        "name": "q002",
+        "label": "第一次服務日期",
+        "sourceLabel": "第一次服務日期",
+        "type": "date",
+        "help": ""
+      },
+      {
+        "name": "q003",
+        "label": "結案日期",
+        "sourceLabel": "結案日期",
+        "type": "date",
+        "help": ""
+      },
+      {
+        "name": "q004",
+        "label": "姓名（第1組）",
+        "sourceLabel": "姓名",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q005",
+        "label": "出生日期（第1組）",
+        "sourceLabel": "出生日期",
+        "type": "date",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q006",
+        "label": "性別（第1組）",
+        "sourceLabel": "性別",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q007",
+        "label": "語言（第1組）",
+        "sourceLabel": "語言",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q008",
+        "label": "教育程度",
+        "sourceLabel": "教育程度",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q009",
+        "label": "婚姻狀況",
+        "sourceLabel": "婚姻狀況",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q010",
+        "label": "宗教信仰",
+        "sourceLabel": "宗教信仰",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q011",
+        "label": "經濟來源",
+        "sourceLabel": "經濟來源",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q012",
+        "label": "城市（第1組）",
+        "sourceLabel": "城市",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q013",
+        "label": "鄉鎮市區（第1組）",
+        "sourceLabel": "鄉鎮市區",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q014",
+        "label": "地址（第1組）",
+        "sourceLabel": "地址",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q015",
+        "label": "城市（第2組）",
+        "sourceLabel": "城市",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q016",
+        "label": "鄉鎮市區（第2組）",
+        "sourceLabel": "鄉鎮市區",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q017",
+        "label": "地址（第2組）",
+        "sourceLabel": "地址",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q018",
+        "label": "電話號碼（第1組）",
+        "sourceLabel": "電話號碼",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q019",
+        "label": "身分證字號",
+        "sourceLabel": "身分證字號",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q020",
+        "label": "姓名（第2組）",
+        "sourceLabel": "姓名",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q021",
+        "label": "關係（第1組）",
+        "sourceLabel": "關係",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q022",
+        "label": "出生日期（第2組）",
+        "sourceLabel": "出生日期",
+        "type": "date",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q023",
+        "label": "性別（第2組）",
+        "sourceLabel": "性別",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q024",
+        "label": "語言（第2組）",
+        "sourceLabel": "語言",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q025",
+        "label": "城市（第3組）",
+        "sourceLabel": "城市",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q026",
+        "label": "鄉鎮市區（第3組）",
+        "sourceLabel": "鄉鎮市區",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q027",
+        "label": "地址（第3組）",
+        "sourceLabel": "地址",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q028",
+        "label": "電話號碼（第2組）",
+        "sourceLabel": "電話號碼",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q029",
+        "label": "健康狀況（第1組）",
+        "sourceLabel": "健康狀況",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q030",
+        "label": "姓名（第3組）",
+        "sourceLabel": "姓名",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q031",
+        "label": "關係（第2組）",
+        "sourceLabel": "關係",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q032",
+        "label": "電話號碼（第3組）",
+        "sourceLabel": "電話號碼",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q033",
+        "label": "健康狀況（第2組）",
+        "sourceLabel": "健康狀況",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q034",
+        "label": "城市（第4組）",
+        "sourceLabel": "城市",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q035",
+        "label": "鄉鎮市區（第4組）",
+        "sourceLabel": "鄉鎮市區",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q036",
+        "label": "地址（第4組）",
+        "sourceLabel": "地址",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q037",
+        "label": "姓名（第4組）",
+        "sourceLabel": "姓名",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q038",
+        "label": "關係（第3組）",
+        "sourceLabel": "關係",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q039",
+        "label": "電話號碼（第4組）",
+        "sourceLabel": "電話號碼",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q040",
+        "label": "健康狀況（第3組）",
+        "sourceLabel": "健康狀況",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q041",
+        "label": "城市（第5組）",
+        "sourceLabel": "城市",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q042",
+        "label": "鄉鎮市區（第5組）",
+        "sourceLabel": "鄉鎮市區",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q043",
+        "label": "地址（第5組）",
+        "sourceLabel": "地址",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q044",
+        "label": "姓名（第5組）",
+        "sourceLabel": "姓名",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q045",
+        "label": "關係（第4組）",
+        "sourceLabel": "關係",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q046",
+        "label": "電話號碼（第5組）",
+        "sourceLabel": "電話號碼",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q047",
+        "label": "健康狀況（第4組）",
+        "sourceLabel": "健康狀況",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q048",
+        "label": "城市（第6組）",
+        "sourceLabel": "城市",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q049",
+        "label": "鄉鎮市區（第6組）",
+        "sourceLabel": "鄉鎮市區",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q050",
+        "label": "地址（第6組）",
+        "sourceLabel": "地址",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q051",
+        "label": "居住環境品質",
+        "sourceLabel": "居住環境品質",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q052",
+        "label": "住宅種類",
+        "sourceLabel": "住宅種類",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q053",
+        "label": "求助原因",
+        "sourceLabel": "求助原因",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q054",
+        "label": "個案需求",
+        "sourceLabel": "個案需求",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q055",
+        "label": "主要問題",
+        "sourceLabel": "主要問題",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q056",
+        "label": "預設照顧目標計畫",
+        "sourceLabel": "預設照顧目標計畫",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q057",
+        "label": "初派照顧人員",
+        "sourceLabel": "初派照顧人員",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q058",
+        "label": "照顧員異動狀況",
+        "sourceLabel": "照顧員異動狀況",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q059",
+        "label": "督導員異動狀況",
+        "sourceLabel": "督導員異動狀況",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q060",
+        "label": "接案督導",
+        "sourceLabel": "接案督導",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q061",
+        "label": "督導",
+        "sourceLabel": "督導",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q062",
+        "label": "主管",
+        "sourceLabel": "主管",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q063",
+        "label": "填表日期",
+        "sourceLabel": "*填表日期",
+        "type": "date",
+        "help": ""
+      }
+    ],
+    "unavailable": [
+      "原表的選項、完整群組及計分條件尚未核定；本版只保存填答。"
+    ]
+  },
+  {
+    "id": "assessment-02",
+    "name": "個案照顧問題與預設照顧目標",
+    "evidenceStatus": "固定欄位已觀察；分組、選項、必填條件及計分待核對",
+    "sourceFiles": [
+      "notes/case-evidence.json",
+      "notes/case-prompts-evidence.json"
+    ],
+    "sourceRoute": "/case/hcAssessmentForm/:caseId",
+    "fields": [
+      {
+        "name": "q001",
+        "label": "個案姓名",
+        "sourceLabel": "個案姓名",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q002",
+        "label": "擬定人員",
+        "sourceLabel": "擬定人員",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q003",
+        "label": "日期",
+        "sourceLabel": "日期",
+        "type": "date",
+        "help": ""
+      },
+      {
+        "name": "q004",
+        "label": "個案需求",
+        "sourceLabel": "個案需求",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q005",
+        "label": "主要問題",
+        "sourceLabel": "主要問題",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q006",
+        "label": "訂定照顧計畫",
+        "sourceLabel": "訂定照顧計畫",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q007",
+        "label": "依服務計畫執行",
+        "sourceLabel": "依服務計畫執行",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q008",
+        "label": "停止日期",
+        "sourceLabel": "停止日期",
+        "type": "date",
+        "help": ""
+      },
+      {
+        "name": "q009",
+        "label": "停止原因",
+        "sourceLabel": "停止原因",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q010",
+        "label": "後續追蹤",
+        "sourceLabel": "後續追蹤",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q011",
+        "label": "填表日期",
+        "sourceLabel": "*填表日期",
+        "type": "date",
+        "help": ""
+      },
+      {
+        "name": "q012",
+        "label": "下次評估日期",
+        "sourceLabel": "下次評估日期",
+        "type": "date",
+        "help": ""
+      }
+    ],
+    "unavailable": [
+      "原表的選項、完整群組及計分條件尚未核定；本版只保存填答。"
+    ]
+  },
+  {
+    "id": "assessment-03",
+    "name": "需求評估紀錄表",
+    "evidenceStatus": "固定欄位已觀察；分組、選項、必填條件及計分待核對",
+    "sourceFiles": [
+      "notes/case-evidence.json"
+    ],
+    "sourceRoute": "/case/hcAssessmentForm/:caseId",
+    "fields": [
+      {
+        "name": "q001",
+        "label": "個案姓名",
+        "sourceLabel": "個案姓名",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q002",
+        "label": "照服員姓名",
+        "sourceLabel": "照服員姓名",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q003",
+        "label": "訪視日期",
+        "sourceLabel": "訪視日期",
+        "type": "date",
+        "help": ""
+      },
+      {
+        "name": "q004",
+        "label": "處遇情形",
+        "sourceLabel": "處遇情形",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q005",
+        "label": "備註說明",
+        "sourceLabel": "備註說明",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q006",
+        "label": "督導",
+        "sourceLabel": "督導",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q007",
+        "label": "主管",
+        "sourceLabel": "主管",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q008",
+        "label": "審閱日期",
+        "sourceLabel": "審閱日期",
+        "type": "date",
+        "help": ""
+      },
+      {
+        "name": "q009",
+        "label": "填表日期",
+        "sourceLabel": "*填表日期",
+        "type": "date",
+        "help": ""
+      }
+    ],
+    "unavailable": [
+      "計分規則待核對，本版不計算總分",
+      "原表的選項、完整群組及計分條件尚未核定；本版只保存填答。"
+    ]
+  },
+  {
+    "id": "assessment-04",
+    "name": "督導訪視紀錄表單",
+    "evidenceStatus": "固定欄位已觀察；分組、選項、必填條件及計分待核對",
+    "sourceFiles": [
+      "notes/case-evidence.json"
+    ],
+    "sourceRoute": "/case/hcAssessmentForm/:caseId",
+    "fields": [
+      {
+        "name": "q001",
+        "label": "訪視日期",
+        "sourceLabel": "*訪視日期",
+        "type": "date",
+        "help": ""
+      },
+      {
+        "name": "q002",
+        "label": "照服員姓名",
+        "sourceLabel": "照服員姓名",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q003",
+        "label": "訪視",
+        "sourceLabel": "訪視",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q004",
+        "label": "地點",
+        "sourceLabel": "地點",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q005",
+        "label": "方式",
+        "sourceLabel": "方式",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q006",
+        "label": "對象",
+        "sourceLabel": "對象",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q007",
+        "label": "訪視內容",
+        "sourceLabel": "訪視內容 (目前字數 0，建議400字內且不包含換行，超過可能會導致列印時內容被裁切)",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q008",
+        "label": "追蹤處理",
+        "sourceLabel": "追蹤處理 (目前字數 0，建議400字內且不包含換行，超過可能會導致列印時內容被裁切)",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q009",
+        "label": "填表日期",
+        "sourceLabel": "*填表日期",
+        "type": "date",
+        "help": ""
+      },
+      {
+        "name": "q010",
+        "label": "下次評估日期",
+        "sourceLabel": "下次評估日期",
+        "type": "date",
+        "help": ""
+      }
+    ],
+    "unavailable": [
+      "原表的選項、完整群組及計分條件尚未核定；本版只保存填答。"
+    ]
+  },
+  {
+    "id": "assessment-05",
+    "name": "簡易心智狀態問卷調查表(SPMSQ)",
+    "evidenceStatus": "固定欄位已觀察；分組、選項、必填條件及計分待核對",
+    "sourceFiles": [
+      "notes/case-evidence.json",
+      "notes/case-templates-evidence.json",
+      "notes/case-prompts-evidence.json"
+    ],
+    "sourceRoute": "/case/hcAssessmentForm/:caseId",
+    "fields": [
+      {
+        "name": "q001",
+        "label": "個案姓名",
+        "sourceLabel": "個案姓名",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q002",
+        "label": "記錄狀況",
+        "sourceLabel": "記錄狀況",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q003",
+        "label": "填表日期",
+        "sourceLabel": "*填表日期",
+        "type": "date",
+        "help": ""
+      },
+      {
+        "name": "q004",
+        "label": "今天是幾號?",
+        "sourceLabel": "今天是幾號?",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q005",
+        "label": "今天是星期幾?",
+        "sourceLabel": "今天是星期幾?",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q006",
+        "label": "這是什麼地方?",
+        "sourceLabel": "這是什麼地方?",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q007",
+        "label": "您的電話是幾號?",
+        "sourceLabel": "您的電話是幾號?",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q008",
+        "label": "您住在什麼地方?",
+        "sourceLabel": "您住在什麼地方?",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q009",
+        "label": "您幾歲了?",
+        "sourceLabel": "您幾歲了?",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q010",
+        "label": "您的出生年月日?",
+        "sourceLabel": "您的出生年月日?",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q011",
+        "label": "現任的總統是誰?",
+        "sourceLabel": "現任的總統是誰?",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q012",
+        "label": "前任的總統是誰?",
+        "sourceLabel": "前任的總統是誰?",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q013",
+        "label": "您媽媽叫什麼名字?",
+        "sourceLabel": "您媽媽叫什麼名字?",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q014",
+        "label": "從20減3開始算，一直減3減下去。",
+        "sourceLabel": "從20減3開始算，一直減3減下去。",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      }
+    ],
+    "unavailable": [
+      "原表的選項、完整群組及計分條件尚未核定；本版只保存填答。"
+    ]
+  },
+  {
+    "id": "assessment-06",
+    "name": "居服員服務品質訪視調查稽核表",
+    "evidenceStatus": "固定欄位已觀察；分組、選項、必填條件及計分待核對",
+    "sourceFiles": [
+      "notes/case-templates-evidence.json",
+      "notes/case-prompts-evidence.json"
+    ],
+    "sourceRoute": "/case/hcAssessmentForm/:caseId",
+    "fields": [
+      {
+        "name": "q001",
+        "label": "訪視方式",
+        "sourceLabel": "訪視方式",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q002",
+        "label": "訪查日期",
+        "sourceLabel": "訪查日期",
+        "type": "date",
+        "help": ""
+      },
+      {
+        "name": "q003",
+        "label": "訪視時間",
+        "sourceLabel": "訪視時間",
+        "type": "time",
+        "help": ""
+      },
+      {
+        "name": "q004",
+        "label": "姓名（第1組）",
+        "sourceLabel": "姓名",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q005",
+        "label": "年齡（第1組）",
+        "sourceLabel": "年齡",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q006",
+        "label": "性別（第1組）",
+        "sourceLabel": "性別",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q007",
+        "label": "服務區域",
+        "sourceLabel": "服務區域",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q008",
+        "label": "服務時段",
+        "sourceLabel": "服務時段",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q009",
+        "label": "障礙別",
+        "sourceLabel": "* 障礙別",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q010",
+        "label": "服務項目",
+        "sourceLabel": "服務項目",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q011",
+        "label": "姓名（第2組）",
+        "sourceLabel": "姓名",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q012",
+        "label": "年齡（第2組）",
+        "sourceLabel": "年齡",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q013",
+        "label": "性別（第2組）",
+        "sourceLabel": "性別",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q014",
+        "label": "姓名（第3組）",
+        "sourceLabel": "姓名",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q015",
+        "label": "與個案關係",
+        "sourceLabel": "與個案關係",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q016",
+        "label": "性別（第3組）",
+        "sourceLabel": "性別",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q017",
+        "label": "原因（第1組）",
+        "sourceLabel": "原因",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q018",
+        "label": "解決方式（第1組）",
+        "sourceLabel": "解決方式",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q019",
+        "label": "原因（第2組）",
+        "sourceLabel": "原因",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q020",
+        "label": "解決方式（第2組）",
+        "sourceLabel": "解決方式",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q021",
+        "label": "原因（第3組）",
+        "sourceLabel": "原因",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q022",
+        "label": "解決方式（第3組）",
+        "sourceLabel": "解決方式",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q023",
+        "label": "原因（第4組）",
+        "sourceLabel": "原因",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q024",
+        "label": "解決方式（第4組）",
+        "sourceLabel": "解決方式",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q025",
+        "label": "原因（第5組）",
+        "sourceLabel": "原因",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q026",
+        "label": "解決方式（第5組）",
+        "sourceLabel": "解決方式",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q027",
+        "label": "原因（第6組）",
+        "sourceLabel": "原因",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q028",
+        "label": "解決方式（第6組）",
+        "sourceLabel": "解決方式",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q029",
+        "label": "原因（第7組）",
+        "sourceLabel": "原因",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q030",
+        "label": "解決方式（第7組）",
+        "sourceLabel": "解決方式",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q031",
+        "label": "原因（第8組）",
+        "sourceLabel": "原因",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q032",
+        "label": "解決方式（第8組）",
+        "sourceLabel": "解決方式",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q033",
+        "label": "原因（第9組）",
+        "sourceLabel": "原因",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q034",
+        "label": "解決方式（第9組）",
+        "sourceLabel": "解決方式",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q035",
+        "label": "填表日期",
+        "sourceLabel": "*填表日期",
+        "type": "date",
+        "help": ""
+      }
+    ],
+    "unavailable": [
+      "原表的選項、完整群組及計分條件尚未核定；本版只保存填答。"
+    ]
+  },
+  {
+    "id": "assessment-07",
+    "name": "家庭照顧者身心狀況評估量表",
+    "evidenceStatus": "固定欄位已觀察；分組、選項、必填條件及計分待核對",
+    "sourceFiles": [
+      "notes/case-templates-evidence.json",
+      "notes/case-prompts-evidence.json"
+    ],
+    "sourceRoute": "/case/hcAssessmentForm/:caseId",
+    "fields": [
+      {
+        "name": "q001",
+        "label": "照顧者姓名",
+        "sourceLabel": "照顧者姓名",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q002",
+        "label": "年齡",
+        "sourceLabel": "年齡",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q003",
+        "label": "性別",
+        "sourceLabel": "性別",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q004",
+        "label": "與長輩關係",
+        "sourceLabel": "與長輩關係",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q005",
+        "label": "1. 您覺得身體不舒服(不爽快)時還是要照顧他",
+        "sourceLabel": "1. 您覺得身體不舒服(不爽快)時還是要照顧他",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q006",
+        "label": "2. 感到疲倦",
+        "sourceLabel": "2. 感到疲倦",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q007",
+        "label": "3. 體力上負擔重",
+        "sourceLabel": "3. 體力上負擔重",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q008",
+        "label": "4. 我會受到他的情緒影響",
+        "sourceLabel": "4. 我會受到他的情緒影響",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q009",
+        "label": "5. 睡覺被干擾(因為病人在夜裡無法安睡)",
+        "sourceLabel": "5. 睡覺被干擾(因為病人在夜裡無法安睡)",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q010",
+        "label": "6. 因為照顧他讓您的健康變壞了",
+        "sourceLabel": "6. 因為照顧他讓您的健康變壞了",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q011",
+        "label": "7. 感到心力交瘁",
+        "sourceLabel": "7. 感到心力交瘁",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q012",
+        "label": "8. 照顧他讓您精神上覺得痛苦",
+        "sourceLabel": "8. 照顧他讓您精神上覺得痛苦",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q013",
+        "label": "9. 當您和他在一起時，會感到生氣",
+        "sourceLabel": "9. 當您和他在一起時，會感到生氣",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q014",
+        "label": "10. 因為照顧家人影響到您原先的旅行計畫",
+        "sourceLabel": "10. 因為照顧家人影響到您原先的旅行計畫",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q015",
+        "label": "11. 與親朋好友交往受影響",
+        "sourceLabel": "11. 與親朋好友交往受影響",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q016",
+        "label": "12. 您必須時時刻刻都要注意他",
+        "sourceLabel": "12. 您必須時時刻刻都要注意他",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q017",
+        "label": "13. 照顧他的花費大，造成負擔",
+        "sourceLabel": "13. 照顧他的花費大，造成負擔",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q018",
+        "label": "14. 不能外出工作，導致家庭收入受影響",
+        "sourceLabel": "14. 不能外出工作，導致家庭收入受影響",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q019",
+        "label": "備註",
+        "sourceLabel": "備註",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q020",
+        "label": "填表日期",
+        "sourceLabel": "*填表日期",
+        "type": "date",
+        "help": ""
+      },
+      {
+        "name": "q021",
+        "label": "下次評估日期",
+        "sourceLabel": "下次評估日期",
+        "type": "date",
+        "help": ""
+      }
+    ],
+    "unavailable": [
+      "計分規則待核對，本版不計算總分",
+      "原表的選項、完整群組及計分條件尚未核定；本版只保存填答。"
+    ]
+  },
+  {
+    "id": "assessment-08",
+    "name": "居家環境安全評估表",
+    "evidenceStatus": "固定欄位已觀察；分組、選項、必填條件及計分待核對",
+    "sourceFiles": [
+      "notes/case-templates-evidence.json",
+      "notes/case-prompts-evidence.json"
+    ],
+    "sourceRoute": "/case/hcAssessmentForm/:caseId",
+    "fields": [
+      {
+        "name": "q001",
+        "label": "狀況描述：（第1組）",
+        "sourceLabel": "狀況描述：",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q002",
+        "label": "狀況描述：（第2組）",
+        "sourceLabel": "狀況描述：",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q003",
+        "label": "填表日期",
+        "sourceLabel": "*填表日期",
+        "type": "date",
+        "help": ""
+      },
+      {
+        "name": "q004",
+        "label": "下次評估日期",
+        "sourceLabel": "下次評估日期",
+        "type": "date",
+        "help": ""
+      },
+      {
+        "name": "q005",
+        "label": "1. 照光夠明亮，可以看清楚屋內物品及家具、通道等位置",
+        "sourceLabel": "1. 照光夠明亮，可以看清楚屋內物品及家具、通道等位置",
+        "type": "textarea",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q006",
+        "label": "2. 能在夜間清楚看到屋內電燈開關（如外環顯示燈或螢光貼條）",
+        "sourceLabel": "2. 能在夜間清楚看到屋內電燈開關（如外環顯示燈或螢光貼條）",
+        "type": "textarea",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q007",
+        "label": "3. 地板使用防滑的材質或使用防滑條",
+        "sourceLabel": "3. 地板使用防滑的材質或使用防滑條",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q008",
+        "label": "4. 無高度與地面落差太大的門檻",
+        "sourceLabel": "4. 無高度與地面落差太大的門檻",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q009",
+        "label": "5. 地上的延長線與電線放置整齊",
+        "sourceLabel": "5. 地上的延長線與電線放置整齊",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q010",
+        "label": "6. 走道上未放置雜物",
+        "sourceLabel": "6. 走道上未放置雜物",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q011",
+        "label": "7. 家具邊緣或轉角處無光滑無直角突出，不易絆倒人",
+        "sourceLabel": "7. 家具邊緣或轉角處無光滑無直角突出，不易絆倒人",
+        "type": "textarea",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q012",
+        "label": "8. 地板及浴室時常保持乾燥",
+        "sourceLabel": "8. 地板及浴室時常保持乾燥",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q013",
+        "label": "9. 浴室內有防滑椅可供坐著休息",
+        "sourceLabel": "9. 浴室內有防滑椅可供坐著休息",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q014",
+        "label": "10.「浴缸」或「淋浴設備」旁設有抓握的固定扶手可使用",
+        "sourceLabel": "10.「浴缸」或「淋浴設備」旁設有抓握的固定扶手可使用",
+        "type": "textarea",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q015",
+        "label": "11.「馬桶」旁設有抓握的固定扶手可使用",
+        "sourceLabel": "11.「馬桶」旁設有抓握的固定扶手可使用",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q016",
+        "label": "12.「洗手台」旁設有抓握的固定扶手可使用",
+        "sourceLabel": "12.「洗手台」旁設有抓握的固定扶手可使用",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q017",
+        "label": "13. 夜燈或床側燈光度足夠提供夜晚行動",
+        "sourceLabel": "13. 夜燈或床側燈光度足夠提供夜晚行動",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q018",
+        "label": "14. 能夠容易拿取櫥櫃或架上物品不需墊腳尖或椅子",
+        "sourceLabel": "14. 能夠容易拿取櫥櫃或架上物品不需墊腳尖或椅子",
+        "type": "textarea",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q019",
+        "label": "15. 腳踏凳的踏板無損壞且能防滑",
+        "sourceLabel": "15. 腳踏凳的踏板無損壞且能防滑",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q020",
+        "label": "樓梯通道",
+        "sourceLabel": "樓梯通道",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q021",
+        "label": "17. 樓梯間有適當照明亮度",
+        "sourceLabel": "17. 樓梯間有適當照明亮度",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q022",
+        "label": "18. 樓梯有裝設固定扶手及表面有防滑裝置",
+        "sourceLabel": "18. 樓梯有裝設固定扶手及表面有防滑裝置",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      }
+    ],
+    "unavailable": [
+      "附件上傳尚未實作",
+      "原表的選項、完整群組及計分條件尚未核定；本版只保存填答。"
+    ]
+  },
+  {
+    "id": "assessment-09",
+    "name": "居家服務個案照護計畫",
+    "evidenceStatus": "固定欄位已觀察；分組、選項、必填條件及計分待核對",
+    "sourceFiles": [
+      "notes/case-templates-evidence.json",
+      "notes/case-prompts-evidence.json"
+    ],
+    "sourceRoute": "/case/hcAssessmentForm/:caseId",
+    "fields": [
+      {
+        "name": "q001",
+        "label": "案主姓名",
+        "sourceLabel": "案主姓名",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q002",
+        "label": "開案日期",
+        "sourceLabel": "開案日期",
+        "type": "date",
+        "help": ""
+      },
+      {
+        "name": "q003",
+        "label": "性別",
+        "sourceLabel": "性別",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q004",
+        "label": "生效日期",
+        "sourceLabel": "*生效日期",
+        "type": "date",
+        "help": ""
+      },
+      {
+        "name": "q005",
+        "label": "評估日期",
+        "sourceLabel": "*評估日期",
+        "type": "date",
+        "help": ""
+      },
+      {
+        "name": "q006",
+        "label": "下次評估日期",
+        "sourceLabel": "*下次評估日期",
+        "type": "date",
+        "help": ""
+      },
+      {
+        "name": "q007",
+        "label": "居服員",
+        "sourceLabel": "居服員",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q008",
+        "label": "服務頻率及估計時間（第1組）",
+        "sourceLabel": "服務頻率及估計時間",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q009",
+        "label": "居服員2",
+        "sourceLabel": "居服員2",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q010",
+        "label": "服務頻率及估計時間（第2組）",
+        "sourceLabel": "服務頻率及估計時間",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q011",
+        "label": "居服員3",
+        "sourceLabel": "居服員3",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q012",
+        "label": "服務頻率及估計時間（第3組）",
+        "sourceLabel": "服務頻率及估計時間",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q013",
+        "label": "督導（第1組）",
+        "sourceLabel": "督導",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q014",
+        "label": "督導（第2組）",
+        "sourceLabel": "督導",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q015",
+        "label": "主管",
+        "sourceLabel": "主管",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q016",
+        "label": "填表日期",
+        "sourceLabel": "*填表日期",
+        "type": "date",
+        "help": ""
+      }
+    ],
+    "unavailable": [
+      "原表的選項、完整群組及計分條件尚未核定；本版只保存填答。"
+    ]
+  },
+  {
+    "id": "assessment-10",
+    "name": "居家服務個案結案表",
+    "evidenceStatus": "固定欄位已觀察；分組、選項、必填條件及計分待核對",
+    "sourceFiles": [
+      "notes/case-templates-evidence.json"
+    ],
+    "sourceRoute": "/case/hcAssessmentForm/:caseId",
+    "fields": [
+      {
+        "name": "q001",
+        "label": "案主姓名",
+        "sourceLabel": "案主姓名",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q002",
+        "label": "開案日期",
+        "sourceLabel": "開案日期",
+        "type": "date",
+        "help": ""
+      },
+      {
+        "name": "q003",
+        "label": "居服員姓名",
+        "sourceLabel": "居服員姓名",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q004",
+        "label": "結案日期",
+        "sourceLabel": "結案日期",
+        "type": "date",
+        "help": ""
+      },
+      {
+        "name": "q005",
+        "label": "身分證字號",
+        "sourceLabel": "身分證字號",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q006",
+        "label": "出生日期",
+        "sourceLabel": "出生日期",
+        "type": "date",
+        "help": ""
+      },
+      {
+        "name": "q007",
+        "label": "城市",
+        "sourceLabel": "城市",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q008",
+        "label": "鄉鎮市區",
+        "sourceLabel": "鄉鎮市區",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q009",
+        "label": "地址",
+        "sourceLabel": "地址",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q010",
+        "label": "追蹤日期",
+        "sourceLabel": "追蹤日期",
+        "type": "date",
+        "help": ""
+      },
+      {
+        "name": "q011",
+        "label": "追蹤情況簡述",
+        "sourceLabel": "追蹤情況簡述",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q012",
+        "label": "待追繳",
+        "sourceLabel": "待追繳",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q013",
+        "label": "已追繳",
+        "sourceLabel": "已追繳",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q014",
+        "label": "居服督導員",
+        "sourceLabel": "居服督導員",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q015",
+        "label": "主管",
+        "sourceLabel": "主管",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q016",
+        "label": "填表日期",
+        "sourceLabel": "*填表日期",
+        "type": "date",
+        "help": ""
+      }
+    ],
+    "unavailable": [
+      "原表的選項、完整群組及計分條件尚未核定；本版只保存填答。"
+    ]
+  },
+  {
+    "id": "assessment-11",
+    "name": "服務異動申請單",
+    "evidenceStatus": "固定欄位已觀察；分組、選項、必填條件及計分待核對",
+    "sourceFiles": [
+      "notes/case-templates-evidence.json"
+    ],
+    "sourceRoute": "/case/hcAssessmentForm/:caseId",
+    "fields": [
+      {
+        "name": "q001",
+        "label": "姓名（第1組）",
+        "sourceLabel": "姓名",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q002",
+        "label": "出生日期（第1組）",
+        "sourceLabel": "出生日期",
+        "type": "date",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q003",
+        "label": "性別（第1組）",
+        "sourceLabel": "性別",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q004",
+        "label": "與個案關係",
+        "sourceLabel": "與個案關係",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q005",
+        "label": "城市（第1組）",
+        "sourceLabel": "城市",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q006",
+        "label": "鄉鎮市區（第1組）",
+        "sourceLabel": "鄉鎮市區",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q007",
+        "label": "地址（第1組）",
+        "sourceLabel": "地址",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q008",
+        "label": "聯絡電話（第1組）",
+        "sourceLabel": "聯絡電話",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q009",
+        "label": "聯絡手機（第1組）",
+        "sourceLabel": "聯絡手機",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q010",
+        "label": "姓名（第2組）",
+        "sourceLabel": "姓名",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q011",
+        "label": "出生日期（第2組）",
+        "sourceLabel": "出生日期",
+        "type": "date",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q012",
+        "label": "性別（第2組）",
+        "sourceLabel": "性別",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q013",
+        "label": "身分證字號",
+        "sourceLabel": "身分證字號",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q014",
+        "label": "城市（第2組）",
+        "sourceLabel": "城市",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q015",
+        "label": "鄉鎮市區（第2組）",
+        "sourceLabel": "鄉鎮市區",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q016",
+        "label": "地址（第2組）",
+        "sourceLabel": "地址",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q017",
+        "label": "聯絡電話（第2組）",
+        "sourceLabel": "聯絡電話",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q018",
+        "label": "聯絡手機（第2組）",
+        "sourceLabel": "聯絡手機",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q019",
+        "label": "核定函",
+        "sourceLabel": "核定函",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q020",
+        "label": "單位名稱",
+        "sourceLabel": "單位名稱",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q021",
+        "label": "電話",
+        "sourceLabel": "電話",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q022",
+        "label": "傳真",
+        "sourceLabel": "傳真",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q023",
+        "label": "照顧管理專員",
+        "sourceLabel": "照顧管理專員",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q024",
+        "label": "照顧管理督導",
+        "sourceLabel": "照顧管理督導",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q025",
+        "label": "單位主管",
+        "sourceLabel": "單位主管",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q026",
+        "label": "表單型態",
+        "sourceLabel": "表單型態",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q027",
+        "label": "填表日期",
+        "sourceLabel": "*填表日期",
+        "type": "date",
+        "help": ""
+      }
+    ],
+    "unavailable": [
+      "原表的選項、完整群組及計分條件尚未核定；本版只保存填答。"
+    ]
+  },
+  {
+    "id": "assessment-12",
+    "name": "個案轉介單",
+    "evidenceStatus": "固定欄位已觀察；分組、選項、必填條件及計分待核對",
+    "sourceFiles": [
+      "notes/case-templates-evidence.json"
+    ],
+    "sourceRoute": "/case/hcAssessmentForm/:caseId",
+    "fields": [
+      {
+        "name": "q001",
+        "label": "受理轉介單位（第1組）",
+        "sourceLabel": "受理轉介單位",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q002",
+        "label": "姓名",
+        "sourceLabel": "姓名",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q003",
+        "label": "出生日期",
+        "sourceLabel": "出生日期",
+        "type": "date",
+        "help": ""
+      },
+      {
+        "name": "q004",
+        "label": "性別",
+        "sourceLabel": "性別",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q005",
+        "label": "身分證字號",
+        "sourceLabel": "身分證字號",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q006",
+        "label": "籍貫",
+        "sourceLabel": "籍貫",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q007",
+        "label": "語言",
+        "sourceLabel": "語言",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q008",
+        "label": "城市",
+        "sourceLabel": "城市",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q009",
+        "label": "鄉鎮市區",
+        "sourceLabel": "鄉鎮市區",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q010",
+        "label": "地址",
+        "sourceLabel": "地址",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q011",
+        "label": "聯絡電話",
+        "sourceLabel": "聯絡電話",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q012",
+        "label": "緊急聯絡人",
+        "sourceLabel": "緊急聯絡人",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q013",
+        "label": "與個案關係",
+        "sourceLabel": "與個案關係",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q014",
+        "label": "緊急聯絡人-聯絡電話",
+        "sourceLabel": "緊急聯絡人-聯絡電話",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q015",
+        "label": "處置經過",
+        "sourceLabel": "處置經過",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q016",
+        "label": "轉介原因",
+        "sourceLabel": "轉介原因",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q017",
+        "label": "轉介單位電話",
+        "sourceLabel": "轉介單位電話",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q018",
+        "label": "轉介日期",
+        "sourceLabel": "轉介日期",
+        "type": "date",
+        "help": ""
+      },
+      {
+        "name": "q019",
+        "label": "督導員",
+        "sourceLabel": "督導員",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q020",
+        "label": "單位主管",
+        "sourceLabel": "單位主管",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q021",
+        "label": "個案姓名",
+        "sourceLabel": "個案姓名",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q022",
+        "label": "回覆日期",
+        "sourceLabel": "回覆日期",
+        "type": "date",
+        "help": ""
+      },
+      {
+        "name": "q023",
+        "label": "回覆人",
+        "sourceLabel": "回覆人",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q024",
+        "label": "受理轉介單位（第2組）",
+        "sourceLabel": "受理轉介單位",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q025",
+        "label": "電話",
+        "sourceLabel": "電話",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q026",
+        "label": "提供服務",
+        "sourceLabel": "提供服務",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q027",
+        "label": "其他",
+        "sourceLabel": "其他",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q028",
+        "label": "原因",
+        "sourceLabel": "原因",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q029",
+        "label": "備註",
+        "sourceLabel": "備註",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q030",
+        "label": "填表日期",
+        "sourceLabel": "*填表日期",
+        "type": "date",
+        "help": ""
+      }
+    ],
+    "unavailable": [
+      "原表的選項、完整群組及計分條件尚未核定；本版只保存填答。"
+    ]
+  },
+  {
+    "id": "assessment-13",
+    "name": "派班單",
+    "evidenceStatus": "固定欄位已觀察；分組、選項、必填條件及計分待核對",
+    "sourceFiles": [
+      "notes/case-templates-evidence.json"
+    ],
+    "sourceRoute": "/case/hcAssessmentForm/:caseId",
+    "fields": [
+      {
+        "name": "q001",
+        "label": "個案姓名",
+        "sourceLabel": "個案姓名",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q002",
+        "label": "居服員姓名",
+        "sourceLabel": "居服員姓名",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q003",
+        "label": "年齡",
+        "sourceLabel": "年齡",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q004",
+        "label": "出生日期",
+        "sourceLabel": "出生日期",
+        "type": "date",
+        "help": ""
+      },
+      {
+        "name": "q005",
+        "label": "性別",
+        "sourceLabel": "性別",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q006",
+        "label": "城市",
+        "sourceLabel": "城市",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q007",
+        "label": "鄉鎮市區",
+        "sourceLabel": "鄉鎮市區",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q008",
+        "label": "地址",
+        "sourceLabel": "地址",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q009",
+        "label": "聯絡電話",
+        "sourceLabel": "聯絡電話",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q010",
+        "label": "緊急聯絡人",
+        "sourceLabel": "緊急聯絡人",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q011",
+        "label": "與個案關係",
+        "sourceLabel": "與個案關係",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q012",
+        "label": "緊急聯絡人-聯絡電話",
+        "sourceLabel": "緊急聯絡人-聯絡電話",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q013",
+        "label": "派案日期",
+        "sourceLabel": "派案日期",
+        "type": "date",
+        "help": ""
+      },
+      {
+        "name": "q014",
+        "label": "服務日期",
+        "sourceLabel": "服務日期",
+        "type": "date",
+        "help": ""
+      },
+      {
+        "name": "q015",
+        "label": "服務週期（第1組）",
+        "sourceLabel": "服務週期",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q016",
+        "label": "服務時段（第1組）",
+        "sourceLabel": "服務時段",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q017",
+        "label": "服務項目（第1組）",
+        "sourceLabel": "服務項目",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q018",
+        "label": "次數（第1組）",
+        "sourceLabel": "次數",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q019",
+        "label": "備註（第1組）",
+        "sourceLabel": "備註",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q020",
+        "label": "服務週期（第2組）",
+        "sourceLabel": "服務週期",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q021",
+        "label": "服務時段（第2組）",
+        "sourceLabel": "服務時段",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q022",
+        "label": "服務項目（第2組）",
+        "sourceLabel": "服務項目",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q023",
+        "label": "次數（第2組）",
+        "sourceLabel": "次數",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q024",
+        "label": "備註（第2組）",
+        "sourceLabel": "備註",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q025",
+        "label": "服務週期（第3組）",
+        "sourceLabel": "服務週期",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q026",
+        "label": "服務時段（第3組）",
+        "sourceLabel": "服務時段",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q027",
+        "label": "服務項目（第3組）",
+        "sourceLabel": "服務項目",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q028",
+        "label": "次數（第3組）",
+        "sourceLabel": "次數",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q029",
+        "label": "備註（第3組）",
+        "sourceLabel": "備註",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q030",
+        "label": "服務週期（第4組）",
+        "sourceLabel": "服務週期",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q031",
+        "label": "服務時段（第4組）",
+        "sourceLabel": "服務時段",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q032",
+        "label": "服務項目（第4組）",
+        "sourceLabel": "服務項目",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q033",
+        "label": "次數（第4組）",
+        "sourceLabel": "次數",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q034",
+        "label": "備註（第4組）",
+        "sourceLabel": "備註",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q035",
+        "label": "服務週期（第5組）",
+        "sourceLabel": "服務週期",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q036",
+        "label": "服務時段（第5組）",
+        "sourceLabel": "服務時段",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q037",
+        "label": "服務項目（第5組）",
+        "sourceLabel": "服務項目",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q038",
+        "label": "次數（第5組）",
+        "sourceLabel": "次數",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q039",
+        "label": "備註（第5組）",
+        "sourceLabel": "備註",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q040",
+        "label": "服務週期（第6組）",
+        "sourceLabel": "服務週期",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q041",
+        "label": "服務時段（第6組）",
+        "sourceLabel": "服務時段",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q042",
+        "label": "服務項目（第6組）",
+        "sourceLabel": "服務項目",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q043",
+        "label": "次數（第6組）",
+        "sourceLabel": "次數",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q044",
+        "label": "備註（第6組）",
+        "sourceLabel": "備註",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q045",
+        "label": "服務週期（第7組）",
+        "sourceLabel": "服務週期",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q046",
+        "label": "服務時段（第7組）",
+        "sourceLabel": "服務時段",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q047",
+        "label": "服務項目（第7組）",
+        "sourceLabel": "服務項目",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q048",
+        "label": "次數（第7組）",
+        "sourceLabel": "次數",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q049",
+        "label": "備註（第7組）",
+        "sourceLabel": "備註",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q050",
+        "label": "服務週期（第8組）",
+        "sourceLabel": "服務週期",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q051",
+        "label": "服務時段（第8組）",
+        "sourceLabel": "服務時段",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q052",
+        "label": "服務項目（第8組）",
+        "sourceLabel": "服務項目",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q053",
+        "label": "次數（第8組）",
+        "sourceLabel": "次數",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q054",
+        "label": "備註（第8組）",
+        "sourceLabel": "備註",
+        "type": "text",
+        "help": "依原表出現順序保留；群組歸屬待核對。"
+      },
+      {
+        "name": "q055",
+        "label": "填表日期",
+        "sourceLabel": "*填表日期",
+        "type": "date",
+        "help": ""
+      }
+    ],
+    "unavailable": [
+      "原表的選項、完整群組及計分條件尚未核定；本版只保存填答。"
+    ]
+  },
+  {
+    "id": "assessment-14",
+    "name": "長期照顧服務核銷清冊(居家照顧服務)",
+    "evidenceStatus": "固定欄位已觀察；分組、選項、必填條件及計分待核對",
+    "sourceFiles": [
+      "notes/case-templates-evidence.json"
+    ],
+    "sourceRoute": "/case/hcAssessmentForm/:caseId",
+    "fields": [
+      {
+        "name": "q001",
+        "label": "服務區域",
+        "sourceLabel": "服務區域",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q002",
+        "label": "姓名",
+        "sourceLabel": "姓名",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q003",
+        "label": "身分證字號",
+        "sourceLabel": "身分證字號",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q004",
+        "label": "出生日期",
+        "sourceLabel": "出生日期",
+        "type": "date",
+        "help": ""
+      },
+      {
+        "name": "q005",
+        "label": "城市",
+        "sourceLabel": "城市",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q006",
+        "label": "鄉鎮市區",
+        "sourceLabel": "鄉鎮市區",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q007",
+        "label": "補助比例",
+        "sourceLabel": "補助比例",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q008",
+        "label": "(月)給付額度 AA碼",
+        "sourceLabel": "(月)給付額度 AA碼",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q009",
+        "label": "(月)給付額度 BA碼",
+        "sourceLabel": "(月)給付額度 BA碼",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q010",
+        "label": "(月)核定給付額度 AA碼",
+        "sourceLabel": "(月)核定給付額度 AA碼",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q011",
+        "label": "(月)核定給付額度 BA碼",
+        "sourceLabel": "(月)核定給付額度 BA碼",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q012",
+        "label": "政府補助小計",
+        "sourceLabel": "政府補助小計",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q013",
+        "label": "個案部分負擔小計",
+        "sourceLabel": "個案部分負擔小計",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q014",
+        "label": "填表日期",
+        "sourceLabel": "*填表日期",
+        "type": "date",
+        "help": ""
+      }
+    ],
+    "unavailable": [
+      "原表的選項、完整群組及計分條件尚未核定；本版只保存填答。"
+    ]
+  },
+  {
+    "id": "assessment-15",
+    "name": "個案研討-個案名字",
+    "evidenceStatus": "固定欄位已觀察；分組、選項、必填條件及計分待核對",
+    "sourceFiles": [
+      "notes/case-templates-evidence.json",
+      "notes/case-prompts-evidence.json"
+    ],
+    "sourceRoute": "/case/hcAssessmentForm/:caseId",
+    "fields": [
+      {
+        "name": "q001",
+        "label": "個案研討日期",
+        "sourceLabel": "個案研討日期",
+        "type": "date",
+        "help": ""
+      },
+      {
+        "name": "q002",
+        "label": "案主姓名",
+        "sourceLabel": "案主姓名",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q003",
+        "label": "性別",
+        "sourceLabel": "性別",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q004",
+        "label": "類別",
+        "sourceLabel": "類別",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q005",
+        "label": "服務員",
+        "sourceLabel": "服務員",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q006",
+        "label": "派班督導",
+        "sourceLabel": "派班督導",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q007",
+        "label": "填表日期",
+        "sourceLabel": "*填表日期",
+        "type": "date",
+        "help": ""
+      }
+    ],
+    "unavailable": [
+      "原表的選項、完整群組及計分條件尚未核定；本版只保存填答。"
+    ]
+  },
+  {
+    "id": "assessment-16",
+    "name": "心情溫度計",
+    "evidenceStatus": "固定欄位已觀察；分組、選項、必填條件及計分待核對",
+    "sourceFiles": [
+      "notes/case-templates-evidence.json",
+      "notes/case-prompts-evidence.json"
+    ],
+    "sourceRoute": "/case/hcAssessmentForm/:caseId",
+    "fields": [
+      {
+        "name": "q001",
+        "label": "個案姓名",
+        "sourceLabel": "個案姓名",
+        "type": "text",
+        "help": ""
+      },
+      {
+        "name": "q002",
+        "label": "填表日期",
+        "sourceLabel": "*填表日期",
+        "type": "date",
+        "help": ""
+      },
+      {
+        "name": "q003",
+        "label": "感覺緊張不安",
+        "sourceLabel": "感覺緊張不安",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q004",
+        "label": "覺得容易苦惱或動怒",
+        "sourceLabel": "覺得容易苦惱或動怒",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q005",
+        "label": "感覺憂鬱、情緒低落",
+        "sourceLabel": "感覺憂鬱、情緒低落",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q006",
+        "label": "覺得比不上別人",
+        "sourceLabel": "覺得比不上別人",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q007",
+        "label": "睡眠困難，譬如難以入睡、易醒或早醒",
+        "sourceLabel": "睡眠困難，譬如難以入睡、易醒或早醒",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      },
+      {
+        "name": "q008",
+        "label": "有自殺想法",
+        "sourceLabel": "有自殺想法",
+        "type": "text",
+        "help": "選項或細項待核對；請先以文字記錄。"
+      }
+    ],
+    "unavailable": [
+      "原表的選項、完整群組及計分條件尚未核定；本版只保存填答。"
+    ]
+  }
+]

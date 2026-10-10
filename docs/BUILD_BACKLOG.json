@@ -1,0 +1,123 @@
+{
+  "schemaVersion": 1,
+  "version": "0.55.0",
+  "status": "local-partial",
+  "purpose": "public-project-roadmap",
+  "notice": "獨立本機測試系統，使用合成資料；本文件不包含原平台盤點、私人開通或完整開發追溯，亦不宣稱全部功能等價或正式部署完成。",
+  "acceptedLocalCapabilities": [
+    {
+      "id": "cases",
+      "summary": "個案主檔與版本歷程",
+      "status": "local-partial"
+    },
+    {
+      "id": "care-plans",
+      "summary": "照顧計畫與服務清單",
+      "status": "local-partial"
+    },
+    {
+      "id": "contacts",
+      "summary": "多組聯絡人原值安全維護",
+      "status": "local-partial"
+    },
+    {
+      "id": "attachments",
+      "summary": "個案與證照附件及版本下載",
+      "status": "local-partial"
+    },
+    {
+      "id": "employees",
+      "summary": "員工主檔與機構角色",
+      "status": "local-partial"
+    },
+    {
+      "id": "certifications-training",
+      "summary": "證照期限提示與訓練分鐘",
+      "status": "local-partial"
+    },
+    {
+      "id": "interviews",
+      "summary": "八欄面試者登錄",
+      "status": "local-partial"
+    },
+    {
+      "id": "shifts",
+      "summary": "單班、週期排班與班表閱讀",
+      "status": "local-partial"
+    },
+    {
+      "id": "service-records",
+      "summary": "本人服務與核閱計價快照",
+      "status": "local-partial"
+    },
+    {
+      "id": "leave",
+      "summary": "請假與衝突班次查詢",
+      "status": "local-partial"
+    },
+    {
+      "id": "assessments",
+      "summary": "表單填答、需求評估與督導訪視保存查詢",
+      "status": "local-partial"
+    },
+    {
+      "id": "case-followups",
+      "summary": "人工暫停與結案追蹤",
+      "status": "local-partial"
+    },
+    {
+      "id": "announcements-reports",
+      "summary": "機構公告、本人已讀與查詢報表",
+      "status": "local-partial"
+    },
+    {
+      "id": "personal-calendar",
+      "summary": "本人六欄事件與完整月份／年度檢視",
+      "status": "local-partial"
+    }
+  ],
+  "authentication": {
+    "cis": "local-accepted",
+    "portalReceiver": "local-synthetic-accepted",
+    "publicExportVerification": "pending",
+    "realAccountIncluded": false
+  },
+  "remains": [
+    {
+      "id": "payment",
+      "status": "needs-contract",
+      "summary": "正式支付、補助、自付與申報"
+    },
+    {
+      "id": "payroll",
+      "status": "needs-contract",
+      "summary": "正式薪資、出勤、例休與假額"
+    },
+    {
+      "id": "scoring",
+      "status": "needs-contract",
+      "summary": "正式評分與資格認定"
+    },
+    {
+      "id": "external-integration",
+      "status": "needs-contract",
+      "summary": "外部介接、正式資料移轉與完整工作流程等價"
+    },
+    {
+      "id": "hosting-https-portal-real-uat",
+      "status": "pending",
+      "summary": "持久主機、HTTPS、Portal 簽署端／入口發布與真實公司登入 UAT"
+    },
+    {
+      "id": "operational-data-protection",
+      "status": "needs-contract",
+      "summary": "加密、保存期限、營運備份與災難復原"
+    },
+    {
+      "id": "shared-calendar",
+      "status": "needs-contract",
+      "summary": "機構行事曆、共享／代理與年度格狀曆"
+    }
+  ],
+  "evidencePolicy": "本機能力已有合成驗收；公開副本、CI、部署與 UAT 各自以實際來源、命令、退出碼及可取得產物驗收。"
+}

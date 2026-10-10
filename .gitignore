@@ -1,0 +1,22 @@
+# Runtime data and identity configuration stay outside Git.
+/data/
+node_modules/
+.env*
+!.env.portal.example
+*.sqlite
+*.sqlite-*
+*.db
+*.db-*
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Private inventories, QA evidence, artifacts, and backups.
+outputs/
+notes/
+.audit-private/
+.tools/
+backups/
+*.log
+.DS_Store
