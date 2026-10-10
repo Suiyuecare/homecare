@@ -21,6 +21,7 @@ import { MAX_ATTACHMENT_BODY_BYTES, guardAttachmentAccess, attachmentQuery, vali
 import { isCertificationAttachmentEntity, guardCertificationAttachmentAccess, validateCertificationAttachment, certificationAttachmentQuery, requireCertificationParent, insertCertificationAttachmentFile, readCertificationAttachmentFile } from './certification-attachments.mjs';
 import { readHistory } from './history.mjs';
 import { guardCaseRecordIndexAccess, readCaseRecordIndex } from './case-record-index.mjs';
+import { guardEmployeeRecordIndexAccess, readEmployeeRecordIndex } from './employee-record-index.mjs';
 import { validateAnnouncementReadQuery, validateAnnouncementReadPayload, readAnnouncementReadState, readAnnouncementReadReceipts, preflightAnnouncementRead, acknowledgeAnnouncementRead, confirmAnnouncementReadResponse } from './announcement-reads.mjs';
 import { guardRecurringShiftAccess, previewRecurringShifts, commitRecurringShifts } from './recurring-shifts.mjs';
 import { readShiftReport } from './shift-report.mjs';
@@ -264,6 +265,12 @@ export function createApp({dbPath,host='127.0.0.1',port=Number(process.env.PORT|
       const result=idem(req,ctx,payload,()=>{if(!scopedRows(db,ctx,entity).some(item=>item.id===recordId))fail(404,'NOT_FOUND','找不到資料');const old=get(db,ctx.orgId,entity,recordId);if(old.version!==payload.version)fail(409,'VERSION_CONFLICT','附件已更新，請重新讀取');const data={...business(old),...attachmentFileMetadata(file)};validate(db,ctx,entity,data,old);const item=replace(db,ctx.orgId,entity,old,data);insertAttachmentFile(db,ctx,item,file);audit(db,ctx,'record.update',entity,item.id,{fields:['fileName','mimeType','sizeBytes','sha256'],version:item.version,operation:'replace-file'});return{status:200,value:{item:publicRecord(ctx,item)}};});
       return send(res,result.status,result.value);
      }
+    }
+    const employeeRecordIndexRoute=pathname.match(/^\/api\/employees\/([a-f0-9-]+)\/record-index$/);
+    if(employeeRecordIndexRoute){
+     guardEmployeeRecordIndexAccess(ctx);
+     if(req.method!=='GET')fail(405,'METHOD_NOT_ALLOWED','員工保存紀錄索引僅支援唯讀GET');
+     return send(res,200,readEmployeeRecordIndex(db,ctx,employeeRecordIndexRoute[1],url.searchParams));
     }
     const caseRecordIndexRoute=pathname.match(/^\/api\/cases\/([a-f0-9-]+)\/record-index$/);
     if(caseRecordIndexRoute){

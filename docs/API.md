@@ -434,3 +434,13 @@ GET /api/personal-calendar-events/year：四既有角色先驗，再限定ctx.or
 ## 0.57 視覺整理
 
 本版本只調整共用視覺與既有導覽／頁內定位。所有 API schema、角色與機構授權、查詢參數、payload、CAS、冪等、歷程與計價快照保持；沒有新增業務端點。Portal 接收與明確身分綁定規則沿原契約，視覺驗收不代表正式入口已發布。
+
+## 員工保存紀錄索引 API（0.58，本機驗收完成）
+
+`GET /api/employees/:employeeId/record-index` 僅限 `admin`／`supervisor`；角色先驗，非GET在body前回405。同機構實體為employees的精確父ID可讀，包含停用員工；不存在、跨機構、錯實體父項回404。
+
+只接受各一次的entity/page/pageSize；entity必填employee-certifications、employee-training或leave-requests。page正安全十進位整數預設1，pageSize 1..100預設25，介面固定25；未知、重複、空或非法條件回422，無寬鬆數值轉型。
+
+精確回 `{items,total,page,pageSize,entity,orgId,employeeId}`，每列只 `{entity,id,orgId,employeeId,version,updatedAt}`。原資料是JSON object且own employeeId文字精確等SQL父項才取，包含目前所有狀態；typed、missing、shadow或異型歸屬不修復也不展示。SQL created_at DESC,id ASC排序後所有matching metadata先確認安全version、原文字updatedAt、同org/entity及既有歷程路由相容ID，再分頁；任何不安全候選（含off-page）整份回409 EMPLOYEE_RECORD_INDEX_INVALID。不回createdAt或業務／資格／課程／請假原因／薪資／BLOB／actor／快照內容。
+
+讀取無新表、migration、trigger或寫入。索引嚴格確認完整echo／own descriptor／安全數字／分頁長度／唯一ID後才呈現；草稿變更撤舊結果，失敗人工重讀，合法越界頁至多一次最後頁fresh讀。共用case/employee index owner沿原ui.js guardedRead與單筆history；現在同員工不代表過去每版仍屬該員工，原逐版權限及歷史關聯保持。必要本機合成HTTP、純確認、桌機／390px實際瀏覽器及原case回歸已完成，詳docs/EMPLOYEE_RECORD_INDEX_SCOPE.md。

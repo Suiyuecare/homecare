@@ -52,3 +52,5 @@ jobs:
         run: pnpm test:e2e:case-record-index
       - name: Visual refresh, four roles and mobile
         run: pnpm test:e2e:visual-refresh
+      - name: Employee saved record index
+        run: pnpm test:e2e:employee-record-index

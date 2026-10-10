@@ -253,3 +253,10 @@ canonical元件及CSS/tokens保持；僅services的preserveWhenDisabled opt-in�
 本機合成驗收：1,112項程式測試、243份JavaScript、58個configured commands（56套瀏覽器）接受；四角色92個頁面組合、250個版面檢查、同一批資料桌機／390px共32張Before／After逐張實看。個案捷徑另驗28次跳轉、14次失效守門與46個唯讀區段。七種PDF列印已驗。保留首輪PDF工具環境與兩個測試setup失敗及受控修正；產品斷言未放寬。strict沿已接受私人parser零finding，原官方auditor逾時保存；DESIGN零error／10既有warning。
 
 這是本機視覺與操作驗收；正式持久主機、HTTPS、Portal發布與真實業務UAT仍待完成，沒有原平台全量等價、正式薪資／支付／申報或完整WCAG宣稱。
+
+
+## 員工保存紀錄索引（0.58，契約）
+
+延續v0.57 APM品牌、唯一public/styles.css與ui.js元件，不新增色彩、尺寸、token、dialog或表格。員工列「保存紀錄」沿44px outline動作；wide shared details内原生紀錄種類選單、明確查詢、25筆原semantic table與折疊完整ID。共用record-index adapter以case／employee業務profile保持原個案索引外觀，員工分別證照／教育訓練／請假；原更新時間文字完整呈現，長ID與390px table自身捲動沿既有geometry。Loading、無結果、非法回應、manual retry與Escape/回焦沿既有owner。實際畫面及行為驗收另綁固定來源；這段描述不宣稱已正式部署或完整UAT。
+
+本輪0.58必要合成驗收完成：1,144程式／最低Node85／250JS、十一套瀏覽器136項、九張新PNG實看；原個案索引與APM／合成HTTPS Portal回歸通過。strict沿已接受私人parser零finding，原官方auditor20秒逾時保留且不宣稱pass；DESIGN零error／10既有warning／1info。沒有正式部署或完整WCAG／OS原生popup／真實帳號UAT宣稱。完整來源文件於runtime驗收後更新，不將較早full-source map誤稱為最終文件hash。

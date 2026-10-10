@@ -1,3 +1,4 @@
+import { openEmployeeRecordIndex } from './employee-record-index.js';
 import {
   api, el, pageHeader, table, badge, button, openForm, confirmAction,
   toast, formatDate, formatMoney, today, getContext, fetchAll,
@@ -664,6 +665,7 @@ async function employees(container, alive) {
         el('a', { href: '#/certifications', class: 'btn btn-outline', onclick: () => setPersonnelEmployeeFilter('/certifications', row.id) }, '證照'),
         el('a', { href: '#/training', class: 'btn btn-outline', onclick: () => setPersonnelEmployeeFilter('/training', row.id) }, '訓練'),
         button(row.status === 'active' ? '停用' : '啟用', () => setStatus(refresh, row), { variant: 'ghost' }),
+        button('保存紀錄', () => { if (alive()) openEmployeeRecordIndex({ employeeRecord: row, lookups: { employees: new Map([[row.id, row]]) }, isCurrent: alive }); }, { variant: 'outline' }),
         button('版本歷程', () => openRecordHistory({ entity: 'employees', id: row.id, isCurrent: alive }), { variant: 'ghost' }),
       ) }] : []),
     ],

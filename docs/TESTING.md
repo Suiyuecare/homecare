@@ -67,3 +67,5 @@ pnpm test:e2e:visual-refresh
 ```
 
 此套使用API建立合成資料與隨機記憶體服務，涵蓋四角色23頁、六種管理者寬度、44px主要動作、16px手機輸入、導覽／Escape／焦點、空資料、失敗重試與輸入保留；完整業務表／附件及核閱快照唯讀比對。預設只驗目前原始碼，不需要私人fixture或正式帳號。產生的16張畫面必須另做真實像素檢視。共用樣式大幅改動時需重驗premium-ui.json全部配置及七種PDF報表。
+
+員工三類保存紀錄索引合成瀏覽器驗證：`pnpm test:e2e:employee-record-index`。來源契約見 `docs/EMPLOYEE_RECORD_INDEX_SCOPE.md`；僅記憶體資料庫與隨機loopback。

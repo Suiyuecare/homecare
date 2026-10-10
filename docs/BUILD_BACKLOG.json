@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0.57.0",
+  "version": "0.58.0",
   "status": "local-partial",
   "purpose": "public-project-roadmap",
   "notice": "獨立本機測試系統，使用合成資料；本文件不包含原平台盤點、私人開通或完整開發追溯，亦不宣稱全部功能等價或正式部署完成。",
@@ -88,6 +88,14 @@
       "summary": "APM品牌共用視覺、今日服務卡片、四組導覽、個案區塊定位及四角色手機操作",
       "status": "local-verified",
       "contract": "docs/VISUAL_REFRESH_SCOPE.md",
+      "originalParityVerified": false,
+      "productionDeployed": false
+    },
+    {
+      "id": "employee-record-index",
+      "summary": "管理者與督導可在員工列選擇「保存紀錄」，查詢目前同一員工的證照、教育訓練或請假，每頁25筆，並從索引開啟原有單筆版本歷程。只列種類、目前版次、原更新文字及可展開識別碼；同名、停用員工仍依精確ID辨識。現在歸屬此人不代表每個過去版本都屬此人，歷程仍按原伺服器逐版授權。",
+      "status": "local-verified",
+      "contract": "docs/EMPLOYEE_RECORD_INDEX_SCOPE.md",
       "originalParityVerified": false,
       "productionDeployed": false
     }

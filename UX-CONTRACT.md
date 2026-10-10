@@ -24,6 +24,7 @@ DESIGN.md與public/styles.css一對一token映射，ui.js共用元件，單一li
 | CRUD | public/ui.js api/openForm | docs/API.md | refresh owning list | full-flow E2E |
 | File Upload | public/ui.js createForm / attachmentFilePayload / downloadAttachment | docs/ATTACHMENTS_SCOPE.md / docs/CERTIFICATION_ATTACHMENTS_SCOPE.md | native single-file picker | file validation / retry / exact download bytes E2E |
 | Read-only history | public/modules/history.js openRecordHistory / public/ui.js openDetails | docs/HISTORY_SCOPE.md / docs/SHIFT_HISTORY_SCOPE.md / docs/SERVICE_HISTORY_SCOPE.md / docs/PERSONNEL_HISTORY_SCOPE.md / docs/LEAVE_HISTORY_SCOPE.md / docs/CERTIFICATION_ATTACHMENTS_SCOPE.md / docs/ASSESSMENT_HISTORY_SCOPE.md | default / wide | load/retry/cancel/focus E2E |
+| Metadata record index | public/modules/record-index.js openRecordIndex / public/ui.js openDetails | docs/CASE_RECORD_INDEX_SCOPE.md / docs/EMPLOYEE_RECORD_INDEX_SCOPE.md | case / employee profiles; domain DTO confirmation | exact parent / manual query / paging / guarded Abort / original history E2E |
 | Report query/export/print | public/modules/report-view.js / public/ui.js downloadCsv / openDetails / public/styles.css | docs/SHIFT_REPORT_SCOPE.md / docs/SERVICE_REPORT_SCOPE.md / docs/CASE_REPORT_SCOPE.md / docs/EMPLOYEE_REPORT_SCOPE.md / docs/LEAVE_REPORT_SCOPE.md / docs/TRAINING_REPORT_SCOPE.md / docs/CERTIFICATION_REPORT_SCOPE.md | shift/service/case/employee/leave/training/certification adapters / CSV / printable details | full rows and totals / fresh authorization / cancel / multi-page PDF E2E |
 | Read-only date overview | public/ui.js openDetails / createForm / table; public/data/shift-calendar.js; public/modules/shift-calendar.js adapter | docs/SHIFT_CALENDAR_SCOPE.md | guardedRead / wide / week-month / typed date | complete fresh DTO / draft retraction / context / keyboard / 390px E2E |
 
@@ -288,3 +289,12 @@ loaded／pending 的本人、機構、角色、員工、hash、父 render 與外
 主要動作與表格按鈕至少44px，手機表單字級至少16px。鍵盤跳至主內容保留目前 route；native dialog 的 Escape、焦點回復與表單保留沿原 owner。長表與所有報表沿自己的橫捲、原 A4 geometry。照顧/服務四欄首頁沿一份語義 ul/li responsive呈現，沒有 duplicate hidden table。
 
 驗收證據由 tests/visual-refresh-e2e.mjs 配合所有 configured commands、嚴格靜態檢查及相同合成資料桌機/手機 Before/After 實際像素構成；文件的實作與正式發布狀態分開記錄。
+
+
+## 員工保存紀錄索引與共用索引 owner（0.58，契約）
+
+唯一public/modules/record-index.js承接原個案索引的查詢、重新讀取及分頁，原case-record-index薄caller四類預設保持；employee-record-index薄caller新增三類業務variant。沿ui.js guardedRead openDetails、createForm、table、pagination/errorState與history.js單筆歷程，原schema、角色、CRUD及SSO保持。員工列只有admin/supervisor新增保存紀錄，既有證照／訓練／員工主檔歷程保留。
+
+敏感父項及query只在記憶；草稿變更撤結果，合法完整echo/metadata確認後才呈現。manual retry不自動error重送；合法超後頁一次last-page重讀沿原case behavior。讀取/loaded/context/hash/render/outer失效清空Abort、晚回應不復活、nested相同primitive保持。現在歸属此員工不代表所有過去版本都屬此人，原history授權保持。沿v0.57 APM、native labelled select、44px操作與wide dialog/table內捲；不改styles/token或再造dialog/controller。必要整合與真瀏覽器證據由本輪接受收據另列，不由契約文字推定通過。
+
+本輪0.58必要合成驗收完成：1,144程式／最低Node85／250JS、十一套瀏覽器136項、九張新PNG實看；原個案索引與APM／合成HTTPS Portal回歸通過。strict沿已接受私人parser零finding，原官方auditor20秒逾時保留且不宣稱pass；DESIGN零error／10既有warning／1info。沒有正式部署或完整WCAG／OS原生popup／真實帳號UAT宣稱。完整來源文件於runtime驗收後更新，不將較早full-source map誤稱為最終文件hash。
