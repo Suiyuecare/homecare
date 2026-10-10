@@ -18,6 +18,8 @@ import { mountCertificationReport } from './certification-report.js';
 import { openRecordHistory } from './history.js';
 import { openLeaveShiftConflicts } from './leave-shift-conflicts.js';
 import { openAnnouncementRead, openAnnouncementReadReceipts } from './announcement-read-receipts.js';
+import { openAnnouncementPageReceipts } from './announcement-page-receipts.js';
+import { announcementPageIdentity, captureAnnouncementPage } from '../data/announcement-page-receipts.js';
 import { createAssessmentEditor } from '../data/assessment-editor.js';
 import { createAnnouncementEditor } from '../data/announcement-editor.js';
 import { createServiceItemEditor } from '../data/service-item-editor.js';
@@ -119,8 +121,29 @@ async function listPage(container, config, alive) {
   let controller;
   const body = el('div', { class: 'list-content', 'aria-live': 'polite', 'aria-atomic': 'false' });
   const footer = el('div', { class: 'list-footer' });
+  // Optional accepted-page action: the original list remains its sole controller.
+  let acceptedPage, acceptedRequest, pageActionButton, pageActionBusy = false, pageRevision = 0;
+  const syncPageAction = () => {
+    if (!pageActionButton) return;
+    pageActionButton.disabled = !acceptedPage?.ids.length || !alive() || !config.currentPageAction.isCurrent();
+    if (pageActionBusy) {
+      pageActionButton.setAttribute('aria-disabled', 'true'); pageActionButton.setAttribute('aria-busy', 'true');
+    } else {
+      pageActionButton.removeAttribute('aria-disabled'); pageActionButton.removeAttribute('aria-busy');
+    }
+  };
+  const retractPageAction = (cancelRequest = false, clear = false) => {
+    if (!config.currentPageAction) return;
+    acceptedPage = null; acceptedRequest = null;
+    body.dataset.renderVersion = `current-page:${++pageRevision}`;
+    if (cancelRequest) { ++sequence; controller?.abort(); }
+    if (clear) { body.replaceChildren(); footer.replaceChildren(); }
+    syncPageAction();
+  };
   const load = async () => {
     if (config.confirmList && !alive()) return;
+    if (config.currentPageAction && (!alive() || !config.currentPageAction.isCurrent())) return;
+    retractPageAction();
     const request = ++sequence;
     controller?.abort();
     controller = new AbortController();
@@ -136,6 +159,8 @@ async function listPage(container, config, alive) {
       ? config.requested(params, { page, pageSize: PAGE_SIZE, orgId: getContext().organizationId || getContext().orgId })
       : { page, pageSize: PAGE_SIZE, orgId: getContext().organizationId || getContext().orgId,
         status: params.get('status') || '', interviewDate: params.get('interviewDate') || '' } : null;
+    const pageRequested = config.currentPageAction ? { page, pageSize: PAGE_SIZE,
+      orgId: getContext().organizationId ?? getContext().orgId } : null;
     try {
       if (config.dateFilter && date && !config.dateFilter.valid(date)) throw new Error(config.dateFilter.errorMessage || '請選擇有效的面試日期。');
       if (config.caseFilter) {
@@ -157,14 +182,20 @@ async function listPage(container, config, alive) {
       }
       const result = await api(`${config.endpoint || `/api/${config.entity}`}?${params}`, { signal: controller.signal });
       if (!alive() || request !== sequence) return;
+      if (config.currentPageAction && !config.currentPageAction.isCurrent()) return;
       config.confirmList?.(result, requested);
+      const pageSnapshot = config.currentPageAction?.capture(result, pageRequested);
       if (page > 1 && !result.items.length && result.total > 0) { page = Math.ceil(result.total / PAGE_SIZE); return load(); }
       body.replaceChildren(table(config.columns(load), result.items, {
         emptyText: query || status || kind || date || caseId ? '沒有符合條件的資料，請調整查詢。' : (config.emptyText || '目前尚無資料。'),
       }));
       footer.replaceChildren(pagination({ page: result.page ?? page, pageSize: result.pageSize ?? PAGE_SIZE, total: result.total, onChange: next => { page = next; void load(); } }));
+      if (config.currentPageAction && alive() && config.currentPageAction.isCurrent() && request === sequence) {
+        acceptedPage = pageSnapshot; acceptedRequest = request; syncPageAction();
+      }
     } catch (error) {
       if (!alive() || request !== sequence || error.name === 'AbortError') return;
+      if (config.currentPageAction && !config.currentPageAction.isCurrent()) return;
       if (config.caseFilter && error.fields?.[config.caseFilter.key]) {
         caseControl.setAttribute('aria-invalid', 'true');
         caseFieldError.textContent = error.fields[config.caseFilter.key]; caseFieldError.hidden = false;
@@ -176,6 +207,23 @@ async function listPage(container, config, alive) {
     value: query, label: config.searchLabel || '搜尋資料', placeholder: config.placeholder || '輸入關鍵字',
     onSearch: value => { query = config.preserveSearchText ? toolbar.querySelector('input[type="search"]').value : value; page = 1; void load(); },
   }));
+  if (config.currentPageAction) {
+    pageActionButton = button(config.currentPageAction.label, async () => {
+      if (pageActionBusy || !acceptedPage?.ids.length || !alive() || !config.currentPageAction.isCurrent()) return;
+      const snapshot = acceptedPage, request = acceptedRequest;
+      const actionCurrent = () => alive() && config.currentPageAction.isCurrent()
+        && acceptedPage === snapshot && acceptedRequest === request && request === sequence;
+      pageActionBusy = true; syncPageAction();
+      try { await config.currentPageAction.open(snapshot, actionCurrent); }
+      catch (error) { if (actionCurrent() && error.name !== 'AbortError') toast('本頁本人回執資料無法確認；請重新查詢。', 'error'); }
+      finally { pageActionBusy = false; syncPageAction(); }
+    }, { variant: 'outline', disabled: true });
+    toolbar.append(pageActionButton);
+    const searchInput = toolbar.querySelector('input[type="search"]');
+    for (const type of ['input', 'compositionstart', 'compositionend']) {
+      searchInput.addEventListener(type, () => retractPageAction(true, true));
+    }
+  }
   if (config.statuses) toolbar.append(selectControl('狀態', [{ value: '', label: '全部狀態' }, ...options(config.statuses)], '', value => { status = value; page = 1; void load(); }));
   if (config.kindFilter) toolbar.append(selectControl(config.kindFilter.label,
     [{ value: '', label: config.kindFilter.emptyLabel }, ...config.kindFilter.choices], '', value => {
@@ -199,11 +247,12 @@ async function listPage(container, config, alive) {
   }
   const headerActions = config.create ? [button(config.createLabel || '新增', () => config.create(load), { variant: 'primary' })] : [];
   container.replaceChildren(pageHeader(config.title, config.subtitle, headerActions), ...(config.before || []), toolbar, body, footer);
-  if (config.confirmList) {
+  if (config.confirmList || config.currentPageAction) {
     let invalidated = false;
     const invalidate = () => {
-      if (invalidated || alive()) return;
+      if (invalidated || (alive() && (!config.currentPageAction || config.currentPageAction.isCurrent()))) return;
       invalidated = true; controller?.abort(); body.replaceChildren(); footer.replaceChildren();
+      retractPageAction();
       if (config.caseFilter) {
         caseControl.replaceChildren(el('option', { value: '' }, config.caseFilter.emptyLabel));
         caseControl.disabled = true; caseControl.setAttribute('aria-invalid', 'false');
@@ -898,6 +947,12 @@ async function assessments(container, alive) {
 }
 
 async function announcements(container, alive) {
+  const startedContext = getContext(), identity = announcementPageIdentity(startedContext), startedHash = window.location.hash;
+  const pageCurrent = () => {
+    try { return alive() && getContext() === startedContext && window.location.hash === startedHash
+      && announcementPageIdentity(getContext()) === identity; }
+    catch { return false; }
+  };
   const edit = (refresh, row) => {
     const editor = createAnnouncementEditor({ existing: row });
     const orgId = getContext().organizationId;
@@ -935,6 +990,10 @@ async function announcements(container, alive) {
     entity: 'announcements', title: '內部公告', subtitle: '於機構內分享服務與行政訊息。',
     createLabel: '新增公告', create: writable() ? refresh => edit(refresh) : null,
     statuses: { draft: '草稿', published: '已發布' }, placeholder: '搜尋公告標題與內容',
+    currentPageAction: {
+      label: '查詢本頁本人回執', isCurrent: pageCurrent, capture: captureAnnouncementPage,
+      open: (snapshot, isCurrent) => openAnnouncementPageReceipts({ snapshot, isCurrent }),
+    },
     columns: refresh => [
       { key: 'title', label: '標題' },
       { label: '內容', render: row => el('details', {}, el('summary', {}, '閱讀內容'), el('p', { class: 'pre-wrap' }, row.body)) },

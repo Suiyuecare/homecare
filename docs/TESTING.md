@@ -71,3 +71,5 @@ pnpm test:e2e:visual-refresh
 員工三類保存紀錄索引合成瀏覽器驗證：`pnpm test:e2e:employee-record-index`。來源契約見 `docs/EMPLOYEE_RECORD_INDEX_SCOPE.md`；僅記憶體資料庫與隨機loopback。
 
 面試者完整保存紀錄切片以 `pnpm test:e2e:interview-record-details` 驗證 fresh 單筆八欄原文、型別安全、機構／角色、桌機／390px、鍵盤與長文末端、人工重讀及情境撤除；沿合成記憶資料庫和隨機 loopback。它不接觸正式綁定或員工帳號，不建立錄取／到職規則。只宣稱實際執行的必要子集，完整配置不等於每輪全部 fresh。
+
+本頁本人公告回執以 `pnpm test:e2e:announcement-page-receipts` 驗證人工且最多25個目前本頁ID的串行GET、本人精確版次回執、混合未確認與手動重讀、搜尋／頁次／身份失效、鍵盤與390px表內捲動；使用合成記憶資料庫和隨機loopback。原全文的明確閱讀POST與名冊沿原owner，此新入口不提交閱讀、不推論未讀率。只宣稱實際執行的必要subset，來源上傳與CI不代表正式部署。

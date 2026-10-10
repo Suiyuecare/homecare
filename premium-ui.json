@@ -76,7 +76,8 @@
     "caseRecordIndex",
     "visualRefresh",
     "employeeRecordIndex",
-    "interviewRecordDetails"
+    "interviewRecordDetails",
+    "announcementPageReceipts"
   ],
   "commands": {
     "check": "node scripts/check-source.mjs",
@@ -138,7 +139,8 @@
     "caseRecordIndex": "node tests/case-record-index-e2e.mjs",
     "visualRefresh": "node tests/visual-refresh-e2e.mjs",
     "employeeRecordIndex": "node tests/employee-record-index-e2e.mjs",
-    "interviewRecordDetails": "node tests/interview-record-details-e2e.mjs"
+    "interviewRecordDetails": "node tests/interview-record-details-e2e.mjs",
+    "announcementPageReceipts": "node tests/announcement-page-receipts-e2e.mjs"
   },
   "evidence": {
     "crudFullFlow": "tests/e2e.mjs",
@@ -153,6 +155,7 @@
     "caseRecordIndex": "tests/case-record-index-e2e.mjs",
     "visualRefresh": "tests/visual-refresh-e2e.mjs",
     "employeeRecordIndex": "tests/employee-record-index-e2e.mjs",
-    "interviewRecordDetails": "tests/interview-record-details-e2e.mjs"
+    "interviewRecordDetails": "tests/interview-record-details-e2e.mjs",
+    "announcementPageReceipts": "tests/announcement-page-receipts-e2e.mjs"
   }
 }

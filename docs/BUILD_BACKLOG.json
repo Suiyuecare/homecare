@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0.59.0",
+  "version": "0.60.0",
   "status": "local-partial",
   "purpose": "public-project-roadmap",
   "notice": "獨立本機測試系統，使用合成資料；本文件不包含原平台盤點、私人開通或完整開發追溯，亦不宣稱全部功能等價或正式部署完成。",
@@ -104,6 +104,14 @@
       "summary": "管理者與督導可從面試者清單選擇「查看紀錄」，直接閱讀目前保存的八個欄位及完整面試內容、備註。每次以精確 ID 重新取得目前版次，不使用清單摘要；停用名單及同名不同人仍可辨識。文字與換行原樣顯示，缺少、空白、null 或非文字值有明確標記，不展开未知內文；名單狀態不代表錄取或到職。",
       "status": "local-verified",
       "contract": "docs/INTERVIEW_RECORD_DETAILS_SCOPE.md",
+      "originalParityVerified": false,
+      "productionDeployed": false
+    },
+    {
+      "id": "announcement-page-receipts",
+      "summary": "四既有角色可在內部公告選擇「查詢本頁本人回執」，人工逐筆查詢目前頁最多25則公告的本人目前版回執。清單載入、搜尋與分頁不自動查回執；結果分清本版已保存、尚無本人回執、不可確認及查詢未確認，保留精確識別碼與原文標題。無回執不代表未讀或未完成義務。",
+      "status": "local-verified",
+      "contract": "docs/ANNOUNCEMENT_PAGE_RECEIPTS_SCOPE.md",
       "originalParityVerified": false,
       "productionDeployed": false
     }

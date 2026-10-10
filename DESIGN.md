@@ -266,3 +266,9 @@ canonical元件及CSS/tokens保持；僅services的preserveWhenDisabled opt-in�
 沿 docs/INTERVIEW_RECORD_DETAILS_SCOPE.md：現有清單的「查看紀錄」以既有單筆 GET fresh 取得目前八欄原文及保存版次／建立與更新文字。detail-grid／pre-wrap 與 guardedRead openDetails 沿唯一共享 owner；全文不截斷、不解析日期／時間、不轉型未知 JSON，typed／missing／empty／null 分辨。名單啟停仍不代表錄取或到職。loaded／pending 完整 primitive／hash／父render／outer reference 失效撤除，人工重試只一個 GET；無新 CSS／token／表單／CRUD／server／schema／controller。
 
 0.59本輪必要合成驗收：1,164程式／最低Node73／254JS、六套browser65項、十張新PNG實看；APM與合成HTTPS Portal及原面試CRUD／歷程回歸通過。strict沿已接受私人parser零finding，未重跑已知逾時的原官方auditor，原失敗與作者工具腳本失敗保存、不宣稱官方pass或first-pass；DESIGN零error／10既有warning／1info。runtime與tests保持335-source接受稿精確bytes；僅狀態及追溯文件在QA後更新，不把初始freeze全文件hash當成最終hash。正式主機／HTTPS／Portal／OS popup／人工作業UAT未完成。
+
+## 本頁本人公告回執（0.60，契約）
+
+沿 docs/ANNOUNCEMENT_PAGE_RECEIPTS_SCOPE.md，內部公告只有人工「查詢本頁本人回執」才串行讀最多25個已確認本頁ID；清單初載、搜尋、條件與分頁不隱式讀回執。toolbar outline button、表格自身捲動及唯一 wide guardedRead openDetails 沿 APM 與 shared owner，無新 CSS／token／字型／picker／POST。欄位只 fresh 標題／精確ID／目前版／本人本版回執／canonicalUTC保存時間；無回執不代表未讀、義務或完成率，不顯示body。混合錯誤明示未確認，手動全頁重讀；清單搜尋草稿立即撤捕捉，snapshot／sequence／父render／primitive／outer context完整守門。header同步防雙開以aria-busy/aria-disabled但可focus，失效或空页native disabled；共享Close/Escape與原trigger focus不改。必要瀏覽器、桌機／390px與圖片仍待驗收。
+
+0.60本輪必要合成驗收：1,186程式／最低Node73／258JS、十一套browser131項、新查詢12項及十張新PNG實看；APM與合成HTTPS Portal、原公告回執／名冊／歷程／安全編輯、共用清單個案與員工索引及面試詳情回歸通過。新browser原兩次actual1及UI前置守門修正、作者工具與root工具失敗封存；只作最窄修正，不放寬產品斷言或逾時，不能宣稱first-pass。必要命令16種由14個輸入保持的本輪通過與2個最終重驗組成，61 configured／60 required不全部fresh；原freeze、r02/r03與carry provenance分開保存。strict沿已接受私人parser零finding，原官方auditor的逾時失敗與原有效測試證據保持、未重跑或宣稱官方pass；DESIGN零error／10既有warning／1info。340公開來源／101runtime接受稿的runtime精確保持，QA後僅更新狀態及追溯文件。原180目錄／9階段／12契約／2增強與58里程碑及99來源前綴保留後追加59／101；RM07仍partial。正式主機、HTTPS、Portal發布、OS popup及人工作業UAT未完成。

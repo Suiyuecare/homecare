@@ -452,3 +452,11 @@ GET /api/personal-calendar-events/year：四既有角色先驗，再限定ctx.or
 「查看紀錄」每次 fresh GET，目前 version 可以不同於清單。嚴格 exact envelope、own data descriptor id/orgId/version/createdAt/updatedAt 及精確 requested identity；version 正 safe integer、保存時間原字串不解析。只投影八個既有欄位，missing／empty／null／non-text／text 分辨；完整原文含 CR/LF、無效舊日期與未知狀態 literal 呈現，typed 只型別 tag，未知額外欄不取值或遍歷。Known getter 拒絕且不執行，unknown getter 不讀；無HTML執行或隱藏JSON展示。
 
 沿唯一 openDetails guardedRead、原 listPage、detail-grid／pre-wrap，兩長文欄复用 field-wide。角色／ID 開啟前確認，user/org/role/employee/hash/父render與outer context完整守門；loaded／pending失效清空abort關閉、晚回應不復活；nested同primitive保留。失敗僅人工重讀、一個fresh GET，原CRUD與歷程入口保持，無print／CSV／POST。必要合成驗收與限制見 docs/INTERVIEW_RECORD_DETAILS_SCOPE.md。
+
+## 本頁本人公告回執（0.60，本機验收完成）
+
+重用既有 GET /api/announcements/:id/read-state；只有人工操作捕捉目前已確認頁的精確識別碼、最多25個，以同一AbortSignal循序讀取，不傳version或query，不新增API／POST／schema。每列採fresh目前版，可不同於清單舊版；完整固定DTO及本人、機構、ID、版次與SHA256 receipt tuple沿原confirmAnnouncementReadState。回執角色與姓名是閱讀時保存，不以現在的角色或姓名否定舊回執。
+
+只投影安全標題、精確ID、目前版次、本人回執保存狀態、canonical UTC readAt及canAcknowledge。未保存不代表未讀、應讀或法定簽收；不可確認另標示且不產生閱讀提交。每筆HTTP／斷線／逾時／非法2xx只顯捕捉ID與「未確認，請重新查詢」，其餘逐筆繼續；人工重查同一頁全部ID，先清空舊結果。25是請求數界限，並非整批15秒、傳輸位元組或server掃描SLA。
+
+listPage新增optional currentPageAction同步capture hook，只有公告opt-in。exact分頁metadata與distinct ID驗證後才paint／發布snapshot，不驗證舊API未提供的filter echo。原controller／sequence／observer為唯一清單owner；搜尋草稿含IME、條件、分頁、refresh與primitive／外層context失效立即撤除、abort、關閉，不復活晚回應。openDetails guardedRead為唯一對話框owner；雙啟動有同步gate、關閉回焦沿原owner。完整凍結契約與必要合成驗收見docs/ANNOUNCEMENT_PAGE_RECEIPTS_SCOPE.md。
