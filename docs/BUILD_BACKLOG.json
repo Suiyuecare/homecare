@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0.58.0",
+  "version": "0.59.0",
   "status": "local-partial",
   "purpose": "public-project-roadmap",
   "notice": "獨立本機測試系統，使用合成資料；本文件不包含原平台盤點、私人開通或完整開發追溯，亦不宣稱全部功能等價或正式部署完成。",
@@ -96,6 +96,14 @@
       "summary": "管理者與督導可在員工列選擇「保存紀錄」，查詢目前同一員工的證照、教育訓練或請假，每頁25筆，並從索引開啟原有單筆版本歷程。只列種類、目前版次、原更新文字及可展開識別碼；同名、停用員工仍依精確ID辨識。現在歸屬此人不代表每個過去版本都屬此人，歷程仍按原伺服器逐版授權。",
       "status": "local-verified",
       "contract": "docs/EMPLOYEE_RECORD_INDEX_SCOPE.md",
+      "originalParityVerified": false,
+      "productionDeployed": false
+    },
+    {
+      "id": "interview-record-details",
+      "summary": "管理者與督導可從面試者清單選擇「查看紀錄」，直接閱讀目前保存的八個欄位及完整面試內容、備註。每次以精確 ID 重新取得目前版次，不使用清單摘要；停用名單及同名不同人仍可辨識。文字與換行原樣顯示，缺少、空白、null 或非文字值有明確標記，不展开未知內文；名單狀態不代表錄取或到職。",
+      "status": "local-verified",
+      "contract": "docs/INTERVIEW_RECORD_DETAILS_SCOPE.md",
       "originalParityVerified": false,
       "productionDeployed": false
     }

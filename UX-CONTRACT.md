@@ -298,3 +298,9 @@ loaded／pending 的本人、機構、角色、員工、hash、父 render 與外
 敏感父項及query只在記憶；草稿變更撤結果，合法完整echo/metadata確認後才呈現。manual retry不自動error重送；合法超後頁一次last-page重讀沿原case behavior。讀取/loaded/context/hash/render/outer失效清空Abort、晚回應不復活、nested相同primitive保持。現在歸属此員工不代表所有過去版本都屬此人，原history授權保持。沿v0.57 APM、native labelled select、44px操作與wide dialog/table內捲；不改styles/token或再造dialog/controller。必要整合與真瀏覽器證據由本輪接受收據另列，不由契約文字推定通過。
 
 本輪0.58必要合成驗收完成：1,144程式／最低Node85／250JS、十一套瀏覽器136項、九張新PNG實看；原個案索引與APM／合成HTTPS Portal回歸通過。strict沿已接受私人parser零finding，原官方auditor20秒逾時保留且不宣稱pass；DESIGN零error／10既有warning／1info。沒有正式部署或完整WCAG／OS原生popup／真實帳號UAT宣稱。完整來源文件於runtime驗收後更新，不將較早full-source map誤稱為最終文件hash。
+
+## 面試者完整保存紀錄（0.59，契約）
+
+沿 docs/INTERVIEW_RECORD_DETAILS_SCOPE.md：現有清單的「查看紀錄」以既有單筆 GET fresh 取得目前八欄原文及保存版次／建立與更新文字。detail-grid／pre-wrap 與 guardedRead openDetails 沿唯一共享 owner；全文不截斷、不解析日期／時間、不轉型未知 JSON，typed／missing／empty／null 分辨。名單啟停仍不代表錄取或到職。loaded／pending 完整 primitive／hash／父render／outer reference 失效撤除，人工重試只一個 GET；無新 CSS／token／表單／CRUD／server／schema／controller。
+
+0.59本輪必要合成驗收：1,164程式／最低Node73／254JS、六套browser65項、十張新PNG實看；APM與合成HTTPS Portal及原面試CRUD／歷程回歸通過。strict沿已接受私人parser零finding，未重跑已知逾時的原官方auditor，原失敗與作者工具腳本失敗保存、不宣稱官方pass或first-pass；DESIGN零error／10既有warning／1info。runtime與tests保持335-source接受稿精確bytes；僅狀態及追溯文件在QA後更新，不把初始freeze全文件hash當成最終hash。正式主機／HTTPS／Portal／OS popup／人工作業UAT未完成。

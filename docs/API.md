@@ -444,3 +444,11 @@ GET /api/personal-calendar-events/year：四既有角色先驗，再限定ctx.or
 精確回 `{items,total,page,pageSize,entity,orgId,employeeId}`，每列只 `{entity,id,orgId,employeeId,version,updatedAt}`。原資料是JSON object且own employeeId文字精確等SQL父項才取，包含目前所有狀態；typed、missing、shadow或異型歸屬不修復也不展示。SQL created_at DESC,id ASC排序後所有matching metadata先確認安全version、原文字updatedAt、同org/entity及既有歷程路由相容ID，再分頁；任何不安全候選（含off-page）整份回409 EMPLOYEE_RECORD_INDEX_INVALID。不回createdAt或業務／資格／課程／請假原因／薪資／BLOB／actor／快照內容。
 
 讀取無新表、migration、trigger或寫入。索引嚴格確認完整echo／own descriptor／安全數字／分頁長度／唯一ID後才呈現；草稿變更撤舊結果，失敗人工重讀，合法越界頁至多一次最後頁fresh讀。共用case/employee index owner沿原ui.js guardedRead與單筆history；現在同員工不代表過去每版仍屬該員工，原逐版權限及歷史關聯保持。必要本機合成HTTP、純確認、桌機／390px實際瀏覽器及原case回歸已完成，詳docs/EMPLOYEE_RECORD_INDEX_SCOPE.md。
+
+## 面試者目前保存紀錄詳情（0.59，本機驗收完成）
+
+重用既有 `GET /api/interview-applicants/:id` 回 `{item}`；伺服器先驗管理者／督導，機構與 SQL metadata 原規則保持，停用名單仍可讀。沒有新 endpoint、寫入、schema 或正式錄取／到職規則。
+
+「查看紀錄」每次 fresh GET，目前 version 可以不同於清單。嚴格 exact envelope、own data descriptor id/orgId/version/createdAt/updatedAt 及精確 requested identity；version 正 safe integer、保存時間原字串不解析。只投影八個既有欄位，missing／empty／null／non-text／text 分辨；完整原文含 CR/LF、無效舊日期與未知狀態 literal 呈現，typed 只型別 tag，未知額外欄不取值或遍歷。Known getter 拒絕且不執行，unknown getter 不讀；無HTML執行或隱藏JSON展示。
+
+沿唯一 openDetails guardedRead、原 listPage、detail-grid／pre-wrap，兩長文欄复用 field-wide。角色／ID 開啟前確認，user/org/role/employee/hash/父render與outer context完整守門；loaded／pending失效清空abort關閉、晚回應不復活；nested同primitive保留。失敗僅人工重讀、一個fresh GET，原CRUD與歷程入口保持，無print／CSV／POST。必要合成驗收與限制見 docs/INTERVIEW_RECORD_DETAILS_SCOPE.md。

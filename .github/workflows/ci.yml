@@ -54,3 +54,5 @@ jobs:
         run: pnpm test:e2e:visual-refresh
       - name: Employee saved record index
         run: pnpm test:e2e:employee-record-index
+      - name: Interview complete saved record details
+        run: pnpm test:e2e:interview-record-details

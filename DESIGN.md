@@ -260,3 +260,9 @@ canonical元件及CSS/tokens保持；僅services的preserveWhenDisabled opt-in�
 延續v0.57 APM品牌、唯一public/styles.css與ui.js元件，不新增色彩、尺寸、token、dialog或表格。員工列「保存紀錄」沿44px outline動作；wide shared details内原生紀錄種類選單、明確查詢、25筆原semantic table與折疊完整ID。共用record-index adapter以case／employee業務profile保持原個案索引外觀，員工分別證照／教育訓練／請假；原更新時間文字完整呈現，長ID與390px table自身捲動沿既有geometry。Loading、無結果、非法回應、manual retry與Escape/回焦沿既有owner。實際畫面及行為驗收另綁固定來源；這段描述不宣稱已正式部署或完整UAT。
 
 本輪0.58必要合成驗收完成：1,144程式／最低Node85／250JS、十一套瀏覽器136項、九張新PNG實看；原個案索引與APM／合成HTTPS Portal回歸通過。strict沿已接受私人parser零finding，原官方auditor20秒逾時保留且不宣稱pass；DESIGN零error／10既有warning／1info。沒有正式部署或完整WCAG／OS原生popup／真實帳號UAT宣稱。完整來源文件於runtime驗收後更新，不將較早full-source map誤稱為最終文件hash。
+
+## 面試者完整保存紀錄（0.59，契約）
+
+沿 docs/INTERVIEW_RECORD_DETAILS_SCOPE.md：現有清單的「查看紀錄」以既有單筆 GET fresh 取得目前八欄原文及保存版次／建立與更新文字。detail-grid／pre-wrap 與 guardedRead openDetails 沿唯一共享 owner；全文不截斷、不解析日期／時間、不轉型未知 JSON，typed／missing／empty／null 分辨。名單啟停仍不代表錄取或到職。loaded／pending 完整 primitive／hash／父render／outer reference 失效撤除，人工重試只一個 GET；無新 CSS／token／表單／CRUD／server／schema／controller。
+
+0.59本輪必要合成驗收：1,164程式／最低Node73／254JS、六套browser65項、十張新PNG實看；APM與合成HTTPS Portal及原面試CRUD／歷程回歸通過。strict沿已接受私人parser零finding，未重跑已知逾時的原官方auditor，原失敗與作者工具腳本失敗保存、不宣稱官方pass或first-pass；DESIGN零error／10既有warning／1info。runtime與tests保持335-source接受稿精確bytes；僅狀態及追溯文件在QA後更新，不把初始freeze全文件hash當成最終hash。正式主機／HTTPS／Portal／OS popup／人工作業UAT未完成。

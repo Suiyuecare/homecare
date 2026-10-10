@@ -75,7 +75,8 @@
     "personalCalendarYear",
     "caseRecordIndex",
     "visualRefresh",
-    "employeeRecordIndex"
+    "employeeRecordIndex",
+    "interviewRecordDetails"
   ],
   "commands": {
     "check": "node scripts/check-source.mjs",
@@ -136,7 +137,8 @@
     "personalCalendarYear": "node tests/personal-calendar-year-e2e.mjs",
     "caseRecordIndex": "node tests/case-record-index-e2e.mjs",
     "visualRefresh": "node tests/visual-refresh-e2e.mjs",
-    "employeeRecordIndex": "node tests/employee-record-index-e2e.mjs"
+    "employeeRecordIndex": "node tests/employee-record-index-e2e.mjs",
+    "interviewRecordDetails": "node tests/interview-record-details-e2e.mjs"
   },
   "evidence": {
     "crudFullFlow": "tests/e2e.mjs",
@@ -150,6 +152,7 @@
     "personalCalendarYear": "tests/personal-calendar-year-e2e.mjs",
     "caseRecordIndex": "tests/case-record-index-e2e.mjs",
     "visualRefresh": "tests/visual-refresh-e2e.mjs",
-    "employeeRecordIndex": "tests/employee-record-index-e2e.mjs"
+    "employeeRecordIndex": "tests/employee-record-index-e2e.mjs",
+    "interviewRecordDetails": "tests/interview-record-details-e2e.mjs"
   }
 }

@@ -1,3 +1,4 @@
+import { openInterviewRecordDetails } from './interview-record-details.js';
 import { openEmployeeRecordIndex } from './employee-record-index.js';
 import {
   api, el, pageHeader, table, badge, button, openForm, confirmAction,
@@ -595,6 +596,7 @@ async function interviews(container, alive) {
       { label: '面試內容', render: row => display(row.interviewContent, 160) }, { label: '備註', render: row => display(row.note, 160) },
       { label: '名單狀態', render: row => { const known = INTERVIEW_STATUSES.some(item => item.value === row.status); const node = badge(known ? row.status : 'unknown'); node.textContent = formatInterviewStatus(row.status); return node; } },
       { label: '操作', render: row => actions(
+        button('查看紀錄', () => { if (current()) return openInterviewRecordDetails({ id: row.id, isCurrent: current }); }, { variant: 'outline' }),
         button('編輯', () => edit(refresh, row), { variant: 'outline' }),
         INTERVIEW_STATUSES.some(item => item.value === row.status) && button(row.status === 'active' ? '停用' : '啟用', () => setStatus(refresh, row), { variant: 'ghost' }),
         button('版本歷程', () => openRecordHistory({ entity: 'interview-applicants', id: row.id, isCurrent: current }), { variant: 'ghost' }),
