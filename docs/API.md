@@ -470,3 +470,7 @@ listPage新增optional currentPageAction同步capture hook，只有公告opt-in�
 共用薄UI adapter呼叫唯一openDetails，沒有另一個controller/observer；原面試profile不套入員工專用preflight。員工額外要求非空user/org與三既有角色，捕捉四primitive、外層context、hash、alive與trigger連接；失效清空、abort、關閉，巢狀sameprimitive reference replacement保持結果、外層重建撤除。503或非法2xx不展示保存欄位，僅人工重讀。詳細契約見docs/EMPLOYEE_RECORD_DETAILS_SCOPE.md。
 
 0.61發布前修正紀錄：首次Git差異檢查發現面試純helper末端多一個換行，尚未暫存、提交或上傳。僅移除該LF，所有可執行文字保持；原發布失敗、初始來源與驗收封存。修正後重新通過264份JavaScript與1,213項完整程式測試，另外12個必要命令沿本輪原通過證據，九套104項瀏覽器與十張實看畫面仍綁初始來源；不宣稱全部最終來源在本輪重新跑過瀏覽器。必要14種命令共16次實際執行，修正追溯見verification-r02.json及兩份source freeze。GitHub最終來源CI另行核對；正式主機、HTTPS、Portal與真實公司登入UAT仍待完成。
+
+## 服務項目目前完整保存資料（0.62）
+
+原 GET /api/service-items/:id 的單筆完整目前版沿伺服器機構與 scopedRows 授權，無新 API。原 /service-items 管理者、督導及財務增加人工查看八個保存欄位，metadata先確認精確 id/org/version及保存時間文字；居服員原有本人已使用項目GET範圍保持，無新入口。前端只投影 code/name/minutes/unitPriceCents/validFrom/validTo/status/note，未知資料不展開、descriptor確認不執行getter。分鐘、日期與試算價格不代替正式服務或支付規則；原維護、CAS、歷程及計價快照保持。契約 docs/SERVICE_ITEM_RECORD_DETAILS_SCOPE.md；本機證據 outputs/software/service-item-record-details-qa/verification.json。正式主機及Portal發布另驗。

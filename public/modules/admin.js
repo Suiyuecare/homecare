@@ -1,5 +1,6 @@
 import { openInterviewRecordDetails } from './interview-record-details.js';
 import { openEmployeeRecordDetails } from './employee-record-details.js';
+import { openServiceItemRecordDetails } from './service-item-record-details.js';
 import { openEmployeeRecordIndex } from './employee-record-index.js';
 import {
   api, el, pageHeader, table, badge, button, openForm, confirmAction,
@@ -732,6 +733,7 @@ async function employees(container, alive) {
 }
 
 async function serviceItems(container, alive) {
+  const canViewDetails = ['admin', 'supervisor', 'finance'].includes(getContext().role);
   const edit = (refresh, row) => {
     const editor = createServiceItemEditor({ existing: row });
     const orgId = getContext().organizationId || getContext().orgId;
@@ -788,11 +790,17 @@ async function serviceItems(container, alive) {
       { key: 'minutes', label: '分鐘' }, { key: 'unitPriceCents', label: '測試單價', render: row => formatTrialPriceCents(row.unitPriceCents) },
       { label: '有效期間', render: row => `${row.validFrom || '未設起日'} ～ ${row.validTo || '未設迄日'}` },
       { label: '狀態', render: row => statusCell(row.status) },
-      ...(writable() ? [{ label: '操作', render: row => actions(
+      ...(canViewDetails ? [{ label: '操作', render: row => {
+        const view = button('查看資料', () => {
+          const current = () => view.isConnected && alive();
+          if (current()) return openServiceItemRecordDetails({ id: row.id, isCurrent: current });
+        }, { variant: 'outline' });
+        return actions(view, ...(writable() ? [
         button('編輯', () => edit(refresh, row), { variant: 'outline' }),
         button(row.status === 'active' ? '停用' : '啟用', () => setStatus(refresh, row), { variant: 'ghost' }),
         button('版本歷程', () => openRecordHistory({ entity: 'service-items', id: row.id, isCurrent: alive }), { variant: 'ghost' }),
-      ) }] : []),
+        ] : []));
+      } }] : []),
     ],
   }, alive);
 }

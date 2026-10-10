@@ -322,3 +322,9 @@ loaded／pending 的本人、機構、角色、員工、hash、父 render 與外
 0.61本輪必要合成驗收：1,213程式／最低Node99／264JS、九套browser104項、新員工詳情12項及十張新PNG實看；APM與合成HTTPS Portal、員工安全編輯／歷程／索引、面試詳情抽取及四角色視覺回歸通過。沿唯一純投影与唯讀對話框owner，原面試行為等價矩陣及原tests保留；347公開來源／105runtime受測輸入SHA前後精確。十四必要命令實際全0，62 configured／61 required不全部fresh；原官方auditor逾時失败與舊有效證據保持，strict沿已接受私人parser零finding，未重跑或宣稱官方pass。DESIGN零error／10既有warning／1info；私人metadata準備encoding工具失敗原件封存，不列作產品測試或CI失敗。QA後只更新狀態及追溯文件；原180目錄／9階段／12契約／2增強與59里程碑及101來源前綴保留後追加60／105；RM01仍partial。正式主機、HTTPS、Portal發布、OS popup及人工作業UAT未完成。
 
 0.61發布前修正紀錄：首次Git差異檢查發現面試純helper末端多一個換行，尚未暫存、提交或上傳。僅移除該LF，所有可執行文字保持；原發布失敗、初始來源與驗收封存。修正後重新通過264份JavaScript與1,213項完整程式測試，另外12個必要命令沿本輪原通過證據，九套104項瀏覽器與十張實看畫面仍綁初始來源；不宣稱全部最終來源在本輪重新跑過瀏覽器。必要14種命令共16次實際執行，修正追溯見verification-r02.json及兩份source freeze。GitHub最終來源CI另行核對；正式主機、HTTPS、Portal與真實公司登入UAT仍待完成。
+
+## 服務項目完整保存閱讀（0.62）
+
+原三讀角色列表沿唯一saved-record-details pure與UI／openDetails guardedRead，只新增service-item薄profile與row入口。八欄順序沿history白名單、備註field-wide／pre-wrap，桌機與390px長文完整閱讀。known狀態及原碼並列、unknown原文、五種保存型別清楚；分鐘只呈numeric primitive，試算分值沿原formatter，日期不解析。每次explicit open／manual retry才fresh單筆；user/org/role/employee、outer context/hash/alive/trigger連線失效沿同一owner撤除與真abort，沒有重複controller或新增CSS。finance僅查看、其他三維護操作保持；caregiver不增導覽，原API範圍不變。來源 docs/SERVICE_ITEM_RECORD_DETAILS_SCOPE.md 與 docs/API.md，業務正式支付契約仍待核定。
+
+0.62本輪必要驗收：1,239程式／最低Node122／268JS、九套browser104項、新12項與十張PNG實看；APM CIS／合成HTTPS Portal、服務項目原安全編輯與歷程、員工與面試共用詳情及四角色視覺回歸通過。原sourcefreeze與失敗保留；只新browser G2補直接inert斷言，runtime107及舊tests精確，十類同消費來源承接、四次affected native通過，共十八次程序含原員工timeout，根因未確立，未宣稱first-pass或所有來源同批fresh。strict沿已接受私人parser零finding；官方auditor原逾時失敗保留，未重跑或宣稱官方pass。DESIGN零error／10既有warning；正式支付／薪資／申報契約待核定。原180目錄／9階段／12契約／2增強及60里程碑／105來源前綴保持，追加61／107；RM05仍needs_contract。正式主機、HTTPS、Portal發布及真實公司登入UAT另驗。

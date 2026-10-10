@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0.61.0",
+  "version": "0.62.0",
   "status": "local-partial",
   "purpose": "public-project-roadmap",
   "notice": "獨立本機測試系統，使用合成資料；本文件不包含原平台盤點、私人開通或完整開發追溯，亦不宣稱全部功能等價或正式部署完成。",
@@ -120,6 +120,14 @@
       "summary": "管理者、督導與財務可在員工管理選擇「查看資料」，直接閱讀目前保存的十個完整欄位、電話、電子郵件、資格、服務區域與備註；沿人工 fresh 單筆讀取，不必進入編輯或版本比較。財務僅查看，原編輯、證照、訓練、啟停用、保存索引與歷程沿既有授權。",
       "status": "local-verified",
       "contract": "docs/EMPLOYEE_RECORD_DETAILS_SCOPE.md",
+      "originalParityVerified": false,
+      "productionDeployed": false
+    },
+    {
+      "id": "service-item-record-details",
+      "summary": "管理者、督導與財務可在服務項目選擇「查看資料」，直接閱讀八個目前保存欄位及完整備註；不用進入編輯或歷程。每次人工重新讀取精確項目，財務僅查看，原編輯、啟停與版本歷程沿既有授權。",
+      "status": "local-verified",
+      "contract": "docs/SERVICE_ITEM_RECORD_DETAILS_SCOPE.md",
       "originalParityVerified": false,
       "productionDeployed": false
     }

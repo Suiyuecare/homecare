@@ -60,3 +60,5 @@ jobs:
         run: pnpm test:e2e:announcement-page-receipts
       - name: Employee complete current saved details
         run: pnpm test:e2e:employee-record-details
+      - name: Service item complete current saved details
+        run: pnpm test:e2e:service-item-record-details
