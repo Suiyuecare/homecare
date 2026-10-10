@@ -274,3 +274,9 @@ business 與 API 輸入／父個案授權來源為 docs/CASE_STATUS_FOLLOWUPS_SC
 ## 本人事件年度閱讀（0.55）
 
 來源docs/PERSONAL_CALENDAR_YEAR_SCOPE.md／docs/API.md：原/personal-calendar年度按鈕→唯一guardedRead openDetails→createForm明確查詢全年本人六欄原值。year四碼及literal q／native status仅modal記憶；清除搜尋撤去結果並回q焦點，草稿变更即停用前後年／重讀，明確查詢／手動retry保留條件。0001／9999越界停用並說明，月份索引以heading焦點定位；390px完整十二月agenda／長文不截斷。loaded/pending primitive／outer／hash／render／連線失效清空abort晚回應不復活，nested同primitive保持，Escape／關閉／回焦由shared owner管理。沒有新寫入、匯出、下載、歷程、巢狀月份操作或第二登入。
+
+## 個案保存紀錄索引（0.56，本機驗收完成）
+
+來源 docs/CASE_RECORD_INDEX_SCOPE.md 與 docs/API.md。管理者／督導個案頁按鈕→唯一 guardedRead openDetails→原生紀錄種類 select 與 createForm 明確查詢→25 筆 metadata table／pagination→既有 openRecordHistory。初次開啟不自動查詢；草稿變更即撤去舊結果並停用分頁／歷程。錯誤與不可信 2xx 保留條件並提供手動重新讀取，不呈現舊索引。
+
+loaded／pending 的本人、機構、角色、員工、hash、父 render 與外層 context 失效清空並 Abort，晚回應不復活；相同 primitive 的巢狀參考替換保持。主視窗關閉或條件撤除亦使巢狀歷程失效。原時間文字與長 ID 保持完整，桌機／390px 使用既有表內橫捲；Escape、取消與回焦沿 canonical owner。必要本機瀏覽器／桌機與390px視覺驗收已完成；不新增 CSS、dialog controller、第二登入或業務寫入。

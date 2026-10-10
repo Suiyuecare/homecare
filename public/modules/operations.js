@@ -4,6 +4,7 @@ import {
   searchBox, pagination, errorState,
 } from '../ui.js';
 import { openRecordHistory } from './history.js';
+import { openCaseRecordIndex } from './case-record-index.js';
 import { createContactsPanel } from './contacts.js';
 import { createAttachmentsPanel } from './attachments.js';
 import { createCaseStatusFollowupsPanel } from './case-status-followups.js';
@@ -615,6 +616,7 @@ async function renderCaseDetail(id, route, container, version) {
   const actions = actionGroup(link('回個案列表', '/cases'));
   actions.append(historyAction('cases', item, { employees }, container, version, '個案版本歷程'));
   if (canManage()) {
+    actions.append(button('保存紀錄索引', () => openCaseRecordIndex({ caseRecord: item, lookups: recordHistoryLookups, isCurrent: alive }), { variant: 'secondary' }));
     actions.append(button('編輯個案', () => caseForm(item, data.employees, refresh, alive), { variant: 'secondary' }));
     for (const status of caseStatuses.filter(s => s.value !== item.status)) actions.append(button(status.value === 'active' ? '恢復服務' : status.label, () => changeCaseStatus(item, status.value, refresh, alive), { variant: 'secondary' }));
   }

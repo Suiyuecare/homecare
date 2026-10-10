@@ -420,3 +420,13 @@ GET /api/personal-calendar-events/year：四既有角色先驗，再限定ctx.or
 本人事件年度檢視（0.55，本機功能）：四既有角色只讀目前機構本人事件，管理者不能代理。年度／原文搜尋／狀態的完整回應依保存日期及時間字面排序，十二月份含空月列出完整六欄及月／年筆數。異型只顯示保存型別，不能歸年的本人事件只計數、不展示或猜日期；全年1000筆及整個2MiB UTF-8回應界限超過拒絕，沒有部分結果或新增寫入。
 
 沿APM CIS、唯一openDetails guardedRead／createForm／table及既有shift-calendar樣式；桌機月份索引可鍵盤定位至heading，390px保留完整十二月agenda、表內捲動與長備註。年度0001至9999翻年／今年／重讀；草稿變更立即撤去舊結果並停用導航，明確查詢才fresh讀取，失敗保留條件可手動retry。user／org／role／employee／hash／父render與outer情境失效清空abort、晚回應不復活，nested同primitive參考保持。原CRUD、月份、歷程、shared UI／CSS與日期演算未改。
+
+## 個案保存紀錄索引 API（0.56，本機驗收完成）
+
+`GET /api/cases/:caseId/record-index` 僅限 `admin`／`supervisor`。角色守門後非 GET 回 405；目前同機構且實體為 `cases` 的精確父 ID 才可讀，包含暫停與結案個案。未知、缺失、跨機構或錯實體父項回 404。
+
+查詢只接受各一次的 `entity`／`page`／`pageSize`。`entity` 必填 `care-plans`、`shifts`、`service-records` 或 `assessments`；page 為正安全十進位整數、預設 1；pageSize 為 1 至 100、預設 25，介面固定 25。未知、重複或非法條件回 422。
+
+精確回應為 `{items,total,page,pageSize,entity,orgId,caseId}`，每列僅 `{entity,id,orgId,caseId,version,updatedAt}`。只取目前 SQL 紀錄與原資料 own `caseId` 精確相符者，依 `created_at DESC,id ASC` 排序；不回 createdAt，也不把 updatedAt 當排序或事件時間。所有符合候選先驗安全版次、歷程路由相容識別及原文字 updatedAt，再分頁；不合法候選整份回 `409 CASE_RECORD_INDEX_INVALID`。
+
+識別沿既有歷程路由小寫十六進位與連字號，不新增 UUID 形狀或長度上限。無法確認父案歸屬的異型原資料不展示、不修復；業務欄、答案、狀態、備註、檔案、操作者、稽核、版本快照與計價內容不進索引。讀取沒有新表、trigger、版本或任何寫入；既有逐版歷程與授權保持。必要本機合成驗收已完成；各提交的公開 CI 結果以 GitHub Actions 實際紀錄為準。

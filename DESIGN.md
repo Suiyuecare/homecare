@@ -237,3 +237,7 @@ canonical元件及CSS/tokens保持；僅services的preserveWhenDisabled opt-in�
 ## 本人事件年度閱讀（0.55）
 
 來源docs/PERSONAL_CALENDAR_YEAR_SCOPE.md與docs/API.md。沿APM CIS、唯一ui.js wide guardedRead openDetails／createForm／table／button／errorState及既有shift-calendar樣式；原個人清單增加年度按鈕，沒有新導覽。桌機十二月份索引跳至heading，同一份十二月完整六欄agenda含空月；390px沿原CSS隱藏索引、表內捲動並完整閱讀長文字。年度native text／狀態native select／literal q保持，型別標記不展nested內容；沒有新增tokens／CSS／widget／controller或巢狀月份handoff。
+
+## 個案保存紀錄索引（0.56，本機驗收完成）
+
+延續 APM CIS、唯一 public/ui.js／public/styles.css 與既有個案詳情。管理者／督導按鈕開啟共用 wide guardedRead 視窗，原生 select、明確查詢、semantic metadata table、25 筆分頁與既有歷程保持同一 owner；原更新文字完整換行，保存 ID 使用原生 details 展開。桌機／390px 沿既有表內橫捲，沒有新增 token、CSS 或控制項。長 ID／原時間、錯誤、空結果、回焦及固定關閉區已完成必要本機瀏覽器驗收；新九張桌機／390px畫面已實際檢視。

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0.55.0",
+  "version": "0.56.0",
   "status": "local-partial",
   "purpose": "public-project-roadmap",
   "notice": "獨立本機測試系統，使用合成資料；本文件不包含原平台盤點、私人開通或完整開發追溯，亦不宣稱全部功能等價或正式部署完成。",
@@ -74,6 +74,14 @@
       "id": "personal-calendar",
       "summary": "本人六欄事件與完整月份／年度檢視",
       "status": "local-partial"
+    },
+    {
+      "id": "case-record-index",
+      "summary": "管理者／督導查詢同案四種目前紀錄 metadata 並開啟既有歷程",
+      "status": "local-verified",
+      "contract": "docs/CASE_RECORD_INDEX_SCOPE.md",
+      "originalParityVerified": false,
+      "productionDeployed": false
     }
   ],
   "authentication": {
@@ -119,5 +127,6 @@
       "summary": "機構行事曆、共享／代理與年度格狀曆"
     }
   ],
-  "evidencePolicy": "本機能力已有合成驗收；公開副本、CI、部署與 UAT 各自以實際來源、命令、退出碼及可取得產物驗收。"
+  "evidencePolicy": "本機能力已有合成驗收；公開副本、CI、部署與 UAT 各自以實際來源、命令、退出碼及可取得產物驗收。",
+  "pendingLocalCapabilities": []
 }
