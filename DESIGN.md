@@ -50,7 +50,7 @@ DESIGN.md定義視覺意圖；public/styles.css的:root是唯一runtime token ow
 
 ## Typography
 
-標題與正文都沿 APM 的臺灣黑體字族。正文16px、表格14px，行高1.55；資料數字採tabular-nums。所有資源本機可用，不依賴遠端字型。
+標題與正文都沿 APM 的臺灣黑體字族。正文16px、表格14px，正文行高1.65、表格1.65；資料數字採tabular-nums。所有資源本機可用，不依賴遠端字型。
 
 ## Layout
 
@@ -62,15 +62,19 @@ DESIGN.md定義視覺意圖；public/styles.css的:root是唯一runtime token ow
 
 ## Shapes
 
-輸入與按鈕8px圓角、資料面板12px，狀態標籤4px。保留表格欄線與組別標題。
+輸入與按鈕8px圓角、資料面板12px，狀態標籤使用膠囊外形、圓點及文字。保留表格欄線與組別標題。
 
 ## Components
 
-ui.js為button/form/table/dialog/toast/search唯一owner。hover變深、focus-visible清楚外框，disabled帶原因。忙碌按鈕維持尺寸。native select與date/time採OS popup，接受平台外觀，產品文字與數字仍zh-TW。
+首頁以真實今日服務與下一步工作優先，四項原工作摘要置於下方。今日服務沿單一語義清單，桌機四欄、手機以時段和個案為主的卡片列。四組角色導覽使用同一套本機原生 SVG，decorative icon 不參與 accessible name。個案頁的區塊捷徑只移動焦點與頁內位置，不新增查詢或業務狀態。shared panel/table/form 使用相同留白、44px 動作及文字狀態；手機輸入至少16px。
+
+派生 tokens --line-subtle、--surface-mist、--shadow-surface 只補足安定表面層次，APM 既有品牌／語義值、logo 與外框固定尺寸保持。
+
+ui.js為button/form/table/dialog/toast/search唯一owner。hover以暖色表面與深色邊框回饋、focus-visible清楚外框，disabled帶原因。忙碌按鈕維持尺寸。native select與date/time採OS popup，接受平台外觀，產品文字與數字仍zh-TW。
 
 dialog使用原生dialog.showModal，具有標題、取消、Escape與焦點回復。表單noValidate，錯誤以文字關聯欄位；textarea resize:none。mutations使用伺服器成功後回饋，不使用樂觀成功。
 
-全域scrollbar以--border為track、--muted為thumb，支援forced-colors。動作只用button，導覽只用a。減少動態偏好關閉過場。
+全域scrollbar以--surface為track、--border為thumb、hover以--muted回饋，支援forced-colors。動作只用button，導覽只用a。減少動態偏好關閉過場。
 
 報表列印沿同一semantic table，A4橫向12mm邊界、9pt內容字、重複欄頭與長文字換行。printable dialog只印報表內容，黑白紙本使用white/black與#777欄線作明確列印變體；螢幕延續既有token、wide dialog及表格自身捲動，不另造元件。
 
@@ -241,3 +245,11 @@ canonical元件及CSS/tokens保持；僅services的preserveWhenDisabled opt-in�
 ## 個案保存紀錄索引（0.56，本機驗收完成）
 
 延續 APM CIS、唯一 public/ui.js／public/styles.css 與既有個案詳情。管理者／督導按鈕開啟共用 wide guardedRead 視窗，原生 select、明確查詢、semantic metadata table、25 筆分頁與既有歷程保持同一 owner；原更新文字完整換行，保存 ID 使用原生 details 展開。桌機／390px 沿既有表內橫捲，沒有新增 token、CSS 或控制項。長 ID／原時間、錯誤、空結果、回焦及固定關閉區已完成必要本機瀏覽器驗收；新九張桌機／390px畫面已實際檢視。
+
+## 視覺改版（0.57，本機驗收完成）
+
+已完成 APM 品牌視覺整理：首頁優先呈現今日服務與角色可用工作，四組 SVG 導覽、清楚的表格／表單層級、手機服務卡片及個案七區塊捷徑。財務首頁導向可授權報表，鍵盤跳至主內容與選單列印保持正確。原 API、登入／SSO、機構角色、保存／衝突／歷程及計價快照保持。
+
+本機合成驗收：1,112項程式測試、243份JavaScript、58個configured commands（56套瀏覽器）接受；四角色92個頁面組合、250個版面檢查、同一批資料桌機／390px共32張Before／After逐張實看。個案捷徑另驗28次跳轉、14次失效守門與46個唯讀區段。七種PDF列印已驗。保留首輪PDF工具環境與兩個測試setup失敗及受控修正；產品斷言未放寬。strict沿已接受私人parser零finding，原官方auditor逾時保存；DESIGN零error／10既有warning。
+
+這是本機視覺與操作驗收；正式持久主機、HTTPS、Portal發布與真實業務UAT仍待完成，沒有原平台全量等價、正式薪資／支付／申報或完整WCAG宣稱。

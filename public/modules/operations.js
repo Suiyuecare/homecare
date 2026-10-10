@@ -618,7 +618,7 @@ async function renderCaseDetail(id, route, container, version) {
   if (canManage()) {
     actions.append(button('保存紀錄索引', () => openCaseRecordIndex({ caseRecord: item, lookups: recordHistoryLookups, isCurrent: alive }), { variant: 'secondary' }));
     actions.append(button('編輯個案', () => caseForm(item, data.employees, refresh, alive), { variant: 'secondary' }));
-    for (const status of caseStatuses.filter(s => s.value !== item.status)) actions.append(button(status.value === 'active' ? '恢復服務' : status.label, () => changeCaseStatus(item, status.value, refresh, alive), { variant: 'secondary' }));
+    for (const status of caseStatuses.filter(s => s.value !== item.status)) actions.append(button(status.value === 'active' ? '恢復服務' : status.label, () => changeCaseStatus(item, status.value, refresh, alive), { variant: 'secondary', class: 'btn btn-secondary case-status-action' }));
   }
   const detail = el('dl', { class: 'detail-grid' });
   const facts = [
@@ -641,8 +641,23 @@ async function renderCaseDetail(id, route, container, version) {
   const contacts = createContactsPanel({ caseRecord: item, isCurrent: alive });
   const attachments = createAttachmentsPanel({ caseRecord: item, isCurrent: alive });
   const followups = createCaseStatusFollowupsPanel({ caseRecord: item, isCurrent: alive });
+  const sections = [
+    ['基本資料', '個案與聯絡資料'], ['聯絡人', null, contacts.element],
+    ['附件', null, attachments.element], ['追蹤紀錄', null, followups.element],
+    ['照顧計畫', '生效中的照顧計畫'], ['班次', '班次'], ['服務紀錄', '服務紀錄'],
+  ];
+  const jumps = el('nav', { class: 'case-section-navigation', 'aria-label': '個案頁區塊' }, sections.map(([label, title, panel], index) => button(label, () => {
+    if (!alive()) return;
+    const target = panel || [...container.querySelectorAll(':scope > section')].find(section => section.querySelector('h2')?.textContent === title);
+    const heading = target?.querySelector('h2');
+    if (!heading) return;
+    heading.tabIndex = -1;
+    heading.focus({ preventScroll: true });
+    heading.scrollIntoView({ block: 'start' });
+  }, { variant: 'ghost', 'data-case-section': String(index) })));
   container.replaceChildren(
     pageHeader(formatCaseText(item.name), '聯絡資料與服務接力，從目前計畫接續下一步作業。', actions),
+    jumps,
     el('section', { class: 'panel' }, sectionTitle('服務接力'), relay),
     el('section', { class: 'panel' }, sectionTitle('個案與聯絡資料'), detail),
     contacts.element,

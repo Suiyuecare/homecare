@@ -1,3 +1,5 @@
+import { icon } from './icons.js';
+
 let context = { user: null, organizationId: null, orgId: null, role: null, organizations: [], csrfToken: null };
 let sessionExpired = () => {};
 let submissionKey = null;
@@ -223,12 +225,12 @@ export async function fetchAll(entity, params = {}) {
   throw new Error('資料超過可選範圍，請縮小查詢條件。');
 }
 export function pageHeader(title, subtitle = '', actions = []) {
-  return el('header', { class: 'page-header' }, el('div', {}, el('p', { class: 'eyebrow' }, '歲悅居家照顧'), el('h1', { tabindex: '-1' }, title), subtitle && el('p', { class: 'subtitle' }, subtitle)), el('div', { class: 'actions' }, actions));
+  return el('header', { class: 'page-header' }, el('div', { class: 'page-heading' }, el('p', { class: 'eyebrow' }, '歲悅居家照顧'), el('h1', { tabindex: '-1' }, title), subtitle && el('p', { class: 'subtitle' }, subtitle)), el('div', { class: 'actions page-actions' }, actions));
 }
 const statusLabels = { active: '服務中', inactive: '停用', paused: '暫停', closed: '結案', draft: '草稿', submitted: '待核閱', approved: '已核准', returned: '退回修改', pending: '待處理', scheduled: '已排班', completed: '已完成', cancelled: '已取消', rejected: '未核准', published: '已發布', ended: '已結束', admin: '管理者', supervisor: '督導', caregiver: '居服員', finance: '薪資／財務' };
 export function badge(value) { return el('span', { class: `badge status-${String(value).replace(/[^a-z-]/g, '')}` }, statusLabels[value] || value || '未設定'); }
 export function table(columns, rows, { emptyText = '目前沒有資料。', caption } = {}) {
-  if (!rows?.length) return el('div', { class: 'empty-state', role: 'status' }, el('span', { class: 'empty-mark', 'aria-hidden': 'true' }, '—'), el('p', {}, emptyText));
+  if (!rows?.length) return el('div', { class: 'empty-state', role: 'status' }, el('span', { class: 'empty-mark', 'aria-hidden': 'true' }, icon('archive', { size: 26 })), el('p', {}, emptyText));
   const head = el('thead', {}, el('tr', {}, columns.map(c => el('th', { scope: 'col' }, c.label || c.key))));
   const body = el('tbody', {}, rows.map(row => el('tr', {}, columns.map(c => el('td', {}, c.render ? c.render(row) : row[c.key] ?? '—')))));
   return el('div', { class: 'table-scroll', tabindex: '0', role: 'region', 'aria-label': caption || '資料表，可左右捲動' }, el('table', {}, caption && el('caption', { class: 'sr-only' }, caption), head, body));
@@ -247,7 +249,7 @@ export function searchBox({ value = '', onSearch, label = '搜尋', placeholder 
   input.addEventListener('compositionstart', () => { composing = true; clearTimeout(timer); });
   input.addEventListener('compositionend', () => { composing = false; send(); });
   input.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.isComposing) { clearTimeout(timer); onSearch(input.value.trim()); } });
-  return el('div', { class: 'search-box' }, el('label', { for: id, class: 'sr-only' }, label), input, clear);
+  return el('div', { class: 'search-box' }, el('label', { for: id, class: 'sr-only' }, label), icon('search'), input, clear);
 }
 export function errorState(error, onRetry) {
   const forbidden = error.status === 403;

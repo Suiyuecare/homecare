@@ -73,7 +73,8 @@
     "needsAssessments",
     "attachmentMetadataSafety",
     "personalCalendarYear",
-    "caseRecordIndex"
+    "caseRecordIndex",
+    "visualRefresh"
   ],
   "commands": {
     "check": "node scripts/check-source.mjs",
@@ -132,7 +133,8 @@
     "needsAssessments": "node tests/needs-assessments-e2e.mjs",
     "attachmentMetadataSafety": "node tests/attachment-metadata-safety-e2e.mjs",
     "personalCalendarYear": "node tests/personal-calendar-year-e2e.mjs",
-    "caseRecordIndex": "node tests/case-record-index-e2e.mjs"
+    "caseRecordIndex": "node tests/case-record-index-e2e.mjs",
+    "visualRefresh": "node tests/visual-refresh-e2e.mjs"
   },
   "evidence": {
     "crudFullFlow": "tests/e2e.mjs",
@@ -144,6 +146,7 @@
     "needsAssessments": "tests/needs-assessments-e2e.mjs",
     "attachmentMetadataSafety": "tests/attachment-metadata-safety-e2e.mjs",
     "personalCalendarYear": "tests/personal-calendar-year-e2e.mjs",
-    "caseRecordIndex": "tests/case-record-index-e2e.mjs"
+    "caseRecordIndex": "tests/case-record-index-e2e.mjs",
+    "visualRefresh": "tests/visual-refresh-e2e.mjs"
   }
 }

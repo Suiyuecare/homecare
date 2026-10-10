@@ -1,6 +1,6 @@
 # Runtime data and identity configuration stay outside Git.
 /data/
-node_modules/
+node_modules
 .env*
 !.env.portal.example
 *.sqlite

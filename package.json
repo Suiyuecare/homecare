@@ -1,6 +1,6 @@
 {
   "name": "suiyue-home-care",
-  "version": "0.56.0",
+  "version": "0.57.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -71,7 +71,8 @@
     "test:e2e:needs-assessments": "node tests/needs-assessments-e2e.mjs",
     "test:e2e:attachment-metadata-safety": "node tests/attachment-metadata-safety-e2e.mjs",
     "test:e2e:personal-calendar-year": "node tests/personal-calendar-year-e2e.mjs",
-    "test:e2e:case-record-index": "node tests/case-record-index-e2e.mjs"
+    "test:e2e:case-record-index": "node tests/case-record-index-e2e.mjs",
+    "test:e2e:visual-refresh": "node tests/visual-refresh-e2e.mjs"
   },
   "packageManager": "pnpm@11.21.0",
   "devDependencies": {

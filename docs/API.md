@@ -430,3 +430,7 @@ GET /api/personal-calendar-events/year：四既有角色先驗，再限定ctx.or
 精確回應為 `{items,total,page,pageSize,entity,orgId,caseId}`，每列僅 `{entity,id,orgId,caseId,version,updatedAt}`。只取目前 SQL 紀錄與原資料 own `caseId` 精確相符者，依 `created_at DESC,id ASC` 排序；不回 createdAt，也不把 updatedAt 當排序或事件時間。所有符合候選先驗安全版次、歷程路由相容識別及原文字 updatedAt，再分頁；不合法候選整份回 `409 CASE_RECORD_INDEX_INVALID`。
 
 識別沿既有歷程路由小寫十六進位與連字號，不新增 UUID 形狀或長度上限。無法確認父案歸屬的異型原資料不展示、不修復；業務欄、答案、狀態、備註、檔案、操作者、稽核、版本快照與計價內容不進索引。讀取沒有新表、trigger、版本或任何寫入；既有逐版歷程與授權保持。必要本機合成驗收已完成；各提交的公開 CI 結果以 GitHub Actions 實際紀錄為準。
+
+## 0.57 視覺整理
+
+本版本只調整共用視覺與既有導覽／頁內定位。所有 API schema、角色與機構授權、查詢參數、payload、CAS、冪等、歷程與計價快照保持；沒有新增業務端點。Portal 接收與明確身分綁定規則沿原契約，視覺驗收不代表正式入口已發布。

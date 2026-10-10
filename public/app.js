@@ -2,7 +2,15 @@ import { api, el, button, badge, pageHeader, table, getContext, setContext, crea
 import { renderOperations } from './modules/operations.js';
 import { renderAdmin } from './modules/admin.js';
 import { renderPersonnel } from './modules/personnel.js';
+import { icon } from './icons.js';
 const app = document.querySelector('#app');
+document.querySelector('.skip-link[href="#main-content"]')?.addEventListener('click', event => {
+  event.preventDefault();
+  const main = document.querySelector('main#main-content');
+  if (!main) return;
+  if (!main.hasAttribute('tabindex')) main.setAttribute('tabindex', '-1');
+  main.focus({ preventScroll: false });
+});
 let booting = false, routeVersion = 0;
 const PRODUCT_NAME = '居家照顧作業系統', COMPANY_NAME = '歲悅長照集團';
 const roleLabels = { admin: '管理者', supervisor: '督導', caregiver: '居服員', finance: '薪資／財務' };
@@ -23,9 +31,9 @@ function configureAuth(setup) {
     portalHomeUrl: setup.portalHomeUrl ? portalUrl(setup.portalHomeUrl) : null };
 }
 function brandImage(size = 52) { return el('img', { src: '/suiyue-logo-transparent.png', alt: '歲悅長照形象標章', width: size, height: size, decoding: 'async' }); }
-function navLink(route, name, icon, mobile = false) {
+function navLink(route, name, iconName, mobile = false) {
   return el('a', { href: `#${route}`, class: mobile ? 'mobile-nav-link' : 'nav-link', 'data-route': route },
-    el('span', { class: 'nav-icon', 'aria-hidden': 'true' }, icon), el('span', { class: 'nav-text' }, name));
+    el('span', { class: 'nav-icon', 'aria-hidden': 'true' }, icon(iconName)), el('span', { class: 'nav-text' }, name));
 }
 function showPortalAuth(notice = '') {
   closeNavigation(); disposeWorkspace();
@@ -39,8 +47,10 @@ function showPortalAuth(notice = '') {
   location.replace(authSettings.portalLoginUrl);
 }
 const navItems = [
-  ['日常作業', '/', '工作台', '◷'], ['/personal-calendar', '個人行事曆', '◴'], ['/cases', '個案管理', '▤'], ['/case-followup-worklist', '人工追蹤查詢', '▧'], ['/plans', '照顧計畫', '≡'], ['/shifts', '排班調度', '▦'], ['/records', '服務核閱', '✓'], ['/my-services', '我的服務', '⌁'],
-  ['機構管理', '/employees', '員工管理', '♧'], ['/interviews', '面試者登錄', '▧'], ['/certifications', '證照與期限', '▣'], ['/training', '訓練紀錄', '▧'], ['/service-items', '服務項目', '◇'], ['/leave', '請假與差勤', '◴'], ['/assessments', '評估表單', '▧'], ['/supervisory-visits', '督導訪視查詢', '▧'], ['/needs-assessments', '需求評估查詢', '▧'], ['/announcements', '機構公告', '◈'], ['/reports', '報表中心', '▥'], ['/settings', '機構設定', '⚙'], ['/audit', '異動紀錄', '↻'], ['/help', '使用說明', '?']
+  ['日常照顧', '/', '工作台', 'home'], ['/cases', '個案管理', 'cases'], ['/plans', '照顧計畫', 'clipboard'], ['/shifts', '排班調度', 'shifts'], ['/records', '服務核閱', 'records'], ['/my-services', '我的服務', 'services'], ['/personal-calendar', '個人行事曆', 'calendar'],
+  ['人員與機構', '/employees', '員工管理', 'users'], ['/interviews', '面試者登錄', 'interview'], ['/certifications', '證照與期限', 'certificate'], ['/training', '訓練紀錄', 'book'], ['/leave', '請假與差勤', 'leave'], ['/service-items', '服務項目', 'layers'], ['/announcements', '機構公告', 'announcement'],
+  ['紀錄與報表', '/assessments', '評估表單', 'clipboard'], ['/supervisory-visits', '督導訪視查詢', 'visit'], ['/needs-assessments', '需求評估查詢', 'search'], ['/case-followup-worklist', '人工追蹤查詢', 'activity'], ['/reports', '報表中心', 'reports'],
+  ['系統管理', '/settings', '機構設定', 'settings'], ['/audit', '異動紀錄', 'history'], ['/help', '使用說明', 'help']
 ];
 const names = Object.fromEntries(navItems.map(item => item.length === 4 ? [item[1], item[2]] : [item[0], item[1]]));
 function brand(workspaceLabel = '') {
@@ -83,11 +93,14 @@ async function showWorkspace() {
   const roleLabel = roleLabels[context.role] || context.role;
   const sidebar = el('aside', { class: 'sidebar', id: 'sidebar' }, el('div', { class: 'sidebar-brand' }, brand()));
   const navigation = el('div', { class: 'sidebar-navigation' });
-  let group;
+  let group, groupLabel;
   for (const item of navItems) {
-    const [section, route, name, icon] = item.length === 4 ? item : [null, ...item];
-    if (section) { group = el('nav', { class: 'nav-group', 'aria-label': section }, el('p', { class: 'nav-label' }, section)); navigation.append(group); }
-    if (canView(route)) group.append(navLink(route, name, icon));
+    const [section, route, name, iconName] = item.length === 4 ? item : [null, ...item];
+    if (section) { groupLabel = section; group = null; }
+    if (canView(route)) {
+      if (!group) { group = el('nav', { class: 'nav-group', 'aria-label': groupLabel }, el('p', { class: 'nav-label' }, groupLabel)); navigation.append(group); }
+      group.append(navLink(route, name, iconName));
+    }
   }
   sidebar.append(navigation);
   sidebar.addEventListener('click', event => { if (event.target.closest('a[href^="#"]')) closeNavigation(); });
@@ -140,8 +153,8 @@ async function showWorkspace() {
   }, { variant: 'outline' });
   const actions = el('div', { class: 'topbar-actions' }, refresh,
     authSettings.portalHomeUrl && el('a', { href: authSettings.portalHomeUrl, class: 'btn btn-outline' }, '回模組頁'),
-    button('登出', signOut, { 'data-sign-out': true }));
-  const notifications = el('a', { href: '#/announcements', class: 'notification-link', 'aria-label': '機構公告' }, el('span', { 'aria-hidden': 'true' }, '◈'));
+    button('登出', signOut, { variant: 'ghost', 'data-sign-out': true }));
+  const notifications = el('a', { href: '#/announcements', class: 'notification-link', 'aria-label': '機構公告' }, icon('announcement'));
   const topbar = el('header', { class: 'topbar' }, el('div', { class: 'topbar-left' }, mobileBrand, pageTitle), actions, status, notifications, menu);
   const select = el('select', { id: 'organization', class: 'org-select', onchange: async event => {
     if (getContext() !== context) return;
@@ -152,7 +165,7 @@ async function showWorkspace() {
   const mobileRoutes = context.role === 'caregiver' ? ['/', '/my-services', '/cases']
     : context.role === 'finance' ? ['/', '/reports', '/cases']
       : ['/', '/shifts', '/cases'];
-  const mobileMore = el('button', { type: 'button', class: 'mobile-nav-more', 'aria-label': '更多功能', 'aria-expanded': 'false', 'aria-haspopup': 'dialog', 'aria-controls': 'sidebar', onclick: () => menu.click() }, el('span', { class: 'nav-icon', 'aria-hidden': 'true' }, '⋯'), '更多');
+  const mobileMore = el('button', { type: 'button', class: 'mobile-nav-more', 'aria-label': '更多功能', 'aria-expanded': 'false', 'aria-haspopup': 'dialog', 'aria-controls': 'sidebar', onclick: () => menu.click() }, el('span', { class: 'nav-icon', 'aria-hidden': 'true' }, icon('more')), '更多');
   const mobileNav = el('nav', { class: 'mobile-navigation', 'aria-label': '行動版導覽' }, mobileRoutes.filter(canView).map(route => {
     const item = navItems.find(value => (value.length === 4 ? value[1] : value[0]) === route);
     const [, , name, icon] = item.length === 4 ? item : [null, ...item];
@@ -170,24 +183,65 @@ async function showWorkspace() {
 }
 async function dashboard(container) {
   const ctx = getContext(); const date = today();
-  container.append(pageHeader('今日服務工作台', `${formatDate(date)} · 查看今日班次與待處理紀錄`, [button(ctx.role === 'caregiver' ? '查看我的服務' : '查看總班表', () => navigate(ctx.role === 'caregiver' ? '/my-services' : '/shifts'))]));
-  const data = await api(`/api/dashboard?date=${date}`); const counts = data.counts || {};
-  const [cases, employees] = await Promise.all([fetchAll('cases'), fetchAll('employees')]);
+  const identity = () => { const current = getContext(); return JSON.stringify([current.user?.id ?? null, current.organizationId ?? current.orgId ?? null, current.role ?? null, current.user?.employeeId ?? null]); };
+  const startedIdentity = identity(), startedHash = location.hash;
+  const current = () => getContext() === ctx && identity() === startedIdentity && location.hash === startedHash && container.isConnected;
+  const stale = () => { if (container.isConnected) container.replaceChildren(); };
+  const primary = ctx.role === 'caregiver' ? { route: '/my-services', label: '查看我的服務', icon: 'services' }
+    : ctx.role === 'finance' ? { route: '/reports', label: '查看作業報表', icon: 'reports' }
+      : { route: '/shifts', label: '查看總班表', icon: 'shifts' };
+  const organization = ctx.organizations.find(item => item.id === ctx.organizationId);
+  container.classList.add('dashboard-workspace');
+  container.append(pageHeader('今日服務工作台', '查看今日班次與待處理紀錄', canView(primary.route) ? [button([icon(primary.icon), el('span', {}, primary.label)], () => {
+    if (current() && canView(primary.route)) navigate(primary.route);
+  })] : []), el('div', { class: 'dashboard-context', 'aria-label': '目前日期與工作範圍' },
+    el('span', {}, icon('calendar', { size: 16 }), el('span', {}, formatDate(date))),
+    el('span', {}, icon('building', { size: 16 }), el('span', {}, organization?.name || '目前機構')),
+    el('span', {}, roleLabels[ctx.role] || ctx.role)));
+  let data, cases, employees;
+  try {
+    data = await api(`/api/dashboard?date=${date}`);
+    if (!current()) { stale(); return; }
+    [cases, employees] = await Promise.all([fetchAll('cases'), fetchAll('employees')]);
+    if (!current()) { stale(); return; }
+  } catch (error) {
+    if (!current()) { stale(); return; }
+    throw error;
+  }
+  const counts = data.counts || {};
   const casesMap = new Map(cases.map(x => [x.id, x.name])); const staffMap = new Map(employees.map(x => [x.id, x.name]));
   const shifts = data.todayShifts || [];
   const pending = data.pendingRecords || [];
   const countDefs = [['今日班次', counts.todayShifts ?? shifts.length, '依目前機構與角色範圍'], ['待核閱紀錄', counts.pendingRecords ?? pending.length, '送出後等待督導核閱'], ['服務中個案', counts.activeCases ?? cases.filter(x => x.status === 'active').length, '目前狀態為服務中'], ['在職人員', counts.activeEmployees ?? employees.filter(x => x.status === 'active').length, '目前狀態為在職']];
-  container.append(el('section', { class: 'stats-grid', 'aria-label': '工作摘要' }, countDefs.map(([name, value, hint]) => el('div', { class: 'stat' }, el('span', {}, name), el('strong', {}, value), el('small', {}, hint)))));
-  const work = el('section', { class: 'panel' }, el('div', { class: 'section-heading' }, el('h2', {}, '今日服務安排'), el('span', { class: 'small muted' }, '服務資訊以最新排班為準')), table([
-    { label: '時段', render: r => `${r.startTime}–${r.endTime}` },
-    { label: '個案', render: r => el('a', { href: `#/cases/${r.caseId}` }, r.caseName || casesMap.get(r.caseId) || '個案') },
-    { label: '服務人員', render: r => r.employeeName || staffMap.get(r.employeeId) || '未指定' },
-    { label: '狀態', render: r => badge(r.status) }
-  ], shifts, { emptyText: '今天尚無班次，可到排班調度安排服務。' }));
-  const next = el('section', { class: 'panel' }, el('h2', {}, '接下來的工作'));
+  const summary = el('section', { class: 'dashboard-summary', 'aria-label': '工作摘要' },
+    el('h2', {}, '工作摘要'), el('div', { class: 'dashboard-metrics' }, countDefs.map(([name, value, hint]) => el('div', { class: 'dashboard-metric' }, el('span', {}, name), el('strong', {}, value), el('small', {}, hint)))));
+  const services = shifts.length ? el('ul', { class: 'dashboard-service-list', 'aria-label': '今日服務安排' }, shifts.map(r =>
+    el('li', { class: 'dashboard-service-row' },
+      el('div', { class: 'dashboard-service-time' }, el('span', { class: 'sr-only' }, '時段：'), `${r.startTime}–${r.endTime}`),
+      el('div', { class: 'dashboard-service-case' }, el('span', { class: 'sr-only' }, '個案：'), el('a', { href: `#/cases/${r.caseId}` }, r.caseName || casesMap.get(r.caseId) || '個案')),
+      el('div', { class: 'dashboard-service-employee' }, el('span', { class: 'sr-only' }, '服務人員：'), r.employeeName || staffMap.get(r.employeeId) || '未指定'),
+      el('div', { class: 'dashboard-service-status' }, el('span', { class: 'sr-only' }, '狀態：'), badge(r.status)))))
+    : table([], [], { emptyText: '今天尚無班次，可到排班調度安排服務。' });
+  const work = el('section', { class: 'panel dashboard-schedule' }, el('div', { class: 'section-heading' }, el('h2', {}, '今日服務安排'), el('span', { class: 'small muted' }, '服務資訊以最新排班為準')), services);
+  const next = el('section', { class: 'panel dashboard-next' }, el('h2', {}, '接下來的工作'));
   const links = ctx.role === 'caregiver' ? [['/my-services', '填寫我的服務紀錄', '核對班次後，記錄實際服務時間與項目。'], ['/cases', '查閱服務個案', '服務前先確認聯絡資訊與照顧注意事項。']] : [['/records', `核閱服務紀錄${pending.length ? ` · ${pending.length} 筆` : ''}`, '檢查實際時間、服務項目與數量。'], ['/plans', '確認照顧計畫', '排班依據個案有效計畫與服務項目。'], ['/reports', '查看作業報表', '核對服務明細與費用試算。']];
-  for (const [route, name, hint] of links) if (canView(route)) next.append(el('a', { href: `#${route}`, class: 'next-action' }, el('strong', {}, name), el('span', {}, hint)));
-  container.append(el('div', { class: 'dashboard-grid' }, work, next));
+  for (const [route, name, hint] of links) if (canView(route)) next.append(el('a', { href: `#${route}`, class: 'next-action' },
+    el('strong', {}, name), el('span', {}, hint), icon('arrow-right', { size: 16 })));
+  const shortcuts = {
+    '/cases': ['個案管理', '聯絡資料與照顧資訊', 'cases'], '/shifts': ['排班調度', '安排與核對服務班次', 'shifts'],
+    '/personal-calendar': ['個人行事曆', '查看自己的事件與安排', 'calendar'], '/reports': ['報表中心', '依保存資料查詢明細', 'reports'],
+    '/my-services': ['我的服務', '核對班次與填寫紀錄', 'services'], '/announcements': ['機構公告', '閱讀機構發布的內容', 'announcement'],
+  };
+  const shortcutRoutes = ctx.role === 'caregiver' ? ['/my-services', '/cases', '/personal-calendar', '/announcements']
+    : ctx.role === 'finance' ? ['/reports', '/cases', '/personal-calendar', '/announcements']
+      : ['/cases', '/shifts', '/personal-calendar', '/reports'];
+  const quick = el('section', { class: 'dashboard-shortcuts', 'aria-label': '快速入口' }, el('h2', {}, '快速入口'),
+    el('div', { class: 'dashboard-shortcut-grid' }, shortcutRoutes.filter(canView).map(route => {
+      const [label, hint, iconName] = shortcuts[route];
+      return el('a', { href: `#${route}`, class: 'dashboard-shortcut' }, icon(iconName),
+        el('div', { class: 'shortcut-copy' }, el('strong', {}, label), el('span', {}, hint)), icon('arrow-right', { size: 16 }));
+    })));
+  container.append(el('div', { class: 'dashboard-grid' }, work, next), summary, quick);
 }
 function help(container) {
   container.append(pageHeader('使用說明', '依角色與作業順序，完成一筆服務。'), el('section', { class: 'panel help-list' }, [['機構管理者', '先建立員工、個案及服務項目，再設定照顧計畫。新帳號從機構設定建立，居服員帳號需連結對應員工。'], ['督導', '依有效計畫安排班次，處理請假與代班，再核閱居服員送出的服務紀錄。核閱前可退回補充；已核准內容保留歷程。'], ['居服員', '從「我的服務」開啟班次，填寫實際起訖、服務項目與數量，儲存草稿或送交核閱。'], ['證照與訓練', '「證照與期限」依截至日期提醒已到期與30日內到期；「訓練紀錄」保存實際時數及歷程。管理者與督導維護，居服員可查自己的紀錄。提醒不等同法定資格審查，時數不自動換算積分。'], ['薪資與報表', '先核閱服務紀錄，再到報表中心查看明細與試算。費用與薪資規則仍需用機構核定案例驗證。'], ['遇到衝突或連線失敗', '表單會保留輸入內容。版本衝突請重新讀取最新資料；連線失敗可確認連線後再試。']].map(([title, text]) => el('div', {}, el('h3', {}, title), el('p', { class: 'muted' }, text)))));

@@ -280,3 +280,11 @@ business 與 API 輸入／父個案授權來源為 docs/CASE_STATUS_FOLLOWUPS_SC
 來源 docs/CASE_RECORD_INDEX_SCOPE.md 與 docs/API.md。管理者／督導個案頁按鈕→唯一 guardedRead openDetails→原生紀錄種類 select 與 createForm 明確查詢→25 筆 metadata table／pagination→既有 openRecordHistory。初次開啟不自動查詢；草稿變更即撤去舊結果並停用分頁／歷程。錯誤與不可信 2xx 保留條件並提供手動重新讀取，不呈現舊索引。
 
 loaded／pending 的本人、機構、角色、員工、hash、父 render 與外層 context 失效清空並 Abort，晚回應不復活；相同 primitive 的巢狀參考替換保持。主視窗關閉或條件撤除亦使巢狀歷程失效。原時間文字與長 ID 保持完整，桌機／390px 使用既有表內橫捲；Escape、取消與回焦沿 canonical owner。必要本機瀏覽器／桌機與390px視覺驗收已完成；不新增 CSS、dialog controller、第二登入或業務寫入。
+
+## 視覺改版 0.57（本機驗收完成）
+
+同一套 APM 品牌、logo、外框與 shared components。首頁先呈現今日實際服務與角色可用的下一步，原四統計保留在下方；財務首頁 CTA 導向可授權報表。四組導覽保留全部 route/name/canView。原生 decorative SVG 由 public/icons.js 唯一所有，全部 aria-hidden，不參與 accessible name。個案區塊捷徑只移動主頁現有標題焦點及捲動位置，完整 context guard，不新增 API。
+
+主要動作與表格按鈕至少44px，手機表單字級至少16px。鍵盤跳至主內容保留目前 route；native dialog 的 Escape、焦點回復與表單保留沿原 owner。長表與所有報表沿自己的橫捲、原 A4 geometry。照顧/服務四欄首頁沿一份語義 ul/li responsive呈現，沒有 duplicate hidden table。
+
+驗收證據由 tests/visual-refresh-e2e.mjs 配合所有 configured commands、嚴格靜態檢查及相同合成資料桌機/手機 Before/After 實際像素構成；文件的實作與正式發布狀態分開記錄。

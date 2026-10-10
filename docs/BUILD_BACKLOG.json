@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0.56.0",
+  "version": "0.57.0",
   "status": "local-partial",
   "purpose": "public-project-roadmap",
   "notice": "獨立本機測試系統，使用合成資料；本文件不包含原平台盤點、私人開通或完整開發追溯，亦不宣稱全部功能等價或正式部署完成。",
@@ -80,6 +80,14 @@
       "summary": "管理者／督導查詢同案四種目前紀錄 metadata 並開啟既有歷程",
       "status": "local-verified",
       "contract": "docs/CASE_RECORD_INDEX_SCOPE.md",
+      "originalParityVerified": false,
+      "productionDeployed": false
+    },
+    {
+      "id": "visual-refresh",
+      "summary": "APM品牌共用視覺、今日服務卡片、四組導覽、個案區塊定位及四角色手機操作",
+      "status": "local-verified",
+      "contract": "docs/VISUAL_REFRESH_SCOPE.md",
       "originalParityVerified": false,
       "productionDeployed": false
     }
