@@ -1,4 +1,5 @@
 import { openInterviewRecordDetails } from './interview-record-details.js';
+import { openEmployeeRecordDetails } from './employee-record-details.js';
 import { openEmployeeRecordIndex } from './employee-record-index.js';
 import {
   api, el, pageHeader, table, badge, button, openForm, confirmAction,
@@ -655,6 +656,7 @@ async function interviews(container, alive) {
 }
 
 async function employees(container, alive) {
+  const canViewDetails = ['admin', 'supervisor', 'finance'].includes(getContext().role);
   const edit = (refresh, row) => {
     const editor = createEmployeeEditor({ existing: row });
     const orgId = getContext().organizationId || getContext().orgId;
@@ -711,14 +713,20 @@ async function employees(container, alive) {
       { key: 'regions', label: '服務區域', render: row => Array.isArray(row.regions) ? row.regions.join('、') : textValue(row.regions) },
       { key: 'hourlyRateCents', label: '試算時薪', render: row => formatTrialPriceCents(row.hourlyRateCents) },
       { key: 'status', label: '狀態', render: row => statusCell(row.status) },
-      ...(writable() ? [{ label: '操作', render: row => actions(
+      ...(canViewDetails ? [{ label: '操作', render: row => {
+        const view = button('查看資料', () => {
+          const current = () => view.isConnected && alive();
+          if (current()) return openEmployeeRecordDetails({ id: row.id, isCurrent: current });
+        }, { variant: 'outline' });
+        return actions(view, ...(writable() ? [
         button('編輯', () => edit(refresh, row), { variant: 'outline' }),
         el('a', { href: '#/certifications', class: 'btn btn-outline', onclick: () => setPersonnelEmployeeFilter('/certifications', row.id) }, '證照'),
         el('a', { href: '#/training', class: 'btn btn-outline', onclick: () => setPersonnelEmployeeFilter('/training', row.id) }, '訓練'),
         button(row.status === 'active' ? '停用' : '啟用', () => setStatus(refresh, row), { variant: 'ghost' }),
         button('保存紀錄', () => { if (alive()) openEmployeeRecordIndex({ employeeRecord: row, lookups: { employees: new Map([[row.id, row]]) }, isCurrent: alive }); }, { variant: 'outline' }),
         button('版本歷程', () => openRecordHistory({ entity: 'employees', id: row.id, isCurrent: alive }), { variant: 'ghost' }),
-      ) }] : []),
+        ] : []));
+      } }] : []),
     ],
   }, alive);
 }

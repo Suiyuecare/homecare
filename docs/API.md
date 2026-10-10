@@ -460,3 +460,13 @@ GET /api/personal-calendar-events/year：四既有角色先驗，再限定ctx.or
 只投影安全標題、精確ID、目前版次、本人回執保存狀態、canonical UTC readAt及canAcknowledge。未保存不代表未讀、應讀或法定簽收；不可確認另標示且不產生閱讀提交。每筆HTTP／斷線／逾時／非法2xx只顯捕捉ID與「未確認，請重新查詢」，其餘逐筆繼續；人工重查同一頁全部ID，先清空舊結果。25是請求數界限，並非整批15秒、傳輸位元組或server掃描SLA。
 
 listPage新增optional currentPageAction同步capture hook，只有公告opt-in。exact分頁metadata與distinct ID驗證後才paint／發布snapshot，不驗證舊API未提供的filter echo。原controller／sequence／observer為唯一清單owner；搜尋草稿含IME、條件、分頁、refresh與primitive／外層context失效立即撤除、abort、關閉，不復活晚回應。openDetails guardedRead為唯一對話框owner；雙啟動有同步gate、關閉回焦沿原owner。完整凍結契約與必要合成驗收見docs/ANNOUNCEMENT_PAGE_RECEIPTS_SCOPE.md。
+
+## 員工目前完整保存資料（0.61，本機驗收完成）
+
+重用既有 GET /api/employees/:id；每次人工開啟或重讀只送精確同一識別碼，以canonical openDetails的AbortSignal讀取單筆，沒有query、批次、自動重試、持續查詢或寫入API。原管理者、督導、財務同機構讀取與居服員本人啟用員工範圍保持；居服員沒有新增介面入口。
+
+共用confirmSavedRecordDetails確認封閉{item}與{id,orgId}、own data metadata及正安全整數版次；保存timestamp是原文字，空字串與CR/LF保留，不轉日期。員工固定十欄投影區分未保存、空白、null、文字、非文字型別；未知欄位與巢狀值不讀取，已知getter拒整筆且不執行。regions確認dense own string[]後detach沿原formatter，不join/de-dupe；holes、混合、extra/symbol顯array標記。hourlyRateCents僅原primitive沿formatTrialPriceCents，安全整數精確BigInt元/分，不coerce或另加邊界。
+
+共用薄UI adapter呼叫唯一openDetails，沒有另一個controller/observer；原面試profile不套入員工專用preflight。員工額外要求非空user/org與三既有角色，捕捉四primitive、外層context、hash、alive與trigger連接；失效清空、abort、關閉，巢狀sameprimitive reference replacement保持結果、外層重建撤除。503或非法2xx不展示保存欄位，僅人工重讀。詳細契約見docs/EMPLOYEE_RECORD_DETAILS_SCOPE.md。
+
+0.61發布前修正紀錄：首次Git差異檢查發現面試純helper末端多一個換行，尚未暫存、提交或上傳。僅移除該LF，所有可執行文字保持；原發布失敗、初始來源與驗收封存。修正後重新通過264份JavaScript與1,213項完整程式測試，另外12個必要命令沿本輪原通過證據，九套104項瀏覽器與十張實看畫面仍綁初始來源；不宣稱全部最終來源在本輪重新跑過瀏覽器。必要14種命令共16次實際執行，修正追溯見verification-r02.json及兩份source freeze。GitHub最終來源CI另行核對；正式主機、HTTPS、Portal與真實公司登入UAT仍待完成。

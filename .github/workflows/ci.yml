@@ -58,3 +58,5 @@ jobs:
         run: pnpm test:e2e:interview-record-details
       - name: Announcement current page own read receipts
         run: pnpm test:e2e:announcement-page-receipts
+      - name: Employee complete current saved details
+        run: pnpm test:e2e:employee-record-details

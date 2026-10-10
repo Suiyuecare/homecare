@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0.60.0",
+  "version": "0.61.0",
   "status": "local-partial",
   "purpose": "public-project-roadmap",
   "notice": "獨立本機測試系統，使用合成資料；本文件不包含原平台盤點、私人開通或完整開發追溯，亦不宣稱全部功能等價或正式部署完成。",
@@ -112,6 +112,14 @@
       "summary": "四既有角色可在內部公告選擇「查詢本頁本人回執」，人工逐筆查詢目前頁最多25則公告的本人目前版回執。清單載入、搜尋與分頁不自動查回執；結果分清本版已保存、尚無本人回執、不可確認及查詢未確認，保留精確識別碼與原文標題。無回執不代表未讀或未完成義務。",
       "status": "local-verified",
       "contract": "docs/ANNOUNCEMENT_PAGE_RECEIPTS_SCOPE.md",
+      "originalParityVerified": false,
+      "productionDeployed": false
+    },
+    {
+      "id": "employee-record-details",
+      "summary": "管理者、督導與財務可在員工管理選擇「查看資料」，直接閱讀目前保存的十個完整欄位、電話、電子郵件、資格、服務區域與備註；沿人工 fresh 單筆讀取，不必進入編輯或版本比較。財務僅查看，原編輯、證照、訓練、啟停用、保存索引與歷程沿既有授權。",
+      "status": "local-verified",
+      "contract": "docs/EMPLOYEE_RECORD_DETAILS_SCOPE.md",
       "originalParityVerified": false,
       "productionDeployed": false
     }

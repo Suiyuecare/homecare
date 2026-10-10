@@ -310,3 +310,15 @@ loaded／pending 的本人、機構、角色、員工、hash、父 render 與外
 沿 docs/ANNOUNCEMENT_PAGE_RECEIPTS_SCOPE.md，內部公告只有人工「查詢本頁本人回執」才串行讀最多25個已確認本頁ID；清單初載、搜尋、條件與分頁不隱式讀回執。toolbar outline button、表格自身捲動及唯一 wide guardedRead openDetails 沿 APM 與 shared owner，無新 CSS／token／字型／picker／POST。欄位只 fresh 標題／精確ID／目前版／本人本版回執／canonicalUTC保存時間；無回執不代表未讀、義務或完成率，不顯示body。混合錯誤明示未確認，手動全頁重讀；清單搜尋草稿立即撤捕捉，snapshot／sequence／父render／primitive／outer context完整守門。header同步防雙開以aria-busy/aria-disabled但可focus，失效或空页native disabled；共享Close/Escape與原trigger focus不改。必要瀏覽器、桌機／390px與圖片仍待驗收。
 
 0.60本輪必要合成驗收：1,186程式／最低Node73／258JS、十一套browser131項、新查詢12項及十張新PNG實看；APM與合成HTTPS Portal、原公告回執／名冊／歷程／安全編輯、共用清單個案與員工索引及面試詳情回歸通過。新browser原兩次actual1及UI前置守門修正、作者工具與root工具失敗封存；只作最窄修正，不放寬產品斷言或逾時，不能宣稱first-pass。必要命令16種由14個輸入保持的本輪通過與2個最終重驗組成，61 configured／60 required不全部fresh；原freeze、r02/r03與carry provenance分開保存。strict沿已接受私人parser零finding，原官方auditor的逾時失敗與原有效測試證據保持、未重跑或宣稱官方pass；DESIGN零error／10既有warning／1info。340公開來源／101runtime接受稿的runtime精確保持，QA後僅更新狀態及追溯文件。原180目錄／9階段／12契約／2增強與58里程碑及99來源前綴保留後追加59／101；RM07仍partial。正式主機、HTTPS、Portal發布、OS popup及人工作業UAT未完成。
+
+## 員工目前完整保存資料（0.61，契約凍結／待驗收）
+
+沿 docs/EMPLOYEE_RECORD_DETAILS_SCOPE.md；現有管理者、督導與財務可從員工列「查看資料」，每次重新讀取精確同機構員工目前版的十欄。財務只增唯讀查看；原六種維護／索引／歷程操作仍沿既有管理權限，居服員不新增員工入口。
+
+純投影唯一 owner 為 public/data/saved-record-details.js，面試者與員工各自提供固定欄位與錯誤文字；封閉 envelope/request、own descriptor 及 metadata 確認不讀取未知值。regions 先複製合法 own-data string[] 才沿 employee-regions formatter，時薪沿 trial-price formatter，不合併或推算薪資。
+
+共用薄閱讀 adapter public/modules/saved-record-details.js 沿唯一 ui.js openDetails wide/guardedRead；原生 modal、signal、observer、loading、manual retry、Escape／回焦仍由 ui.js 所有。員工資格、區域與備註跨全列，完整原文、空值差異、typed 標記與精確分值；不另造 CSS、dialog controller 或搜尋／分頁。面試者既有 DOM／八欄／文字和原 caller guard 保持。新員工 trigger 失去連接或完整 primitive／outer／hash／父 render 失效即撤除，不復活晚回應。
+
+0.61本輪必要合成驗收：1,213程式／最低Node99／264JS、九套browser104項、新員工詳情12項及十張新PNG實看；APM與合成HTTPS Portal、員工安全編輯／歷程／索引、面試詳情抽取及四角色視覺回歸通過。沿唯一純投影与唯讀對話框owner，原面試行為等價矩陣及原tests保留；347公開來源／105runtime受測輸入SHA前後精確。十四必要命令實際全0，62 configured／61 required不全部fresh；原官方auditor逾時失败與舊有效證據保持，strict沿已接受私人parser零finding，未重跑或宣稱官方pass。DESIGN零error／10既有warning／1info；私人metadata準備encoding工具失敗原件封存，不列作產品測試或CI失敗。QA後只更新狀態及追溯文件；原180目錄／9階段／12契約／2增強與59里程碑及101來源前綴保留後追加60／105；RM01仍partial。正式主機、HTTPS、Portal發布、OS popup及人工作業UAT未完成。
+
+0.61發布前修正紀錄：首次Git差異檢查發現面試純helper末端多一個換行，尚未暫存、提交或上傳。僅移除該LF，所有可執行文字保持；原發布失敗、初始來源與驗收封存。修正後重新通過264份JavaScript與1,213項完整程式測試，另外12個必要命令沿本輪原通過證據，九套104項瀏覽器與十張實看畫面仍綁初始來源；不宣稱全部最終來源在本輪重新跑過瀏覽器。必要14種命令共16次實際執行，修正追溯見verification-r02.json及兩份source freeze。GitHub最終來源CI另行核對；正式主機、HTTPS、Portal與真實公司登入UAT仍待完成。
