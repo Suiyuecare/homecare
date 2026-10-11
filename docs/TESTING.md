@@ -88,3 +88,5 @@ CI 使用 Node22.16與24各跑完整程式測試，以六組覆蓋全部瀏覽�
 新回歸 `test:e2e:feedback` 包含三種按鈕、桌機與390px、一般／減少動態、通知下方真點擊及鍵盤、紙本白底及螢幕色保持。權限窗口以真 HTTP 在 body await 撤權／退籍／登出，驗證拒絕與十一表、六trigger、total_changes零後續寫入。
 
 The manual **Report diagnostics** workflow runs the four compact report suites directly with the same Linux PDF dependencies, so a failing assertion appears in its native job log. The normal push workflow still runs all configured commands. Synthetic encrypted rehearsal logs are excluded from failure-tail diagnostics.
+
+常態配置共94命令：來源與程式測試由兩個Node作業驗證，六組互斥執行其餘92命令。舊報表月份安全、十一表合成還原瀏覽器、一般合成備份演練與Portal合成備份演練均納入；不啟動正式服務、讀取操作員資料庫或執行帳號開通命令。

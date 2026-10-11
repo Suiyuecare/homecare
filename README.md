@@ -28,4 +28,4 @@ Portal handoff 只認明確預先開通的 issuer／Google subject／Auth ID／e
 
 正式支付、薪資、資格、FA 介接、評分、定位與離線政策仍依核定依據實作，不能以本機人工作業或合成演練推定正式營運驗收。
 
-本輪完整90項配置與2060項程式測試及修復紀錄見 [全系統回歸範圍](docs/FULL_REGRESSION_SCOPE.md)。GitHub CI以同一提交的Actions實際結果確認。
+本輪94項配置與2060項程式測試及修復紀錄見 [全系統回歸範圍](docs/FULL_REGRESSION_SCOPE.md)。GitHub CI以同一提交的Actions實際結果確認。

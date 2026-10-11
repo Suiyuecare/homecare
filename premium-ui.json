@@ -106,7 +106,11 @@
     "groupOverview",
     "surveys",
     "syntheticEncryptedBackup",
-    "feedback"
+    "feedback",
+    "legacyReportMonthSafety",
+    "syntheticBackup",
+    "syntheticBackupRehearsal",
+    "portalSyntheticBackupRehearsal"
   ],
   "commands": {
     "check": "node scripts/check-source.mjs",
@@ -198,7 +202,11 @@
     "groupOverview": "node tests/group-overview-e2e.mjs",
     "surveys": "node tests/surveys-e2e.mjs",
     "syntheticEncryptedBackup": "node scripts/rehearse-synthetic-encrypted-backup.mjs",
-    "feedback": "node tests/feedback-interaction-e2e.mjs"
+    "feedback": "node tests/feedback-interaction-e2e.mjs",
+    "legacyReportMonthSafety": "node tests/legacy-report-month-safety-e2e.mjs",
+    "syntheticBackup": "node tests/synthetic-backup-e2e.mjs",
+    "syntheticBackupRehearsal": "node scripts/rehearse-synthetic-backup.mjs",
+    "portalSyntheticBackupRehearsal": "node scripts/rehearse-synthetic-portal-backup.mjs"
   },
   "evidence": {
     "crudFullFlow": "tests/e2e.mjs",
@@ -243,6 +251,10 @@
     "groupOverview": "tests/group-overview-e2e.mjs",
     "surveys": "tests/surveys-e2e.mjs",
     "syntheticEncryptedBackup": "scripts/rehearse-synthetic-encrypted-backup.mjs",
-    "feedback": "tests/feedback-interaction-e2e.mjs"
+    "feedback": "tests/feedback-interaction-e2e.mjs",
+    "legacyReportMonthSafety": "tests/legacy-report-month-safety-e2e.mjs",
+    "syntheticBackup": "tests/synthetic-backup-e2e.mjs",
+    "syntheticBackupRehearsal": "scripts/rehearse-synthetic-backup.mjs",
+    "portalSyntheticBackupRehearsal": "scripts/rehearse-synthetic-portal-backup.mjs"
   }
 }

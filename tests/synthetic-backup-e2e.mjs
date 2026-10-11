@@ -47,7 +47,7 @@ const independentRead = dbPath => {
 };
 const checks = [], screenshots = [], readSegments = [], writeSegments = [], apiChecks = [], csvChecks = [], blobDownloads = [], contexts = [], pageErrors = [], consoleErrors = [], failedResponses = [], uiQueries = [];
 let workspace, fixture, restoredApp, browser, base, lastPage, sourceHashesBefore, readBaseline, readCounts, safeStage = 'initialization';
-const actors = {};
+const actors = {}, sourceModeReports = {}, sourceModeCsvBytes = {};
 const mark = label => { checks.push(label); console.log(`PASS ${label}`); };
 const safeRoute = route => route.replace(/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}/g, ':id');
 const readOnly = async (label, work) => {
@@ -93,12 +93,12 @@ const loadReports = async page => {
   await page.getByRole('heading', { name: '報表中心', exact: true, level: 1 }).waitFor();
   await selection(page).waitFor(); await page.waitForLoadState('networkidle');
 };
-const reportMatches = (response, kind, month) => { const url = new URL(response.url()); return response.request().method() === 'GET' && url.pathname === `/api/reports/${kind}` && url.searchParams.get('month') === month; };
+const reportMatches = (response, kind, month) => { const url = new URL(response.url()); return response.request().method() === 'GET' && url.pathname === `/api/reports/${kind}` && url.searchParams.get('month') === month && url.searchParams.get('spanMode') === 'calendar-two-day-v1'; };
 const display = async (page, kind) => {
   const waiting = page.waitForResponse(response => reportMatches(response, kind, fixture.month));
   if (await selection(page).inputValue() !== kind) await selection(page).selectOption(kind); else await page.getByRole('button', { name: '重新查詢', exact: true }).click();
   const response = await waiting; assert.equal(response.status(), 200);
-  const result = await response.json(); same(result, fixture.expected.frozenReports[kind], 'Confirmed restored report equals saved source report');
+  const result = await response.json(); same(result, sourceModeReports[kind], 'Confirmed restored report equals saved source report in the same complete-date mode');
   await body(page).getByRole('heading', { name: result.title, exact: true, level: 2 }).waitFor();
   await body(page).getByText(`${fixture.month} · ${result.rows.length} 筆`, { exact: true }).waitFor();
   assert.equal(await monthControl(page).inputValue(), fixture.month);
@@ -110,7 +110,7 @@ const display = async (page, kind) => {
   const keys = result.columns.map(column => column.key), table = body(page).locator('table').first();
   for (const [index, row] of result.rows.entries()) for (const key of keys.filter(value => /cents$/i.test(value))) assert.equal(await table.locator('tbody tr').nth(index).locator('td').nth(keys.indexOf(key)).textContent(), money(row[key]));
   const totalsKeys = Object.keys(result.totals); assert.equal(await body(page).locator('table').last().locator('tbody tr').first().locator('td').nth(totalsKeys.indexOf('amountCents')).textContent(), money(result.totals.amountCents));
-  uiQueries.push({ kind, month: fixture.month, status: 200, rowCount: result.rows.length, totals: result.totals, sourceReportSha256: sha(JSON.stringify(fixture.expected.frozenReports[kind])), renderedSavedCentsExactly: true });
+  uiQueries.push({ kind, month: fixture.month, status: 200, rowCount: result.rows.length, totals: result.totals, sourceReportSha256: sha(JSON.stringify(sourceModeReports[kind])), renderedSavedCentsExactly: true });
   return result;
 };
 const closeBrowser = async () => { for (const context of contexts) await context.close(); contexts.length = 0; await browser?.close(); browser = null; };
@@ -122,6 +122,18 @@ try {
   workspace = createSyntheticWorkspace();
   fixture = await createSyntheticBackupFixture({ workspace });
   const sourceBefore = fixture.readRawState(), sourceCounts = counters(fixture.app.db);
+  // Capture the exact source DTO/CSV mode used by the current restored browser.
+  // Legacy snapshots remain independently checked by the fixture and G3 below.
+  for (const kind of ['fees', 'payroll']) {
+    const route = `reports/${kind}?month=${fixture.month}&spanMode=calendar-two-day-v1`;
+    sourceModeReports[kind] = await fixture.actors.admin.client.json('GET', route, undefined, { orgId: fixture.orgId });
+    assert.equal(sourceModeReports[kind].spanMode, 'calendar-two-day-v1');
+    same(sourceModeReports[kind].totals, fixture.expected.frozenReports[kind].totals, 'Source mode keeps the exact saved raw-cent totals');
+    const response = await fixture.actors.admin.client.response('GET', `reports/${kind}.csv?month=${fixture.month}&spanMode=calendar-two-day-v1`, undefined, { orgId: fixture.orgId });
+    assert.equal(response.status, 200); sourceModeCsvBytes[kind] = Buffer.from(await response.arrayBuffer());
+  }
+  same(fixture.readRawState(), sourceBefore, 'Capturing source report-mode DTO/CSV leaves all saved rows unchanged');
+  same(counters(fixture.app.db), sourceCounts, 'Capturing source report-mode DTO/CSV causes no source writes');
   same(sourceBefore, fixture.expected.rawState, 'Source fixture matches independent expected saved rows');
   const sourceInspection = inspectSyntheticDatabase(workspace, 'source');
   assert.equal(sourceInspection.tableCount, 11); assert.equal(sourceInspection.triggerCount, 6);
@@ -199,9 +211,9 @@ try {
     await display(page, 'payroll'); await shot(page, 'restored-payroll-desktop.png');
     for (const kind of ['fees', 'payroll']) {
       await display(page, kind);
-      const expected = await apiResponse(actors.admin, `reports/${kind}.csv?month=${fixture.month}`);
-      const endpointBytes = await expected.body(); assert(endpointBytes.equals(fixture.expected.csvBytes[kind]), 'Fresh restored raw CSV equals pre-backup source CSV');
-      const responseWaiting = page.waitForResponse(response => { const url = new URL(response.url()); return url.pathname === `/api/reports/${kind}.csv` && url.searchParams.get('month') === fixture.month; });
+      const expected = await apiResponse(actors.admin, `reports/${kind}.csv?month=${fixture.month}&spanMode=calendar-two-day-v1`);
+      const endpointBytes = await expected.body(); assert(endpointBytes.equals(sourceModeCsvBytes[kind]), 'Fresh restored raw CSV equals pre-backup source CSV');
+      const responseWaiting = page.waitForResponse(response => { const url = new URL(response.url()); return url.pathname === `/api/reports/${kind}.csv` && url.searchParams.get('month') === fixture.month && url.searchParams.get('spanMode') === 'calendar-two-day-v1'; });
       const downloadWaiting = page.waitForEvent('download'); await csvButton(page).click();
       const response = await responseWaiting; assert.equal(response.status(), 200);
       const download = await downloadWaiting, stream = await download.createReadStream(), chunks = [];
@@ -210,7 +222,7 @@ try {
       assert.equal(download.suggestedFilename(), `歲悅-${kind}-${fixture.month}.csv`);
       assert.equal(bytes.subarray(0, 3).toString('hex'), 'efbbbf'); assert(bytes.toString('utf8').includes('\r\n'));
       for (const row of fixture.expected.frozenReports[kind].rows) assert(bytes.toString('utf8').includes('"' + row.amountCents + '"'), 'CSV retains saved raw integer cents');
-      csvChecks.push({ kind, month: fixture.month, status: 200, bytes: bytes.length, sha256: sha(bytes), sourceSha256: sha(fixture.expected.csvBytes[kind]), sourceAndRestoredAndBrowserExact: true, rawCents: true, screenSnapshotIdentityClaimed: false });
+      csvChecks.push({ kind, month: fixture.month, status: 200, bytes: bytes.length, sha256: sha(bytes), sourceSha256: sha(sourceModeCsvBytes[kind]), sourceAndRestoredAndBrowserExact: true, rawCents: true, screenSnapshotIdentityClaimed: false });
     }
   });
   mark('G4 桌機恢復兩種試算畫面與兩次真CSV下載，保存分與fresh來源byte一致');

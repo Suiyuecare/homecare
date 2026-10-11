@@ -55,7 +55,7 @@ const selection = page => page.getByLabel('報表類型', { exact: true });
 const monthControl = page => page.getByLabel('報表月份', { exact: true });
 const csvButton = page => page.getByRole('button', { name: '下載 CSV', exact: true }).first();
 const loadReport = async page => { lastPage = page; await page.goto(`${base}/#/reports`); await page.getByRole('heading', { name: '報表中心', exact: true, level: 1 }).waitFor(); await selection(page).waitFor(); };
-const matches = (response, kind, selectedMonth) => { const url = new URL(response.url()); return response.request().method() === 'GET' && url.pathname === `/api/reports/${kind}` && url.searchParams.get('month') === selectedMonth; };
+const matches = (response, kind, selectedMonth) => { const url = new URL(response.url()); return response.request().method() === 'GET' && url.pathname === `/api/reports/${kind}` && url.searchParams.get('month') === selectedMonth && url.searchParams.get('spanMode') === 'calendar-two-day-v1'; };
 const display = async (page, kind, selectedMonth, action) => {
   const waiting = page.waitForResponse(response => matches(response, kind, selectedMonth));
   await action(); const response = await waiting; assert.equal(response.status(), 200); const result = await response.json();
@@ -162,7 +162,7 @@ try {
 
   await readOnly('fresh-real-Chromium-financial-CSV-downloads-byte-for-byte-monthly-API', async () => {
     for (const [role, kind] of [['admin', 'fees'], ['finance', 'payroll']]) {
-      const actor = actors[role], response = await actor.client.request.get(`${base}/api/reports/${kind}.csv?month=${month}`, { headers: { 'X-Org-Id': orgId } }); assert.equal(response.status(), 200); const expected = await response.body();
+      const actor = actors[role], response = await actor.client.request.get(`${base}/api/reports/${kind}.csv?month=${month}&spanMode=calendar-two-day-v1`, { headers: { 'X-Org-Id': orgId } }); assert.equal(response.status(), 200); const expected = await response.body();
       assert.match(response.headers()['content-type'], /^text\/csv/); assert.match(response.headers()['content-disposition'], new RegExp(`${kind}\\.csv`));
       assert.deepEqual([...expected.subarray(0, 3)], [239, 187, 191]); assert(expected.toString().includes('\r\n')); assert(expected.toString().includes('未核定規則'));
       const waiting = actor.page.waitForEvent('download'); await csvButton(actor.page).click(); const download = await waiting;
@@ -198,7 +198,7 @@ try {
     const page = actors.admin.page; lastPage = page;
     // Hold a real JSON response from the existing reread button. A newer month
     // must abort the old query and keep its own result after the held body returns.
-    const queryPattern = `**/api/reports/fees?month=${month}`;
+    const queryPattern = `**/api/reports/fees?month=${month}&spanMode=calendar-two-day-v1`;
     const queryArrived = deferred(), queryRelease = deferred(), queryHandled = deferred();
     await page.route(queryPattern, async route => { try { const response = await route.fetch(); queryArrived.resolve(); await queryRelease.promise; await route.fulfill({ response }); } catch (error) { if (!/closed|cancel|abort|disposed|already handled/i.test(error.message)) throw error; } finally { queryHandled.resolve(); } });
     try {
