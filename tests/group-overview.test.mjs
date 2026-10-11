@@ -4,6 +4,7 @@ import {DatabaseSync} from 'node:sqlite';
 import {randomUUID} from 'node:crypto';
 import {pathToFileURL} from 'node:url';
 import {GROUP_METRICS,groupOverviewQuery,guardGroupOverview,readGroupOverview,readGroupOverviewRecords,assertGroupOverview,groupOverviewCsv} from '../src/server/group-overview.mjs';
+import {accountMembershipActive,commitAccountChange} from '../src/server/account-administration.mjs';
 const {initDb,insert,replace,now,fail}=await import(pathToFileURL(process.cwd()+'/src/server/model.mjs'));
 const rejects=(fn,code)=>assert.throws(fn,e=>e.code===code);
 function fixture(t){
@@ -58,4 +59,23 @@ test('the 50000 entity boundary refuses the complete output rather than silently
 });
 test('organization rename changes source fingerprint; old drill is refused while fresh output explicitly uses current name',t=>{
  const f=fixture(t),out=f.read(),org=out.organizations[0];f.db.prepare('UPDATE organizations SET name=? WHERE id=?').run('合成機構新名稱',org.id);const before=f.state(),changes=f.changes();rejects(()=>readGroupOverviewRecords(f.db,f.ctx,{orgIds:[org.id],date:out.date,metric:'caseTotal',fingerprint:org.fingerprint,page:1},fail),'GROUP_SOURCE_CHANGED');const fresh=f.read();assert.equal(fresh.organizations[0].name,'合成機構新名稱');assert.notEqual(fresh.organizations[0].fingerprint,org.fingerprint);assert.deepEqual(f.state(),before);assert.equal(f.changes(),changes);
+});
+function changeSelectedAccount(f,status,version=0,orgId=f.orgs[1]) {
+ const other=randomUUID();f.db.prepare('INSERT INTO users VALUES(?,?,?,?,?)').run(other,'合成第二管理者',other+'@example.test','synthetic-only-not-login',now());f.db.prepare('INSERT INTO memberships VALUES(?,?,?,?)').run(orgId,other,'admin',null);
+ f.db.exec('BEGIN IMMEDIATE');try{const result=commitAccountChange(f.db,{orgId,role:'admin',user:{id:other}},f.user,{version,role:'admin',employeeId:null,status,reason:'合成帳號生命週期核對'});f.db.exec('COMMIT');return {...result,stateRecordId:f.db.prepare("SELECT id FROM records WHERE org_id=? AND entity='account-lifecycle' AND json_extract(data,'$.userId')=?").get(orgId,f.user).id};}catch(e){f.db.exec('ROLLBACK');throw e;}
+}
+test('selected suspended admin remains a member but whole overview and stale drill are denied zero-write; explicit reactivation restores current reads',t=>{
+ const f=fixture(t),out=f.read(),selected=out.organizations[1],detail={orgIds:[selected.id],date:out.date,metric:'caseTotal',fingerprint:selected.fingerprint,page:1};changeSelectedAccount(f,'suspended');
+ assert.equal(accountMembershipActive(f.db,f.orgs[0],f.user),true);assert.equal(accountMembershipActive(f.db,f.orgs[1],f.user),false);assert.equal(f.db.prepare('SELECT role FROM memberships WHERE org_id=? AND user_id=?').get(f.orgs[1],f.user).role,'admin');
+ const before=f.state(),changes=f.changes();rejects(()=>f.read(),'ROLE_FORBIDDEN');rejects(()=>readGroupOverviewRecords(f.db,f.ctx,detail,fail),'ROLE_FORBIDDEN');assert.deepEqual(f.state(),before);assert.equal(f.changes(),changes);
+ changeSelectedAccount(f,'active',2);const restored=f.state(),after=f.changes();assert.equal(f.read().totals.caseTotal,2);assert.equal(readGroupOverviewRecords(f.db,f.ctx,detail,fail).total,1);assert.deepEqual(f.state(),restored);assert.equal(f.changes(),after);
+});
+test('current suspended admin and selected malformed or mismatched lifecycle head fail closed without partial source or any read writes',t=>{
+ const current=fixture(t);changeSelectedAccount(current,'suspended',0,current.orgs[0]);const currentBefore=current.state(),currentChanges=current.changes();rejects(()=>current.read(),'ROLE_FORBIDDEN');assert.deepEqual(current.state(),currentBefore);assert.equal(current.changes(),currentChanges);
+ for(const [corrupt,code] of [
+  [(f,id)=>f.db.prepare('UPDATE records SET data=? WHERE id=?').run('{',id),'ACCOUNT_STATE_INVALID'],
+  [(f,id)=>f.db.prepare('UPDATE records SET version=? WHERE id=?').run(BigInt(Number.MAX_SAFE_INTEGER)+1n,id),'ERR_OUT_OF_RANGE'],
+  [(f,id)=>f.db.prepare('UPDATE records SET data=json_set(data,\'$.reason\',?) WHERE id=?').run('合成未同步目前head',id),'ACCOUNT_STATE_INVALID'],
+  [(f,id)=>f.db.prepare('UPDATE records SET data=json_set(data,\'$.status\',?) WHERE id=?').run('unknown',id),'ACCOUNT_STATE_INVALID']
+ ]){const f=fixture(t),suspended=changeSelectedAccount(f,'suspended');changeSelectedAccount(f,'active',2);corrupt(f,suspended.stateRecordId);const before=f.state(),changes=f.changes();rejects(()=>f.read(),code);assert.deepEqual(f.state(),before);assert.equal(f.changes(),changes);}
 });

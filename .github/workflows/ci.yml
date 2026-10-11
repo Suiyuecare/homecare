@@ -62,6 +62,9 @@ jobs:
           HOME_CARE_QA_PYTHON: /tmp/homecare-qa-python/bin/python3
           HOMECARE_COMPLETION_FINANCIAL_QA: outputs/software/financial-adjustments-qa
         run: pnpm test:regression --shard=${{ matrix.shard }}/6
+      - name: Verify closed partial reconciliation evidence
+        if: success() && matrix.shard == 6
+        run: node scripts/check-claim-partial-evidence.mjs
       - name: Preserve synthetic regression results and visual evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
@@ -87,3 +90,5 @@ jobs:
             outputs/software/financial-adjustments-qa/**/*.png
             outputs/software/settings-create-safety-qa/**/result.json
             outputs/software/settings-create-safety-qa/**/*.png
+            outputs/software/claim-partial-reconciliation-qa/**/result.json
+            outputs/software/claim-partial-reconciliation-qa/**/*.png

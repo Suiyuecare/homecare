@@ -109,3 +109,7 @@ try {
 } catch (error) {
   await capture('failure').catch(() => {}); await writeFile(path.join(output, 'verification.json'), JSON.stringify({ status: 'failed', stage, error: error.message, checks, screenshots, errors }, null, 2)); throw error;
 } finally { await browser.close(); await app.close(); }
+
+// Keep legacy acceptance unchanged, then exercise the cumulative partial slice
+// in its own synthetic memory app as part of the same configured CI runtime.
+await import('./claim-partial-reconciliation-e2e.mjs');

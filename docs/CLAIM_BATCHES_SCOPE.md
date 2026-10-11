@@ -4,13 +4,13 @@
 
 ## 權限與保存
 
-`claim-batches` 僅管理者與財務可讀寫；督導、居服員在解析輸入前即拒絕。資料沿用機構隔離、POST 冪等、版本 CAS、原子 SQLite 交易、版本歷程與稽核。無 DELETE 或批次正式送出操作。來源佔用檢查在保存交易內重讀，兩個同時建立的批次不能各自佔用同一張帳單。
+`claim-batches` 僅管理者與財務可讀寫；督導、居服員在解析輸入前即拒絕。資料沿用機構隔離、POST／PATCH 冪等、版本 CAS、原子 SQLite 交易、版本歷程與稽核。無 DELETE 或批次正式送出操作。來源佔用檢查在保存交易內重讀，兩個同時建立的批次不能各自佔用同一張帳單。2026-10-12 的人工部分核付擴充及重送契約見 [CLAIM_PARTIAL_RECONCILIATION_SCOPE.md](CLAIM_PARTIAL_RECONCILIATION_SCOPE.md)。
 
 輸入欄位為 `month number billingDocumentIds sourceReference responseSourceReference responses status note`。`month` 和 `number` 建立後固定；同機構編號不可重複，已取消編號仍保留。來源選取為同機構、同月份、1 至 100 筆不重複的已開立人工帳單，且不得已在其他未取消批次。草稿保存或核對時重新讀取帳單；已選來源若版次或快照改變，拒絕靜默更新，需取消原批次後另建。
 
 伺服器派生 `sourceSnapshots`，每筆精確限定六欄：`billingDocumentId version number caseId caseName amountCents`。姓名取來源帳單開立時保存的個案姓名；來源快照於批次草稿保存時擷取，核對時確認同一來源未變，再鎖定。客戶端不得提交來源快照或總額。
 
-伺服器派生 `summary`，精確限定七欄：`amountCents acceptedAmountCents rejectedAmountCents pendingAmountCents unansweredAmountCents sourceCount responseCount`。金額以安全整數分保存，合計透過 BigInt 計算；接受、退件、待定、未回應四類來源金額之和等於批次總額。退件總額指被退件的原來源帳單金額；每筆回應接受金額則為零。
+伺服器派生 `summary`，精確限定七欄：`amountCents acceptedAmountCents rejectedAmountCents pendingAmountCents unansweredAmountCents sourceCount responseCount`。金額以安全整數分保存，合計透過 BigInt 計算；接受、退件、待定、未回應四類金額之和等於批次總額。人工部分核付的累計已核額計入接受額、其差額計入待定額；舊全額回應與七欄形狀保持。退件總額指被退件的原來源帳單金額；每筆退件回應接受金額則為零。
 
 ## 狀態流程
 
@@ -24,7 +24,7 @@
 
 核對前 `sourceReference` 人工依據必填。取消只可修改 `status` 與本次 `note` 原因；不得沿用舊備註充當未提交的取消原因。來源帳單後來作廢時，仍保留已核對批次及歷程的當時快照；人工回應以凍結快照核對，不回算當前帳單。草稿不可對作廢來源重新核對。當前父帳單及個案仍須存在且屬同機構；不符合時現在、歷程、修改及匯出皆不可取得。
 
-回應精確限定五欄：`billingDocumentId reference status amountCents reason`。每筆原來源帳單最多一筆回應，必須有使用者已收到的人工回應編號或依據，且共同 `responseSourceReference` 必填。結果為接受 `accepted`、退件 `rejected` 或待定 `pending`。接受金額須精確等於凍結來源；退件及待定金額為 0，退件原因必填。部分接受、額外扣款或核付演算法尚未核定，本切片拒絕猜測這些金額規則。完成對帳前，每筆來源須有接受或退件結果，不能仍待定或未回應。
+回應精確限定五欄：`billingDocumentId reference status amountCents reason`。每筆原來源帳單最多一筆回應，必須有使用者已收到的人工回應編號或依據，且共同 `responseSourceReference` 必填。結果為接受 `accepted`、人工部分核付 `partial`、退件 `rejected` 或待定 `pending`。接受金額須精確等於凍結來源；部分核付為大於0且小於原額的累計人工已核事實，說明必填；退件及待定金額為 0，退件原因必填。原 partial 改為 accepted／pending 的新操作須有說明，舊普通 accepted 可空說明。額外扣款、自動核付或正式部分退件算法尚未核定；不推定差額為退件／退款／收付款。完成對帳前，每筆来源須有全額接受或退件結果，不能仍部分核付、待定或未回應。
 
 ## API 與本機匯出
 
@@ -37,7 +37,7 @@
 
 此實體的 POST／PATCH JSON 請求上限為 4 MiB，以容納最多 100 筆人工回應及每筆完整原因；欄位原有長度、數量與型別限制仍逐項驗證。其他一般實體維持 128 KiB，不因本切片擴大。超過上限回 413，資料、版本、稽核及冪等紀錄均不寫入。
 
-JSON 的格式識別為 `local-homecare-claim-v1`，明確 `officialSubmission:false` 與中文用途警語，包含批次版次、完整來源及每筆回應；未回應為 `null`。CSV 每筆重複格式識別及非正式申報警語，含來源原金額、接受值、回應狀態／依據／原因，未回應狀態為 `unanswered`。UTF-8 BOM、CRLF、逗號及引號正確跳脫，使用者文字以 `= + - @` 或含前導空白／控制字元開頭時加單引號，避免被試算表當公式執行。原資料與 JSON 不因 CSV 保護而改寫。
+未含 partial 的 JSON／CSV 格式識別保留 `local-homecare-claim-v1`；目前含 partial 時為 `local-homecare-claim-v2`，增加每行 `unconfirmedAmountCents`。皆明確 `officialSubmission:false` 與中文用途警語，包含批次版次、完整來源及每筆回應；未回應為 `null`。CSV 每筆重複格式識別及非正式申報警語，含來源原金額、累計接受值、回應狀態／依據／原因，未回應狀態為 `unanswered`。UTF-8 BOM、CRLF、逗號及引號正確跳脫，使用者文字以 `= + - @` 或含前導空白／控制字元開頭時加單引號，避免被試算表當公式執行。原資料與 JSON 不因 CSV 保護而改寫。
 
 ## 可操作介面與共用所有者
 
@@ -55,4 +55,4 @@ JSON 的格式識別為 `local-homecare-claim-v1`，明確 `officialSubmission:f
 
 首次測試只發現 DELETE 預期 405 與既有 generic 未提供刪除路徑回 404 不一致；已修測試期待既有拒絕行為，並確認零寫入。未修改伺服器來放寬刪除。此切片的實際瀏覽器、手機及整體視覺驗收由 root 集成檢查完成後另記，本文不提前聲稱已驗。
 
-未使用真實個資、既有資料庫、原平台帳密、秘密或正式系統。正式 FA 格式、送出／回應介接、官方費率、自付／補助／額度、核付／部分接受、正式帳務及主機部署仍另依核定規則驗收；本切片不宣稱原平台全量等價。
+未使用真實個資、既有資料庫、原平台帳密、秘密或正式系統。正式 FA 格式、送出／回應介接、官方費率、自付／補助／額度、自動核付／正式部分退件算法、正式帳務及主機部署仍另依核定規則驗收；本切片不宣稱原平台全量等價。原驗證紀錄保留，人工部分核付新切片的 focused／CI 實際結果另記。

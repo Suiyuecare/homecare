@@ -1,7 +1,7 @@
 import { CASE_HEALTH_PROFILES } from './case-health-editor.js';
 import { CASE_SUPPORT_PROFILES } from './case-support-editor.js';
 import { financialHistoryLines, financialHistorySummary, financialHistoryParty } from './financial-history.js';
-import { claimSourcesForDisplay, claimResponsesForDisplay, claimSummaryForDisplay } from './claim-batch-editor.js';
+import { claimSourcesForDisplay, claimResponsesForDisplay, claimSummaryForDisplay, claimUnconfirmedAmountCents } from './claim-batch-editor.js';
 import { normalizeEmployeeRegions } from './employee-regions.js';
 import { RULE_PARAMETERS } from './business-rule-fields.js';
 import { normalizeAssessmentAnswers, compareAssessmentAnswers } from './assessment-answers.js';
@@ -317,9 +317,17 @@ function claimHistoryIds(value) {
 function claimHistorySummary(value) {
   const summary = claimSummaryForDisplay(value);
   if (!summary) return '[欄位格式無法判讀]';
-  return [['amountCents', '保存來源總額'], ['acceptedAmountCents', '人工記錄接受來源額'], ['rejectedAmountCents', '人工記錄退件來源額'],
-    ['pendingAmountCents', '人工記錄待定來源額'], ['unansweredAmountCents', '尚無回應來源額'], ['sourceCount', '來源筆數'], ['responseCount', '人工回應筆數']]
+  return [['amountCents', '保存來源總額'], ['acceptedAmountCents', '人工已記接受金額'], ['rejectedAmountCents', '人工記錄退件來源額'],
+    ['pendingAmountCents', '尚待確認差額（含待定）'], ['unansweredAmountCents', '尚無回應來源額'], ['sourceCount', '來源筆數'], ['responseCount', '人工回應筆數']]
     .map(([key, label]) => ({ label, value: summary[key], isMoney: key.endsWith('Cents') }));
+}
+function claimHistoryResponses(value, sources) {
+  const responses = claimResponsesForDisplay(value, sources);
+  if (!responses) return '[欄位格式無法判讀]';
+  if (!responses.some(row => row.status === 'partial')) return responses;
+  const frozen = new Map(claimSourcesForDisplay(sources).map(row => [row.billingDocumentId, row]));
+  return responses.map(row => ({ ...row, sourceAmountCents: frozen.get(row.billingDocumentId).amountCents,
+    unconfirmedAmountCents: claimUnconfirmedAmountCents(frozen.get(row.billingDocumentId), row) }));
 }
 function substitutionSnapshotDisplay(value) {
   if(value===null)return [];
@@ -362,7 +370,7 @@ export function normalizeHistorySnapshot(entity, snapshot, templatesMap) {
       : ['announcements', 'interview-applicants', 'personal-calendar-events'].includes(entity) ? announcementText(source[field.key])
       : field.type === 'claim-ids' ? claimHistoryIds(source[field.key])
       : field.type === 'claim-sources' ? claimSourcesForDisplay(source[field.key]) ?? '[欄位格式無法判讀]'
-      : field.type === 'claim-responses' ? claimResponsesForDisplay(source[field.key]) ?? '[欄位格式無法判讀]'
+      : field.type === 'claim-responses' ? claimHistoryResponses(source[field.key], source.sourceSnapshots)
       : field.type === 'claim-summary' ? claimHistorySummary(source[field.key])
       : field.type === 'form-groups' ? formProjection?.groups ?? '[欄位格式無法判讀]'
       : field.type === 'form-fields' ? formProjection?.fields ?? '[欄位格式無法判讀]'

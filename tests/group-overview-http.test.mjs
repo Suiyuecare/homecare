@@ -4,6 +4,7 @@ import {createHash,randomBytes,randomUUID} from 'node:crypto';
 import {createApp} from '../src/server/index.mjs';
 import {insert,replace,now} from '../src/server/model.mjs';
 import {PORTAL_ORIGIN,provisionPortalAccount} from '../src/server/portal-handoff.mjs';
+import {accountMembershipActive,commitAccountChange} from '../src/server/account-administration.mjs';
 async function fixture(t,portal=false){
  const app=createApp({dbPath:':memory:',port:0,...(portal?{portalConfig:{mode:'portal',publicOrigin:'http://127.0.0.1:0',portalOrigin:PORTAL_ORIGIN,signingSecret:'synthetic-group-unit-signing-secret-only'}}:{})}),base=await app.listen();t.after(async()=>{const closing=app.close();app.server.closeAllConnections();await closing;});
  const request=async(client,method,path,payload)=>{const response=await fetch(base+path,{method,headers:{Origin:base,...(client?{Cookie:client.cookie,'X-Org-Id':client.org,'X-CSRF-Token':client.csrf}:{}),...(payload===undefined?{}:{'Content-Type':'application/json'})},...(payload===undefined?{}:{body:JSON.stringify(payload)})}),bytes=Buffer.from(await response.arrayBuffer()),text=bytes.toString('utf8');return{status:response.status,headers:response.headers,bytes,body:response.headers.get('content-type')?.startsWith('application/json')?JSON.parse(text):text};};
@@ -33,4 +34,28 @@ test('HTTP anonymous access refused and unrelated group paths fail role first wi
 });
 test('HTTP Portal binding remains single organization even with another existing admin membership; no directory or guessed-org expansion',async t=>{
  const f=await fixture(t,true),session=await f.request(f.admin,'GET','/api/session');assert.equal(session.body.organizations.length,1);assert.equal(session.body.organizations[0].id,f.admin.org);const before=f.state();assert.equal((await f.request(f.admin,'GET','/api/group-overview?organizationId='+f.admin.org+'&date=2026-10-11')).status,200);for(const path of ['/api/group-overview','/api/group-overview.csv']){const out=await f.request(f.admin,'GET',path+'?'+f.query);assert.equal(out.status,403);assert.equal(out.body.error.code,'ORG_FORBIDDEN');}assert.deepEqual(f.state(),before);
+});
+function selectedAccountChange(f,status,version=0) {
+ if(!f.secondAdmin){f.secondAdmin=randomUUID();f.app.db.prepare('INSERT INTO users VALUES(?,?,?,?,?)').run(f.secondAdmin,'合成第二管理者',f.secondAdmin+'@example.test','synthetic-only-not-login',now());f.app.db.prepare('INSERT INTO memberships VALUES(?,?,?,?)').run(f.org2,f.secondAdmin,'admin',null);}
+ f.app.db.exec('BEGIN IMMEDIATE');try{const result=commitAccountChange(f.app.db,{orgId:f.org2,role:'admin',user:{id:f.secondAdmin}},f.admin.user.id,{version,role:'admin',employeeId:null,status,reason:'合成其他機構帳號停用核對'});f.app.db.exec('COMMIT');return {...result,stateRecordId:f.app.db.prepare("SELECT id FROM records WHERE org_id=? AND entity='account-lifecycle' AND json_extract(data,'$.userId')=?").get(f.org2,f.admin.user.id).id};}catch(e){f.app.db.exec('ROLLBACK');throw e;}
+}
+async function currentOrganizationLogin(f) {
+ const login=await f.request(null,'POST','/api/login',{email:'synthetic-group-admin@example.test',password:'synthetic-only-long-password'});assert.equal(login.status,200,JSON.stringify(login.body));f.admin.cookie=login.headers.get('set-cookie').split(';')[0];f.admin.csrf=login.body.csrfToken;return login.body;
+}
+test('HTTP selected suspended membership stays admin yet refreshed current-org session cannot read whole JSON CSV or prior drill; explicit reactivation requires new login',async t=>{
+ const f=await fixture(t),first=await f.request(f.admin,'GET','/api/group-overview?'+f.query),selected=first.body.organizations[1],drill='/api/group-overview/records?'+new URLSearchParams({organizationId:f.org2,date:first.body.date,metric:'caseTotal',fingerprint:selected.fingerprint,page:'1'});selectedAccountChange(f,'suspended');
+ assert.equal(accountMembershipActive(f.app.db,f.admin.org,f.admin.user.id),true);assert.equal(accountMembershipActive(f.app.db,f.org2,f.admin.user.id),false);assert.equal(f.app.db.prepare('SELECT role FROM memberships WHERE org_id=? AND user_id=?').get(f.org2,f.admin.user.id).role,'admin');assert.equal((await f.request(f.admin,'GET','/api/group-overview?'+f.query)).status,401);
+ const login=await currentOrganizationLogin(f);assert.deepEqual(login.organizations.map(o=>o.id),[f.admin.org]);const before=f.state(),changes=f.app.db.prepare('SELECT total_changes() n').get().n;
+ for(const route of ['/api/group-overview?'+f.query,'/api/group-overview.csv?'+f.query,drill]){const out=await f.request(f.admin,'GET',route);assert.equal(out.status,403);assert.equal(out.body.error.code,'ROLE_FORBIDDEN');assert.equal(out.body.organizations,undefined);assert.equal(out.body.items,undefined);assert.equal(out.headers.get('content-disposition'),null);assert.equal(out.headers.get('cache-control'),'no-store');}
+ assert.deepEqual(f.state(),before);assert.equal(f.app.db.prepare('SELECT total_changes() n').get().n,changes);
+ selectedAccountChange(f,'active',2);assert.equal((await f.request(f.admin,'GET','/api/group-overview?'+f.query)).status,401);await currentOrganizationLogin(f);const active=f.state(),activeChanges=f.app.db.prepare('SELECT total_changes() n').get().n;assert.equal((await f.request(f.admin,'GET','/api/group-overview?'+f.query)).body.totals.caseTotal,2);assert.equal((await f.request(f.admin,'GET',drill)).status,200);assert.deepEqual(f.state(),active);assert.equal(f.app.db.prepare('SELECT total_changes() n').get().n,activeChanges);
+});
+test('HTTP malformed unknown or mismatched selected lifecycle head refuses all output with existing account-state error; no reads repair source',async t=>{
+ for(const corrupt of [
+  (db,id)=>db.prepare('UPDATE records SET data=? WHERE id=?').run('{',id),
+  (db,id)=>db.prepare("UPDATE records SET data=json_set(data,'$.reason',?) WHERE id=?").run('合成未同步目前head',id),
+  (db,id)=>db.prepare("UPDATE records SET data=json_set(data,'$.status',?) WHERE id=?").run('unknown',id)
+ ]){const f=await fixture(t),first=await f.request(f.admin,'GET','/api/group-overview?'+f.query),org=first.body.organizations[1];selectedAccountChange(f,'suspended');const active=selectedAccountChange(f,'active',2);await currentOrganizationLogin(f);corrupt(f.app.db,active.stateRecordId);const before=f.state(),changes=f.app.db.prepare('SELECT total_changes() n').get().n,drill='/api/group-overview/records?'+new URLSearchParams({organizationId:f.org2,date:first.body.date,metric:'caseTotal',fingerprint:org.fingerprint,page:'1'});
+  for(const route of ['/api/group-overview?'+f.query,'/api/group-overview.csv?'+f.query,drill]){const out=await f.request(f.admin,'GET',route);assert.equal(out.status,409);assert.equal(out.body.error.code,'ACCOUNT_STATE_INVALID');assert.equal(out.body.organizations,undefined);assert.equal(out.body.items,undefined);assert.equal(out.headers.get('content-disposition'),null);}assert.deepEqual(f.state(),before);assert.equal(f.app.db.prepare('SELECT total_changes() n').get().n,changes);
+ }
 });

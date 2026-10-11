@@ -97,3 +97,10 @@ The manual **Report diagnostics** workflow runs the four compact report suites d
 ## 重跑前保留舊證據
 
 部分舊測試使用固定QA目錄，為保護既有產物會在重跑時拒絕覆寫。完整重跑前，先停止本輪擁有的測試程序，逐檔記錄並核對舊 outputs 的 SHA256，再將它完整移到專案以外自己控制的私人封存目錄；重新使用乾淨 outputs 執行原命令。保存原結果、原生退出碼與新批次來源雜湊，不刪除舊證據、不關閉守衛，也不把啟動前的保護拒絕說成產品斷言通過。公開CI每個作業從新clone取得乾淨目錄。
+
+
+## 0.80 接續補齊的驗收
+
+人工部分回應及群組逐機構有效帳號守門需在整合來源執行程式、HTTP及桌機／手機browser。原部分金額accepted仍拒絕；新增partial具精確範圍與必填說明，部分不能closed、v1舊匯出不變、v2差額可核對、累計取代不重加、過時／撤權重送不寫入。選取的其他機構被停用但仍保留admin membership時，完整總覽／明細／CSV／列印拒絕，壞head閉鎖且GET零寫入；明確復職後才可重查。
+
+完整公開回歸由同提交的Homecare checks核對兩版Node及所有配置runtime；結果取實際logs與native results，不挪用0.79完整回歸數字。既有原始失敗、fixture修正、安裝缺依賴及舊輸出守衛紀錄皆保留。個案／帳單及十三表schema、原歷程、私人data／binding不由測試變更；測試只用合成隔離資料。

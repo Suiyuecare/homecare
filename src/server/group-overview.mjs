@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { isDeepStrictEqual } from 'node:util';
 import { entitySpan } from './shift-span.mjs';
+import { accountMembershipActive } from './account-administration.mjs';
 
 export const GROUP_OVERVIEW_MODE = 'authorized-organization-start-date-counts-v1';
 export const GROUP_OVERVIEW_NOTICE = '各機構目前保存紀錄的筆數；依開始日歸屬，跨機構同一人會各計一次，不代表去重人數、收入、工時或正式申報。';
@@ -23,8 +24,9 @@ const invalid = fail => fail(422,'GROUP_QUERY_INVALID','請明確選取授權機
 const cap = (value,fail) => { if(Buffer.byteLength(typeof value==='string'?value:JSON.stringify(value),'utf8')>2*1024*1024)fail(413,'GROUP_OUTPUT_TOO_LARGE','完整營運概覽超過2MiB，請縮小機構選取後重查；不會截斷資料。');return value; };
 
 export function guardGroupOverview(db,ctx,orgIds,fail) {
-  if(ctx?.role!=='admin'||!ref(ctx.orgId)||!ref(ctx.user?.id)||db.prepare('SELECT role FROM memberships WHERE org_id=? AND user_id=?').get(ctx.orgId,ctx.user.id)?.role!=='admin')fail(403,'ROLE_FORBIDDEN','僅目前機構管理者可查詢自己已獲管理者授權的機構。');
-  if(orgIds){if(!dense(orgIds,10,1)||orgIds.some(id=>!ref(id)))invalid(fail);for(const orgId of orgIds)if(db.prepare('SELECT role FROM memberships WHERE org_id=? AND user_id=?').get(orgId,ctx.user.id)?.role!=='admin')fail(403,'ROLE_FORBIDDEN','有選取機構的管理者授權已失效，請重新選取；不會返回部分機構資料。');}
+  const activeAdmin = orgId => db.prepare('SELECT role FROM memberships WHERE org_id=? AND user_id=?').get(orgId,ctx.user.id)?.role==='admin' && accountMembershipActive(db,orgId,ctx.user.id);
+  if(ctx?.role!=='admin'||!ref(ctx.orgId)||!ref(ctx.user?.id)||!activeAdmin(ctx.orgId))fail(403,'ROLE_FORBIDDEN','僅目前機構有效管理者可查詢自己已獲管理者授權的機構。');
+  if(orgIds){if(!dense(orgIds,10,1)||orgIds.some(id=>!ref(id)))invalid(fail);for(const orgId of orgIds)if(!activeAdmin(orgId))fail(403,'ROLE_FORBIDDEN','有選取機構的管理者授權已失效，請重新選取；不會返回部分機構資料。');}
 }
 export function groupOverviewQuery(params,fail,detail=false) {
   const allowed = detail?['organizationId','date','metric','fingerprint','page']:['organizationId','date'];

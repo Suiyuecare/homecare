@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0.79.0",
+  "version": "0.80.0",
   "status": "local-slices-accepted-formal-system-pending",
   "purpose": "public-project-roadmap",
   "notice": "獨立本機測試系統，使用合成資料；本文件不包含原平台盤點、私人開通或完整開發追溯，亦不宣稱全部功能等價或正式部署完成。",
@@ -223,10 +223,12 @@
     {
       "id": "CP05",
       "summary": "正式核銷、退件、部分核付與介接",
-      "localStatus": "new-formal-workflow-not-implemented",
+      "localStatus": "manual-partial-slice-implemented-exact-head-acceptance-required",
       "formalStatus": "claim-format-response-and-test-adapter-required",
       "scope": "docs/COMPLETION_ACCEPTANCE_SCOPE.md",
-      "existingLocalToolsPreserved": true
+      "existingLocalToolsPreserved": true,
+      "localScope": "docs/CLAIM_BATCHES_SCOPE.md",
+      "formalWorkflowImplemented": false
     },
     {
       "id": "CP06",
@@ -254,7 +256,7 @@
     }
   ],
   "completionPackages": {
-    "version": "0.79.0",
+    "version": "0.80.0",
     "status": "local-slices-accepted-formal-workflows-pending",
     "plan": "docs/COMPLETION_EXECUTION_PLAN.md",
     "productionDeployed": false,
@@ -290,10 +292,12 @@
       {
         "id": "CP05",
         "summary": "正式核銷、退件、部分核付與介接",
-        "localStatus": "new-formal-workflow-not-implemented",
+        "localStatus": "accepted-local-partial-slice-formal-workflow-pending",
         "formalStatus": "claim-format-response-and-test-adapter-required",
         "scope": "docs/COMPLETION_ACCEPTANCE_SCOPE.md",
-        "existingLocalToolsPreserved": true
+        "existingLocalToolsPreserved": true,
+        "localScope": "docs/CLAIM_BATCHES_SCOPE.md",
+        "formalWorkflowImplemented": false
       },
       {
         "id": "CP06",
@@ -368,5 +372,34 @@
     "actuallyViewedPNGs": 57,
     "publicRelease": "same-commit-ci-required",
     "metadataUpdatesAfterExecutableVerification": true
+  },
+  "completionExtension": {
+    "version": "0.80.0",
+    "status": "local-focused-accepted-same-head-ci-required",
+    "slices": [
+      "manual-cumulative-partial-response-and-unconfirmed-remainder",
+      "selected-organization-active-account-guard"
+    ],
+    "fullRegressionConfiguration": "premium-ui.json",
+    "sourceEvidence": "same-head-GitHub-CI",
+    "legacyFullRegressionPreserved": "fullRegression version0.79.0",
+    "productionDeployed": false,
+    "entireFormalSystemComplete": false,
+    "backgroundScheduling": "stopped_by_user",
+    "localFocused": {
+      "syntheticOnly": true,
+      "relatedUnitFiles": 7,
+      "relatedTestsEachNode": 71,
+      "syntaxModulesEachNode": 538,
+      "claimLegacyBrowserGates": 9,
+      "partialBrowserGates": 11,
+      "groupOverviewBrowserGates": 13,
+      "partialOriginalPngActuallyReviewed": 9,
+      "claimPublicInputsUnchanged": 679,
+      "claimExecutableInputsUnchanged": 551,
+      "groupScopedEvidenceOnly": true,
+      "originalFailuresPreserved": true,
+      "sameHeadFullCIRequired": true
+    }
   }
 }

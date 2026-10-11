@@ -689,3 +689,12 @@ The current application supports Node.js 22.16+ within 22.x and Node.js 24.x. SQ
 Portal十三表加密還原是零參數、合成資料、自有暫存路徑的 CLI，不提供正式還原HTTP接口；安全狀態先清 session、停 binding、換 key，再明確重核 synthetic grant。見 SYNTHETIC_ENCRYPTED_PORTAL_RECOVERY_SCOPE.md。
 
 既有設定 POST `/api/users`、`/api/organizations`、`/api/demo/seed` 在 body 讀完、交易內及快取回執接受前重新驗目前身份、機構與 CSRF；保存列與不可變建立稽核需符合回執，舊內容已變更時回傳 `409 SETTINGS_RECEIPT_STALE`。畫面三個動作都使用內容對應的冪等鍵，改值換鍵，未知 2xx 保留輸入。帳號／機構回覆提供來源機構、實際建立者與建立時間；示範資料的 `requestedBy` 僅表示本次請求人。新增機構後精確確認完整 session 才更新選單，原機構保持選取。詳見 SETTINGS_CREATE_SAFETY_SCOPE.md；舊未帶鍵呼叫與 Portal 模式禁止本機開通的規則保持。
+
+
+## 0.80 人工部分回應與群組權限修正
+
+`claim-batches` 的每筆回應仍是五欄，新增 `status:partial`。金額是單筆凍結來源的人工累計已核事實，須為安全整數分且大於0、小於原額；回應依據及說明必填。七欄摘要不變：部分已核額納入 acceptedAmountCents、差額納入 pendingAmountCents。partial或pending均不能closed。原帳單、來源及金額快照不改寫；每次訂正保存歷程。
+
+同一人工回應PATCH可帶Idempotency-Key，同payload同key重送回原版；每次仍檢查目前權限與來源可見，後續版本已變更則409 CLAIM_RECEIPT_STALE，不能回傳過時成功。現在快照含partial時JSON/CSV格式標記為local-homecare-claim-v2，逐筆附unconfirmedAmountCents；沒有partial仍維持原v1。詳見docs/CLAIM_BATCHES_SCOPE.md，不將人工金額當正式核付、收款或退款。
+
+群組總覽／明細／CSV對目前與每個選取機構確認membership管理者角色及有效account lifecycle，任一停用或失效則整個查詢拒絕。未知／損壞lifecycle head沿既有ACCOUNT_STATE_INVALID拒絕；列印仍先重新讀取同一完整總覽。正式跨機構主身分去重、分享及遮罩規則沒有由此新增。
