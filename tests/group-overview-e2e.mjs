@@ -18,8 +18,8 @@ const qa = path.join(repository, 'outputs/software/group-overview-qa'); await mk
 const output = await mkdtemp(path.join(qa, 'browser-attempt-')); console.log('EVIDENCE ' + output);
 const cache = await readdir(path.join(os.homedir(), 'Library/Caches/ms-playwright')).catch(() => []);
 const executablePath = [process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH, chromium.executablePath(), ...cache.filter(n => /^chromium-/.test(n)).sort().reverse().map(n => path.join(os.homedir(), 'Library/Caches/ms-playwright', n, 'chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing')), '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'].find(p => p && existsSync(p));
-const python = path.join(os.homedir(), '.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3');
-const poppler = path.join(os.homedir(), '.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override/pdftoppm');
+const python = process.env.HOME_CARE_QA_PYTHON || 'python3';
+const poppler = process.env.HOME_CARE_QA_PDFTOPPM || 'pdftoppm';
 const sourceFiles = ['src/server/index.mjs','src/server/model.mjs','src/server/group-overview.mjs','src/server/shift-span.mjs','public/data/shift-span.js','public/data/group-overview-view.js','public/modules/group-overview.js','public/app.js','public/modules/admin.js','public/ui.js','public/styles.css'];
 const hashes = async () => Object.fromEntries(await Promise.all(sourceFiles.map(async p => [p, createHash('sha256').update(await readFile(path.join(runtime, p))).digest('hex')])));
 const beforeSHA = await hashes(), ownTestSHA = createHash('sha256').update(await readFile(fileURLToPath(import.meta.url))).digest('hex');

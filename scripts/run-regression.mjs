@@ -50,6 +50,14 @@ async function main() {
     results.push({ name, file, ...result, elapsedMs: Date.now() - started, log });
     await writeFile(path.join(output, 'results.json'), JSON.stringify({ shard, results }, null, 2));
     console.log(`${result.exitCode === 0 ? 'PASS' : 'FAIL'} ${name}: exit=${result.exitCode} signal=${result.signal || 'none'}`);
+    if (result.exitCode !== 0 && name !== 'syntheticEncryptedBackup') {
+      // Closed synthetic tests only; disable workflow commands around failure text.
+      const diagnosticToken = randomBytes(12).toString('hex');
+      const tail = (await readFile(log, 'utf8')).slice(-12000);
+      console.log('::stop-commands::' + diagnosticToken);
+      console.error('Synthetic failure output (' + name + ', last 12000 characters):\n' + tail);
+      console.log('::' + diagnosticToken + '::');
+    }
   }
   console.log('Native regression evidence: ' + output);
   if (results.some(x => x.exitCode !== 0)) process.exitCode = 1;

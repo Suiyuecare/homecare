@@ -73,6 +73,10 @@ function unknown(body,allowed){if(!body||Array.isArray(body)||typeof body!=='obj
 function pageParams(url){const page=Number(url.searchParams.get('page')||1),pageSize=Number(url.searchParams.get('pageSize')||25);if(!Number.isSafeInteger(page)||page<1||!Number.isSafeInteger(pageSize)||pageSize<1||pageSize>100)fail(422,'PAGINATION','page須為正整數，pageSize介於1至100');return{page,pageSize};}
 const paginate=(items,{page,pageSize})=>({items:items.slice((page-1)*pageSize,page*pageSize),total:items.length,page,pageSize});
 export function createApp({dbPath,host='127.0.0.1',port=Number(process.env.PORT||4310),portalConfig=null}={}){
+ // Check SQLite support in memory before creating or opening persistent data.
+ const runtimeProbe=new DatabaseSync(':memory:');let supportsTransactions;
+ try{supportsTransactions=typeof runtimeProbe.isTransaction==='boolean';}finally{runtimeProbe.close();}
+ if(!supportsTransactions){const error=new Error('Unsupported SQLite runtime: use Node.js 22.16+ (22.x) or 24.x. Transaction status support is required.');error.code='HOME_CARE_RUNTIME_UNSUPPORTED';throw error;}
  if(!Number.isInteger(port)||port<0||port>65535)throw new Error('Invalid port');
  const portal=normalizePortalConfig(portalConfig);
  const dataDir=process.env.DATA_DIR||path.join(root,'data');const databasePath=dbPath||path.join(dataDir,'care.sqlite');

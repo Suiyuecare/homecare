@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0.78.0",
+  "version": "0.78.1",
   "status": "local-partial",
   "purpose": "public-project-roadmap",
   "notice": "獨立本機測試系統，使用合成資料；本文件不包含原平台盤點、私人開通或完整開發追溯，亦不宣稱全部功能等價或正式部署完成。",
@@ -220,7 +220,7 @@
   "evidencePolicy": "本機能力已有合成驗收；公開副本、CI、部署與 UAT 各自以實際來源、命令、退出碼及可取得產物驗收。",
   "pendingLocalCapabilities": [],
   "fullRegression": {
-    "version": "0.78.0",
+    "version": "0.78.1",
     "configuredCommands": 90,
     "status": "local-verified",
     "ci": "two-node-versions-and-six-browser-shards",

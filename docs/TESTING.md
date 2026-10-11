@@ -1,6 +1,6 @@
 # 開發與合成測試
 
-本專案的應用程式使用 Node.js 內建模組與 SQLite。Node.js 最低版本為 22.13.0；本機既有驗收使用 22.13.0 與 24。請使用套件管理器 pnpm 11.21.0，並依公開鎖檔安裝固定版本的開發依賴；Playwright 固定為 1.62.1。
+本專案的應用程式使用 Node.js 內建模組與 SQLite。應用程式支援 Node.js 22.16+（22.x）與24.x；原子22.13的更早子集測試不代表目前完整系統相容。請使用套件管理器 pnpm 11.21.0，並依公開鎖檔安裝固定版本的開發依賴；Playwright 固定為 1.62.1。
 
 ## 新取得原始碼
 
@@ -83,6 +83,8 @@ Service item current saved details (0.62): `pnpm test:e2e:service-item-record-de
 
 `pnpm test:regression` 執行 premium-ui.json 除 check／unit 外全部配置，包含合成加密還原；一次性口令由程序生成後經 stdin 送給工廠自有演練，無 argv／環境秘密。check／unit 仍分别用 pnpm check／pnpm test。
 
-CI 使用 Node22.13與24各跑完整程式測試，以六組覆蓋全部瀏覽器／還原配置，包含 PDF 所需 Python／Poppler 與中文字型。單一 shard 失敗不略過同組其餘測試。結果及 raw log 不公開為 workflow artifacts。
+CI 使用 Node22.16與24各跑完整程式測試，以六組覆蓋全部瀏覽器／還原配置，包含 PDF 所需 Python／Poppler 與中文字型。單一 shard 失敗不略過同組其餘測試。結果及 raw log 不公開為 workflow artifacts。
 
 新回歸 `test:e2e:feedback` 包含三種按鈕、桌機與390px、一般／減少動態、通知下方真點擊及鍵盤、紙本白底及螢幕色保持。權限窗口以真 HTTP 在 body await 撤權／退籍／登出，驗證拒絕與十一表、六trigger、total_changes零後續寫入。
+
+The manual **Report diagnostics** workflow runs the four compact report suites directly with the same Linux PDF dependencies, so a failing assertion appears in its native job log. The normal push workflow still runs all configured commands. Synthetic encrypted rehearsal logs are excluded from failure-tail diagnostics.

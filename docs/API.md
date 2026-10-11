@@ -672,3 +672,7 @@ GET /api/financial-outputs/(billing|payroll)/id-:encodedId?version=N回JSON；�
 ## 0.78 寫入時重新確認授權
 
 私有寫入在接收完整請求內容後，重新確認session、機構、角色、本人員工綁定、CSRF與Origin。過程中失去或切換權限的請求拒絕401／403，且不寫入紀錄、歷程、核閱快照或冪等表；正常寫入及同鍵重試沿既有契約。登入、初始設定、公開問卷與Portal換票沿各自原有守衛。
+
+## 0.78.1 SQLite runtime requirement
+
+The current application supports Node.js 22.16+ within 22.x and Node.js 24.x. SQLite `database.isTransaction` is required for the existing atomic write guards. Startup probes only an in-memory database and rejects unsupported runtimes before persistent directory or database creation. Historical 22.13 subset results above are retained as history and do not establish compatibility for the current full application. See [the official Node.js 22.16 SQLite API](https://nodejs.org/download/release/v22.16.0/docs/api/sqlite.html#databaseistransaction).

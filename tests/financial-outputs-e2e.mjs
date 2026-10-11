@@ -16,8 +16,8 @@ const qa = path.join(root, 'outputs/software/financial-outputs-qa'); await mkdir
 const output = await mkdtemp(path.join(qa, 'browser-attempt-')); console.log('EVIDENCE ' + output);
 const cached = await readdir(path.join(os.homedir(), 'Library/Caches/ms-playwright')).catch(() => []);
 const executablePath = [process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH, chromium.executablePath(), ...cached.filter(n => /^chromium-/.test(n)).sort().reverse().map(n => path.join(os.homedir(), 'Library/Caches/ms-playwright', n, 'chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing')), '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'].find(p => p && existsSync(p));
-const poppler = process.env.FINANCIAL_OUTPUT_PDFTOPPM || path.join(os.homedir(), '.cache/codex-runtimes/codex-primary-runtime/dependencies/bin/override/pdftoppm');
-const python = process.env.FINANCIAL_OUTPUT_PDF_PYTHON || path.join(os.homedir(), '.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3');
+const poppler = process.env.FINANCIAL_OUTPUT_PDFTOPPM || process.env.HOME_CARE_QA_PDFTOPPM || 'pdftoppm';
+const python = process.env.FINANCIAL_OUTPUT_PDF_PYTHON || process.env.HOME_CARE_QA_PYTHON || 'python3';
 const app = createApp({ dbPath: ':memory:', port: 0 }), checks = [], screenshots = [], contexts = [], errors = [], trace = [], downloads = [], pdfEvidence = [], fixtureMutations = [];
 const sourceFiles = ['src/server/financial-outputs.mjs','src/server/billing-documents.mjs','src/server/payroll-statements.mjs','src/server/model.mjs','src/server/index.mjs','public/data/financial-output-editor.js','public/data/billing-document-editor.js','public/data/payroll-statement-editor.js','public/data/service-item-editor.js','public/modules/financial-outputs.js','public/modules/billing-documents.js','public/modules/payroll-statements.js','public/app.js','public/modules/admin.js','public/ui.js','public/styles.css','tests/financial-outputs-e2e.mjs'];
 const sourceHash = async () => Object.fromEntries(await Promise.all(sourceFiles.map(async p => [p, createHash('sha256').update(await readFile(path.join(root,p))).digest('hex')])));

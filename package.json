@@ -1,10 +1,10 @@
 {
   "name": "suiyue-home-care",
-  "version": "0.78.0",
+  "version": "0.78.1",
   "private": true,
   "type": "module",
   "engines": {
-    "node": ">=22.13.0"
+    "node": "^22.16.0 || ^24.0.0"
   },
   "scripts": {
     "start": "node --env-file-if-exists=.env.portal src/server/index.mjs",
