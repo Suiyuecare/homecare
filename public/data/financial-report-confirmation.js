@@ -1,3 +1,5 @@
+import { assertSpanData, CALENDAR_SPAN_MODE } from './shift-span-editor.js';
+import { calendarDay } from './shift-span.js';
 // Confirms the existing saved-snapshot DTO without repairing data or calculating payroll.
 const NOTE = '試算、未核定規則。僅計入已核閱服務，以核閱時保存的價格及時薪快照計算；未處理補助、自付額、加班、稅費或正式薪資/核銷規則，不可作正式申報。示範資料與價格均為合成測試值。';
 const SCHEMAS = {
@@ -51,5 +53,28 @@ export function confirmFinancialReport(kind, result, month) {
   }
   if (amount !== BigInt(result.totals.amountCents)
       || (kind === 'payroll' && minutes !== BigInt(result.totals.minutes))) reject();
+  return result;
+}
+
+// Explicit full-date view only. Legacy confirmation above retains its original DTO and literal prefix semantics.
+export function confirmSpanFinancialReport(kind, result, month) {
+  try { assertSpanData(result); } catch { reject(); }
+  const schema = typeof kind === 'string' && Object.hasOwn(SCHEMAS, kind) ? SCHEMAS[kind] : null;
+  if (!schema || !exactKeys(result, ['title', 'columns', 'rows', 'totals', 'note', 'spanMode']) || result.spanMode !== CALENDAR_SPAN_MODE
+    || !Array.isArray(result.columns) || !Array.isArray(result.rows)) reject();
+  if (kind === 'payroll') {
+    const { spanMode, ...legacy } = result; confirmFinancialReport(kind, legacy, month); return result;
+  }
+  const expected = [...schema.columns.slice(0, 1), ['actualEndDate', '來源實際結束日期'], ...schema.columns.slice(1)];
+  if (result.columns.length !== expected.length || !expected.every(([key, label], i) => exactKeys(result.columns[i], ['key', 'label'])
+    && result.columns[i].key === key && result.columns[i].label === label)) reject();
+  const keys = expected.map(([key]) => key), rows = [];
+  for (const row of result.rows) {
+    if (!exactKeys(row, keys) || typeof row.date !== 'string' || typeof row.actualEndDate !== 'string') reject();
+    // Same text may be an old imported date, preserved under the established literal month rule.
+    if (row.actualEndDate !== row.date) { try { if (calendarDay(row.actualEndDate) !== calendarDay(row.date) + 1) reject(); } catch { reject(); } }
+    rows.push(Object.fromEntries(schema.columns.map(([key]) => [key, row[key]])));
+  }
+  confirmFinancialReport(kind, { title: result.title, columns: schema.columns.map(([key, label]) => ({key, label})), rows, totals: result.totals, note: result.note }, month);
   return result;
 }

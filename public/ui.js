@@ -59,13 +59,18 @@ export function formatFileSize(bytes) {
   if (bytes < 1024) return `${bytes} B`;
   return `${new Intl.NumberFormat('zh-TW', { maximumFractionDigits: 2 }).format(bytes / (bytes < 1024 * 1024 ? 1024 : 1024 * 1024))} ${bytes < 1024 * 1024 ? 'KiB' : 'MiB'}`;
 }
-function pickedFileError(file, { accept = ATTACHMENT_FILE_ACCEPT, maxFileBytes = MAX_ATTACHMENT_FILE_BYTES } = {}) {
+function pickedFileError(file, { accept = ATTACHMENT_FILE_ACCEPT, maxFileBytes = MAX_ATTACHMENT_FILE_BYTES, filePolicy = 'attachment' } = {}) {
   if (!file) return null;
   if (!file.size) return '不能上傳空白檔案，請重新選檔。';
   if (file.size > maxFileBytes) return `檔案超過 ${formatFileSize(maxFileBytes)}，請重新選檔。`;
   const name = file.name.trim(), extension = name.split('.').at(-1).toLowerCase();
   if (!name || name.length > 180 || /[\x00-\x1f\x7f/\\]/.test(name)) return '檔名須為 1 至 180 字，且不能包含路徑或控制字元。';
   const allowed = accept.split(',').map(x => x.trim().toLowerCase());
+  if (filePolicy === 'local-import-csv') {
+    if (extension !== 'csv' || !allowed.includes('.csv')) return '請選擇 CSV 檔案。';
+    if (file.type && !['text/csv','application/csv','text/plain','application/vnd.ms-excel'].includes(file.type)) return 'CSV檔案格式無法確認，請重新選檔。';
+    return null;
+  }
   if (!attachmentTypes[extension] || !allowed.includes(`.${extension}`)) return '請選擇 PDF、PNG 或 JPEG 檔案。';
   if (file.type && file.type !== attachmentTypes[extension]) return '檔案格式與副檔名不一致，請重新選檔。';
   return null;
@@ -269,7 +274,21 @@ function createDialog(title) {
   const dialog = el('dialog', { class: 'app-dialog', 'aria-labelledby': headingId });
   const heading = el('div', { class: 'dialog-header' }, el('h2', { id: headingId }, title));
   dialog.append(heading); document.body.append(dialog);
-  dialog.addEventListener('close', () => { dialog.remove(); if (trigger?.isConnected) trigger.focus(); else document.querySelector('main h1')?.focus(); }, { once: true });
+  dialog.addEventListener('close', () => {
+    dialog.remove();
+    const parent = [...document.querySelectorAll('dialog[open]')].at(-1);
+    const available = node => node?.isConnected && node !== document.body && node.getClientRects().length
+      && !node.matches(':disabled') && !node.closest('[hidden],[inert],[aria-hidden="true"]')
+      && (!parent || parent.contains(node));
+    if (available(trigger)) trigger.focus();
+    // A submitting parent form temporarily disables its trigger before opening
+    // confirmation. Return to its available controls instead of leaving focus
+    // on the page behind the still-open modal.
+    if (parent && !parent.contains(document.activeElement)) {
+      const target = [...parent.querySelectorAll('button,input,select,textarea,a[href],[tabindex]')].find(available) || parent;
+      target.focus();
+    } else if (!parent && !available(trigger)) document.querySelector('main h1')?.focus();
+  }, { once: true });
   return dialog;
 }
 export function openDetails({ title, load, wide = false, printable = false, isCurrent = () => true, loadingText = '正在讀取歷程…', readAcknowledgement, guardedRead = false }) {
@@ -402,10 +421,11 @@ export function confirmAction({ title, message, confirmLabel = '確認', danger 
     }
   });
 }
-export function createForm({ fields, initial = {}, onSubmit, onChange, submitLabel = '儲存', onCancel, cancelLabel = '取消', onPreview, previewLabel = '預覽', lockDuringSubmit = false }) {
+export function createForm({ fields, initial = {}, onSubmit, onChange, submitLabel = '儲存', onCancel, cancelLabel = '取消', onPreview, previewLabel = '預覽', previewInstruction = '請先預覽，確認日期與衝突後再建立。', previewRequiredMessage = '請先重新預覽並處理衝突，再建立全部班次。', lockDuringSubmit = false }) {
   const form = el('form', { noValidate: true, class: 'app-form' });
   const summary = el('div', { class: 'form-summary', role: 'alert', hidden: true });
-  const grid = el('div', { class: 'form-grid' }); const controls = new Map(); const errors = new Map(); const descriptors = new Map();
+  const grid = el('div', { class: 'form-grid' }); const controls = new Map(); const errors = new Map(); const descriptors = new Map(); const groups = new Map(); const hiddenControls = new Map();
+  let fieldOwner = grid;
   let busy = false, dirty = false, phase = null, previewReady = false, previewGeneration = 0, previewController, previewSignature;
   let invalidatePreview = () => {};
   const values = () => Object.fromEntries(fields.map(f => {
@@ -437,7 +457,27 @@ export function createForm({ fields, initial = {}, onSubmit, onChange, submitLab
       c.replaceChildren(...options.map(o => el('label', { class: 'choice-option' }, el('input', { type: 'checkbox', 'data-choice-value': o.value }), el('span', {}, o.label))));
     } else c.replaceChildren(el('option', { value: '' }, f.placeholder || '請選擇'), ...options.map(o => el('option', { value: o.value }, o.label)));
   };
-  const helpers = { setOptions(name, options) { const f = descriptors.get(name); if (f && ['select', 'services', 'checkbox-group'].includes(f.type)) { f.options = options; fillOptions(f, controls.get(name), options); invalidatePreview(); } }, setValue(name, value) { setValue(name, value); invalidatePreview(); }, setDisabled(name, disabled) { const control = controls.get(name), descriptor = descriptors.get(name); if (control && descriptor) setControlDisabled(descriptor, control, disabled); } };
+  const restoreHiddenControls = name => { for (const [item, disabled] of hiddenControls.get(name) || []) item.disabled = disabled; };
+  const captureHiddenControls = name => {
+    const group = groups.get(name), control = controls.get(name);
+    const descendants = [...new Set([control, ...group.querySelectorAll('input,select,textarea,button')])];
+    hiddenControls.set(name, descendants.map(item => [item, Boolean(item.disabled)]));
+    for (const item of descendants) item.disabled = true;
+  };
+  const setHidden = (name, hidden) => {
+    const group = groups.get(name), control = controls.get(name); if (!group || !control || busy) return;
+    hidden = Boolean(hidden); if (group.hidden === hidden) return;
+    group.hidden = hidden;
+    if (hidden) {
+      captureHiddenControls(name);
+      errors.get(name).hidden = true; control.removeAttribute('aria-invalid');
+    } else {
+      restoreHiddenControls(name);
+      hiddenControls.delete(name);
+    }
+    invalidatePreview();
+  };
+  const helpers = { setOptions(name, options) { const f = descriptors.get(name); if (f && ['select', 'services', 'checkbox-group'].includes(f.type)) { const hidden=Boolean(groups.get(name)?.hidden); if(hidden)restoreHiddenControls(name); f.options = options; fillOptions(f, controls.get(name), options); if(hidden)captureHiddenControls(name); invalidatePreview(); } }, setValue(name, value) { setValue(name, value); invalidatePreview(); }, setDisabled(name, disabled) { const control = controls.get(name), descriptor = descriptors.get(name); if (control && descriptor) { const hidden=Boolean(groups.get(name)?.hidden); if(hidden)restoreHiddenControls(name); setControlDisabled(descriptor, control, disabled); if(hidden)captureHiddenControls(name); } }, setHidden };
   for (const field of fields) {
     const f = { ...field }; descriptors.set(f.name, f); const id = `field-${crypto.randomUUID()}`; const errorId = `${id}-error`; const helpId = `${id}-help`;
     let control;
@@ -460,7 +500,12 @@ export function createForm({ fields, initial = {}, onSubmit, onChange, submitLab
       const reveal = button('顯示密碼', () => { const hidden = control.type === 'password'; control.type = hidden ? 'text' : 'password'; reveal.textContent = hidden ? '隱藏密碼' : '顯示密碼'; reveal.setAttribute('aria-pressed', String(hidden)); }, { variant: 'ghost', class: 'btn btn-ghost password-toggle', 'aria-pressed': 'false' });
       group.append(reveal);
     }
-    grid.append(group);
+    if (typeof f.groupLabel === 'string' && f.groupLabel.trim()) {
+      const headingId = `form-group-${crypto.randomUUID()}`;
+      fieldOwner = el('div', { class: 'form-grid' });
+      grid.append(el('section', { class: 'field-wide', 'aria-labelledby': headingId }, el('h3', { id: headingId }, f.groupLabel), fieldOwner));
+    }
+    groups.set(f.name, group); fieldOwner.append(group);
     let fileInfo, clearFile;
     const change = () => {
       dirty = true; errors.get(f.name).hidden = true; control.removeAttribute('aria-invalid'); invalidatePreview();
@@ -481,8 +526,9 @@ export function createForm({ fields, initial = {}, onSubmit, onChange, submitLab
     }
     control.addEventListener('input', change); control.addEventListener('change', change);
   }
+  for (const f of fields) if (f.hidden) setHidden(f.name, true);
   const submit = el('button', { type: 'submit', class: 'btn btn-primary' }, submitLabel);
-  const previewRegion = onPreview ? el('section', { class: 'form-preview', 'aria-label': `${previewLabel}結果`, 'aria-live': 'polite', tabindex: '-1' }, el('p', { class: 'notice' }, '請先預覽，確認日期與衝突後再建立。')) : null;
+  const previewRegion = onPreview ? el('section', { class: 'form-preview', 'aria-label': `${previewLabel}結果`, 'aria-live': 'polite', tabindex: '-1' }, el('p', { class: 'notice' }, previewInstruction)) : null;
   let previewButton;
   const footer = el('div', { class: 'dialog-footer' }, onCancel && button(cancelLabel, onCancel, { variant: 'outline' }), onPreview && (previewButton = button(previewLabel, () => preview(), { variant: 'outline' })), submit);
   form.append(summary, grid, ...(previewRegion ? [previewRegion] : []), footer);
@@ -495,7 +541,7 @@ export function createForm({ fields, initial = {}, onSubmit, onChange, submitLab
   const showErrors = messages => {
     let first;
     for (const [name, message] of Object.entries(messages)) {
-      if (errors.has(name)) { errors.get(name).textContent = message; errors.get(name).hidden = false; controls.get(name).setAttribute('aria-invalid', 'true'); first ||= controls.get(name); }
+      if (errors.has(name) && !groups.get(name)?.hidden) { errors.get(name).textContent = message; errors.get(name).hidden = false; controls.get(name).setAttribute('aria-invalid', 'true'); first ||= controls.get(name); }
     }
     summary.textContent = '請修正以下欄位後再儲存。'; summary.hidden = false;
     if (first?.matches('input,select,textarea')) first.focus(); else first?.querySelector('input')?.focus();
@@ -503,6 +549,7 @@ export function createForm({ fields, initial = {}, onSubmit, onChange, submitLab
   const validatedValues = () => {
     const data = values(); const messages = {};
     for (const f of fields) {
+      if (groups.get(f.name)?.hidden) continue;
       if (f.type === 'services' && f.preserveWhenDisabled === true && controls.get(f.name).disabled === true) continue;
       const value = data[f.name];
       if (f.type === 'file' && pickedFileError(value, f)) messages[f.name] = pickedFileError(value, f);
@@ -540,7 +587,7 @@ export function createForm({ fields, initial = {}, onSubmit, onChange, submitLab
   }
   form.addEventListener('submit', async event => {
     event.preventDefault(); if (busy || event.isComposing) return;
-    if (onPreview && !previewReady) { summary.textContent = '請先重新預覽並處理衝突，再建立全部班次。'; summary.hidden = false; return; }
+    if (onPreview && !previewReady) { summary.textContent = previewRequiredMessage; summary.hidden = false; return; }
     const data = validatedValues(); if (!data) return;
     if (onPreview && previewSignature !== JSON.stringify(data)) { invalidatePreview(); summary.textContent = '內容與預覽不一致，請重新預覽。'; summary.hidden = false; return; }
     const lockedControls = onPreview || lockDuringSubmit ? [...form.querySelectorAll('input,select,textarea')].map(control => [control, control.disabled]) : [];
@@ -548,7 +595,7 @@ export function createForm({ fields, initial = {}, onSubmit, onChange, submitLab
     summary.hidden = true; busy = true; phase = 'submit'; submit.disabled = true; submit.setAttribute('aria-busy', 'true'); if (previewButton) previewButton.disabled = true;
     const previousKey = submissionKey;
     submissionKey = form.mutationKey;
-    try { await onSubmit(data); dirty = false; }
+    try { if (await onSubmit(data) !== false) dirty = false; }
     catch (e) { for (const [control, disabled] of lockedControls) control.disabled = disabled; if (e.invalidatePreview) invalidatePreview(e.previewContent); if (e.fields && Object.keys(e.fields).length) showErrors(e.fields); else { summary.textContent = e.message; summary.hidden = false; summary.scrollIntoView({ block: 'nearest' }); } }
     finally { submissionKey = previousKey; for (const [control, disabled] of lockedControls) control.disabled = disabled; busy = false; phase = null; submit.disabled = Boolean(onPreview && !previewReady); submit.removeAttribute('aria-busy'); if (previewButton) previewButton.disabled = false; }
   });
@@ -574,7 +621,11 @@ export function openForm(config) {
       if (guarded && !current()) return;
       dialog.close();
     };
-    const form = createForm({ ...config, lockDuringSubmit: guarded || config.lockDuringSubmit === true, onCancel: close, onSubmit: async data => { guard(); await config.onSubmit(data, guarded ? { signal: controller.signal, isCurrent: current } : undefined); guard(); dialog.close('saved'); resolve(data); } });
+    const form = createForm({ ...config, lockDuringSubmit: guarded || config.lockDuringSubmit === true, onCancel: close, onSubmit: async data => {
+      guard(); const result = await config.onSubmit(data, guarded ? { signal: controller.signal, isCurrent: current } : undefined); guard();
+      if (config.keepOpenOnFalse === true && result === false) return false;
+      dialog.close('saved'); resolve(config.returnSubmitResult === true ? result : data);
+    } });
     const guardUnload = event => { if (form.isDirty()) { event.preventDefault(); event.returnValue = ''; } };
     window.addEventListener('beforeunload', guardUnload);
     const guardBusyEscape = event => { if (current() && form.isBusy() && event.key === 'Escape' && !event.isComposing) event.preventDefault(); };

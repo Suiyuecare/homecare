@@ -1,8 +1,6 @@
 # 本人事件年度檢視（0.55，本機独立契約）
 
-> 公開版本文件：記錄此功能版本的設計與驗收條件，並非目前公開副本已執行的驗收證明。私人盤點與 QA 產物未匯出；現行行為以 API.md 與原始碼為準，正式規則及部署仍須核定。
-
-2026-10-10 凍結。延續0.51本人六欄事件與0.52月份完整閱讀，提供一次取得全年資料的唯讀年度索引。原機構年度曆、例休假、正式出勤與共享／代理規則仍待核定。
+2026-10-10 凍結。延續0.51本人六欄事件與0.52月份完整閱讀，提供一次取得全年資料的唯讀年度索引。本切片屬RM-07本機能力；原180列、九階段、所有原版completed0及已驗收APM CIS／合成Portal權限維持。原機構年度曆、例休假、正式出勤與共享／代理规则仍待核定。
 
 ## 查詢與保存
 
@@ -18,12 +16,12 @@ items按date/startTime/endTime/id字面升冪，非文字時間排序鍵為空�
 
 載入後確認封閉envelope、query echo、org/owner、完整筆數、唯一ID、安全version、日期歸年、q/status、字面排序及兩界限；拒絕未知或截斷結果。全年依12個月份列出完整六欄表格及月筆數，含空月與全年总數；長文字原文完整可讀、異型只顯示既有型別提示、不展開巢狀內文。桌機月份索引按鈕可鍵盤定位至對應heading；390px沿既有樣式隱藏索引但完整12月agenda可讀。事件維護回原清單，沒有新增平行編輯、取消、歷程、匯出、下載或巢狀月份操作。
 
-上一年／下一年／今年及重新讀取；最小0001與最大9999停用越界年度並說明。草稿變更立即撤去舊結果、停用前後年／重讀，明確「查詢年度」才fresh讀取；失敗保留條件可重試，不自動retry。完整ctx user/org/role/employee primitives、outer reference、hash、render/alive與modal連線守門；nested同primitive參考替換保持，outer重建撤除。loaded/pending失效abort清空，晚回應不能復活。Escape／關閉沿shared焦點回復。
+上一年／下一年／今年及重新讀取；最小0001與最大9999停用越界年度並說明。草稿變更立即撤去舊結果、停用前後年／重讀，明確「查詢年度」才fresh讀取；失敗保留條件可重試，不自動retry。完整ctx user/org/role/employee primitives、outer reference、hash、render/alive与modal連線守門；nested同primitive參考替換保持，outer重建撤除。loaded/pending失效abort清空，晚回應不能復活。Escape／關閉沿shared焦點回復。
 
 ## 必要驗收與界限
 
-HTTP確認四角色self、同機構他人／跨機構、未知role先拒、closed query／非GET與壞body、0001／9999／閏年、完整跨12月超25筆、literal排序／q/status、undatedCount、精確1000／2MiB界限及十一表／六trigger／schema／total_changes零寫；原歷程、idempotency、兩附件BLOB、核閱計價快照保護。pure確認年度條件、完整回應異常拒絕、12月分組與原值typed安全展示。
+HTTP確認四角色self、同機構他人／跨機構、未知role先拒、closed query／非GET與壞body、0001／9999／閏年、完整跨12月超25筆、literal排序／q/status、undatedCount、精確1000／2MiB界限及十一表／六trigger／schema／total_changes零寫；原歷程、idempotency、兩附件BLOB、核閱計價快照保護。pure確認年度條件、完整回應異常拒絕、12月分組与原值typed安全展示。
 
-Browser確認空年、跨12月完整查詢、索引鍵盤／焦點、上下年／今年／邊界、變條件撤除、503／不可信200／retry、loaded/pending情境與晚回應、1440／390長文完整及表內捲動。不宣稱所有配置fresh、原生OS popup或人工UAT。
+Browser確認空年、跨12月完整查詢、索引鍵盤／焦點、上下年／今年／邊界、變條件撤除、503／不可信200／retry、loaded/pending情境與晚回應、1440／390长文完整及表内捲動。必要新年度、既有本人CRUD／月份、core、APM CIS及HTTPS合成Portal回歸，完整unit、最低Node22.13相關、source check、strict私人parser與DESIGN lint；每張新圖外部實際視檢後才標本機完成。不宣稱所有配置fresh、原生OS popup或人工UAT。
 
-正式持久主機／HTTPS／Portal發布與本人公司登入維持既有待辦。
+保存所有既有失敗與封存證據；不讀真帳號DB/env/binding/private備份／4310、不動DNS、不部署／購買／正式申報／付款／外部訊息。正式持久主機／HTTPS／Portal發布與本人公司登入維持既有待辦。

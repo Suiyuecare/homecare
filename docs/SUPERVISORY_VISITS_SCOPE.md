@@ -1,12 +1,10 @@
 # 督導訪視保存紀錄查詢（0.48）
 
-> 公開版本文件：記錄此功能版本的設計與驗收條件，並非目前公開副本已執行的驗收證明。私人盤點與 QA 產物未匯出；現行行為以 API.md 與原始碼為準，正式規則及部署仍須核定。
-
 日期：2026-10-10。本機獨立唯讀切片；先沿已接受的 APM CIS／Portal 整合，再补既有 assessment-04 保存紀錄的跨個案查詢。正式主機、HTTPS、Portal發布與本人UAT沿部署交接未完成。
 
 ## 範圍與來源
 
-既有本機 assessment-04 保存 q001…q010 十個固定答案。此頁只供保存內容查詢，不包含正式訪視報表、列印、匯出或外部欄位映射。
+RM-07；原入口 URL-56520498f5f2（/supervisorVisitRecord，P-5D5AFB33／P-DD76C7AB）。既有本機 TEMPLATE-99aab37537a1 的 assessment-04 有 q001…q010 十個固定欄。原 REPORT-cea40c27e384、EXPORT-99aab37537a1 的正式查詢、列印、匯出及完整選項保持 not_started／unverified；不把本機查詢算作原報表完成。
 
 新增 /supervisory-visits「督導訪視查詢」，只讀目前同機構、目前可讀父個案的 assessments 且 templateId 精確等於 assessment-04。填寫仍在原 /assessments；不建立第二套訪視紀錄、表或寫入端點。不判定正式訪視頻率、逾期、資格、評分、核銷；不發外部訊息。
 
@@ -30,8 +28,11 @@ admin.listPage唯一搜尋、25筆分頁、loading／error／retry與context失�
 
 列表只顯示保存string摘要（160字），詳情使用唯一 openDetails({guardedRead:true,wide:true}) 每次 fresh single GET、完整十題與型別tag／目前名稱標示。Escape回焦點、重試、pending／loaded失效沿同owner，完整user/org/role/employeeId/hash/renderVersion primitive guard。版本歷程仍 openRecordHistory('assessments')，原歷史可能不同模板／個案，按既有逐版授權和精確previous顯示；此入口不縮減或改寫歷程。無CSV／print變體，不新CSS／token／dialog／控制器。
 
-## 驗收條件
+## 驗收與追溯
 
 新HTTP及pure測試、完整unit、source check、必要共用list／assessment／history／core／APM CIS與HTTPS Portal browser、strict與DESIGN lint。合成memory fixture只由本次factory建立，setup／login寫入另列；所有查詢／對話框／篩選／失敗測試全十一表與schema及total_changes零寫，核閱快照及BLOB保持。桌機／390px逐圖實際檢視，包含長文字、空／無結果、讀取失敗、malformed2xx、切換context、真request abort。異常預期精確phase／URL／method／status或errorCode／count，不用整entity錯誤白名單；原失敗與raw視檢pending保持。
 
-既有本機 assessment-04 保存 q001…q010 十個固定答案。此頁只供保存內容查詢，不包含正式訪視報表、列印、匯出或外部欄位映射。
+通過必要整合與瀏覽器才標 implemented_verified，本機版本0.48；只將原入口 URL-56520498f5f2 由not_started轉partial／related_only，mappingStatus維持unverified及currentRoutes追加本機路由。其他179目錄、report/export/template狀態、九階段、completedOriginalItems0、既有里程碑／source前綴保持。RM07仍partial。根使用者source先保留精確副本，凍結QA後才同步有權範圍；不存取data／實際env／真binding／私人備份／4310，不修改DNS或發布。
+
+
+本機接受：861程式測試／8必要browser／16新圖，詳verification。原完整對等、CI、人工UAT與正式部署未驗。

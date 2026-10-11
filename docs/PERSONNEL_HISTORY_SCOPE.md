@@ -1,8 +1,6 @@
 # 證照與訓練唯讀版本差異與操作者（0.12）
 
-> 公開版本文件：記錄此功能版本的設計與驗收條件，並非目前公開副本已執行的驗收證明。私人盤點與 QA 產物未匯出；現行行為以 API.md 與原始碼為準，正式規則及部署仍須核定。
-
-原生效日、進修年度、積分、附件、法定資格與排班連動仍partial/unverified或待核定。沿既有record_versions、稽核、證照及訓練寫入規則，不新增還原／更換員工／積分計算。
+本輪接續RM-01及URL-9dd3d8095d82原「證書」入口，獨立本機合成資料切片。原生效日、進修年度、積分、附件、法定資格與排班連動仍partial/unverified或待核定。沿既有record_versions、稽核、證照及訓練寫入規則，不新增還原／更換員工／積分計算。0.7至0.11不可覆寫封存保留。
 
 ## 授權與比較
 
@@ -26,8 +24,10 @@ personnel.js刪除自訂snapshotDetails/showHistory與重複分頁／請求contr
 
 保留既有列表／搜尋／員工及狀態分類／效期／截至日／分頁、新增／編輯／撤銷取消恢復／失敗輸入／寫入重送與原員工管理入口。共用history的user/org/role/employee/hash與呼叫者generation/container guard，已載入與慢讀失效都清空、abort、關閉；晚回應不復活、Escape回復焦點。personnel的alive可補role/employee與container renderVersion，避免同container其他render替換後仍活著；不修改寫入流程、ui.js或CSS。其他未通知client的授權變化仍在下次請求驗權，不宣稱即時推播撤權。
 
-## 驗收條件
+## 驗收與追溯
 
 Node含兩entity真API建立／編輯／撤銷取消／恢復與精確actor、四角色raw/compare／跨機構／inactive與未連結、不可改父項／歷史污染／父項缺失／精確缺版／28版頁界、actor缺失／歧義／錯事件／baseline、完整10表rawState/count/total_changes零寫、CAS／EMPLOYEE_IMMUTABLE／append-only trigger與既有費用薪資／核閱billingSnapshot不變。純差異測試驗八欄、日期／空期限／實際分鐘、元資料排除與來源不修改。
 
 真Chromium含兩頁真UI新增編輯撤銷取消恢復、目前員工改名後歷史日期／分鐘不變、兩入口與居服員自身歷程／財務拒絕、28版分頁／缺版／未知actor或名稱／空歷程、503重試／取消／Escape焦點／已載入及慢讀的hash/org/role/employee/render失效。client role/employee fixture明示只是UI context，真正API權限由登入session另驗；不能把fixture稱伺服器撤權。read區間只GET並逐段完整10表不變，approved快照不重算。1440/390截圖全部逐張view_image後才完成；舊personnel E2E selector只可調整為共用介面語意，不刪除原功能驗收。
+
+root獨立全Node及舊11套browser回歸，三報表若PDF重生沿同artifact envskip與原provenance／marker限制，逐頁view；新personnel歷程無PDF產出。原84/52/28/16目錄/source/status/parity/9階段及0原completed保留，僅原證書頁追加本機證據與獨立localMilestone；0.12另建不可覆寫封存，必要整合／瀏覽器及視覺全過才implemented_verified。

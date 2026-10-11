@@ -1,8 +1,6 @@
 # 個案主檔安全編輯（0.31 獨立本機切片）
 
-> 公開版本文件：記錄此功能版本的設計與驗收條件，並非目前公開副本已執行的驗收證明。私人盤點與 QA 產物未匯出；現行行為以 API.md 與原始碼為準，正式規則及部署仍須核定。
-
-2026-10-09 凍結；cases-edit-safety-v0.31 / 。沿既有 cases CRUD、機構隔離、角色、CAS、POST 冪等、個案版本歷程及個案總表。本輪只使用合成資料，不增加正式 CMS 評分、暫停／結案原因及區間、資格、支付或外部介接規則。
+2026-10-09 凍結；cases-edit-safety-v0.31 / RM-02。沿既有 cases CRUD、機構隔離、角色、CAS、POST 冪等、個案版本歷程及個案總表。本輪只使用合成資料，不增加正式 CMS 評分、暫停／結案原因及區間、資格、支付或外部介接規則。
 
 十四保存欄：name、caseNo、birthDate、gender、phone、address、status、cmsLevel、welfare、supervisorId、primaryCarer、contactName、contactPhone、note。原十三控制項不含 status，保留姓名／案號 text、生日 native date、性別 native select、電話 tel、CMS native number（min1/max8/step1）、督導 native select、注意事項 textarea 及其餘文字。新增固定 active；狀態只由詳情原暫停／結案／恢復服務動作處理。
 
@@ -24,10 +22,10 @@ admin/supervisor 維護；finance 可讀個案／歷程／總表但不能寫；c
 
 驗收含 pure 保存／取代／清空／own confirmation 全矩陣及 meaningful 真 HTTP：十四欄 create、無trim與精確唯一、version-only／可空／原merged422、0000生日、CMS端點、督導原參照、CAS／POST鍵、四角色。真 UI admin新增→sup列表及詳情編輯→暫停→結案→恢復、異型 private keep、所有新送欄與status-only確認、錯誤保留、dirty／native鍵盤／忙碌、1440與390長備註真正末段逐圖驗證。loaded/pending edit/status六context共24與兩真先提交晚回應分列；28版25+3、目前主責督導名稱與原CMS、最新個案總表及個案history/contact/attachment sibling。
 
-十一表唯讀／必要寫入分段完整對帳，雙非空合成 BLOB 四份目前／版本下載、六不可變 trigger、核閱費薪快照及31報表出口保持；關聯紀錄副本另核不因個案編輯／狀態改寫。0新PDF／marker，七既有artifact72指定參照檔只程式核對，不新增人工舊PDF頁驗收。證照附件歷史偶發失敗原因仍未確認，本輪不宣稱修正根因。
+十一表唯讀／必要寫入分段完整對帳，雙非空合成 BLOB 四份目前／版本下載、六不可變 trigger、核閱費薪快照及31報表出口保持；關聯紀錄副本另核不因個案編輯／狀態改寫。0新PDF／marker，七既有artifact72指定參照檔只程式核對，不新增人工舊PDF頁驗收。三十既有browser430個聚合gates沿0.30封存，collector須辨識 leave/certification/training安全切片 new-browser-work，禁止自動重跑。證照附件歷史偶發失敗原因仍未確認，本輪不宣稱修正根因。
 
-原正式附件 needs_contract 不因安全編輯完成；headless OS popup幾何／鍵盤選值、人工UAT、正式規則及原全量功能匹配未宣稱完成。
+基準0.30為181來源、24 prior proof及10505已存copy計數；不覆寫舊封存、不重掃全部舊內容，新186來源與證據逐份封存核SHA。actual4310／PID83631／DB不重啟、seed、清除或寫入；原180目錄列／16模板359題／四来源／九階段／12待核契約／0原completed／localReportKinds9保持，只完成獨立 localMilestone。原正式附件 needs_contract 不因安全編輯完成；headless OS popup幾何／鍵盤選值、人工UAT、正式规则及原全量功能匹配未宣稱完成。
 
-最終候選只讓 guarded openForm／confirmAction 在 current 且 busy 時以具名 document capture keydown 阻止 Escape 預設行為，並在原 once-close 清理移除監聽；非忙碌、原 dirty／native 控制／context abort、角色及保存規則沿原行為。定向合成診斷確認兩表單六錯誤階段、狀態確認六次真 Escape、BODY 焦點、三次 context abort 及關閉後正常 Escape；instrumented 診斷不計入正式16流程或圖片驗收。
+0.31 第二次凍結補充：首次正式瀏覽器前五組通過，第六組在第三次忙碌 Escape 因 Chromium 原生 cancel 事件不可取消而失敗。原始失敗、兩份診斷與未採用的第一候選完整保留。最終候選只讓 guarded openForm／confirmAction 在 current 且 busy 時以具名 document capture keydown 阻止 Escape 預設行為，並在原 once-close 清理移除監聽；非忙碌、原 dirty／native 控制／context abort、角色及保存規則沿原行為。定向合成診斷確認兩表單六錯誤階段、狀態確認六次真 Escape、BODY 焦點、三次 context abort 及關閉後正常 Escape；instrumented 診斷不計入正式16流程或圖片驗收。
 
 修正前的494 Node、127來源、30舊套件430 gates與當時唯讀本機證據均留作追溯。僅核准 ui.js 與此規格補充後，重新凍結53runtime／186來源，正式驗收需使用修正後來源的494 Node、127來源、30舊套件及16新流程、全部指定fresh UI圖片、唯讀本機與最終稽核；不得以修正前通過結果代替。

@@ -1,3 +1,5 @@
+import { spanReportRows, spanReportColumns } from './span-report.mjs';
+import { entitySpan } from './shift-span.mjs';
 import { dateValid, fail, scopedRows, timeMinute } from './model.mjs';
 import { parseReportQuery, validateReportReferences, assertReportExportLimit, safeVersionReader } from './report-query.mjs';
 
@@ -21,7 +23,7 @@ function matchesSearch(leave, employee, query) {
 /** Saved leave remains readable even when its current employee lookup is unavailable. */
 export function readLeaveReport(db, ctx, params, { full = false } = {}) {
   const { filters, page, pageSize } = parseReportQuery(params, {
-    full, statusLabels, statusMessage: '不支援的請假狀態', caseFilter: false, search: true,
+    full, statusLabels, statusMessage: '不支援的請假狀態', caseFilter: false, search: true, span:true,
   });
   const reader = safeVersionReader(db);
   const employees = new Map(scopedRows(reader, ctx, 'employees').map(employee => [employee.id, employee]));
@@ -31,15 +33,16 @@ export function readLeaveReport(db, ctx, params, { full = false } = {}) {
     (!filters.employeeId || leave.employeeId === filters.employeeId) &&
     (!filters.status || leave.status === filters.status) && matchesSearch(leave, employees.get(leave.employeeId), query));
   for (const leave of candidates) if (!dateValid(leave.date)) invalid();
-  const matching = candidates.filter(leave => leave.date >= filters.startDate && leave.date <= filters.endDate);
+  const matching = filters.spanMode ? spanReportRows(db,ctx,'leave-requests',filters).filter(leave=>matchesSearch(leave,employees.get(leave.employeeId),query)) : candidates.filter(leave => leave.date >= filters.startDate && leave.date <= filters.endDate);
+  if(!filters.spanMode&&matching.some(leave=>Object.hasOwn(leave,'endDate')))fail(409,'SPAN_VIEW_REQUIRED','請以完整日期模式讀取含結束日的請假。');
   const projected = matching.map(leave => {
     const start = timeMinute(leave.startTime, leave.date), end = timeMinute(leave.endTime, leave.date);
     if (typeof leave.id !== 'string' || !leave.id || !Number.isSafeInteger(leave.version) || leave.version < 1 ||
         typeof leave.status !== 'string' || !Object.hasOwn(statusLabels, leave.status) ||
-        !Number.isSafeInteger(start) || !Number.isSafeInteger(end) || end <= start) invalid();
+        !Number.isSafeInteger(start) || !Number.isSafeInteger(end) || (!filters.spanMode && end <= start)) invalid();
     const employee = employees.get(leave.employeeId);
     return {
-      leaveId: leave.id, version: leave.version, date: leave.date, employeeId: text(leave.employeeId),
+      leaveId: leave.id, version: leave.version, date: leave.date, employeeId: text(leave.employeeId), ...(filters.spanMode?{endDate:Object.hasOwn(leave,'endDate')?leave.endDate:leave.date}:{}),
       employeeNo: text(employee?.employeeNo), employee: text(employee?.name),
       startTime: leave.startTime, endTime: leave.endTime, type: text(leave.type), reason: text(leave.reason),
       status: leave.status, statusLabel: statusLabels[leave.status],
@@ -59,7 +62,7 @@ export function readLeaveReport(db, ctx, params, { full = false } = {}) {
       employee: filters.employeeId ? selectedName.trim() ? selectedName : '名稱未取得' : '全部可讀員工',
       status: filters.status ? statusLabels[filters.status] : '全部狀態',
     },
-    generatedAt: new Date().toISOString(), columns,
+    generatedAt: new Date().toISOString(), columns:spanReportColumns(columns,'endDate','結束日期',filters),
     rows: full ? projected : projected.slice((page - 1) * pageSize, page * pageSize),
     totals: { count: total }, total, page: full ? 1 : page, pageSize: full ? total : pageSize,
     note: '本機保存請假紀錄，使用目前可讀員工名稱；名稱缺失以「—」呈現。假別與原因保留原文字，尚未核定假額、薪資或正式表單規則，不作法定時數或扣薪推算。',

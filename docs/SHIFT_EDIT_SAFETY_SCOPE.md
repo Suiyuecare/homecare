@@ -1,8 +1,6 @@
 # 單班排程安全編輯（v0.33，本機契約）
 
-> 公開版本文件：記錄此功能版本的設計與驗收條件，並非目前公開副本已執行的驗收證明。私人盤點與 QA 產物未匯出；現行行為以 API.md 與原始碼為準，正式規則及部署仍須核定。
-
-此切片沿目前 v0.32 的既有單班 API、機構／角色授權、不可變版本、計價快照與共同介面。只用合成資料；不是原平台全功能匹配或正式差勤核定。維持 partial/unverified。未增加恢復、手動完成、批次改派、跨夜、假額、資格、額度、工時、支付或外部通知。
+此切片沿目前 v0.32 的既有單班 API、機構／角色授權、不可變版本、計價快照與共同介面。只用合成資料；不是原平台全功能匹配或正式差勤核定。RM-03 維持 partial/unverified。未增加恢復、手動完成、批次改派、跨夜、假額、資格、額度、工时、支付或外部通知。
 
 ## 保存欄位與入口
 
@@ -14,7 +12,7 @@
 
 - 修改及改回原值都不覆寫原保存欄。carePlanId 未變時，同時省略 caseId，不用目前計畫的個案修復原班次；只有新增或明確換至不同可選計畫時，才從 captured plan 的可讀 caseId 派生。API 無 immutable-parent 限制。
 - 編輯 services 全欄私有保持，不將原數量、異型或未知內文投影到控件。實際禁用 quantity 且 aria-disabled 同步，沿 ui.js 已有 preserveWhenDisabled opt-in；選「以本次輸入取代」才啟用。替換是完整 canonical 清單，1至100項、唯一可選 serviceItemId、數量正整數1至10000，無額外鍵、coercion或稀疏清單。控件0表示不選取。保持保留順序、重複、額外鍵、原型別及 own-presence，失效原資料仍交 merged API 拒絕。計畫數量不是班次数量額度。
-- 換計畫不改 services 的保持方式，也不自動覆寫保存清單。只更新「明確取代」時可選服務；新計畫不包含保持服務時，API 原 PLAN_SERVICE 拒絕。create 選計畫變更時沿原清空未保存的服務輸入；edit 重新建置替換選項時只保留目前输入中仍可選的數量，不帶入原保存清單，移除的未保存選項需可見說明。
+- 換計畫不改 services 的保持方式，也不自動覆写保存清單。只更新「明確取代」時可選服務；新計畫不包含保持服務時，API 原 PLAN_SERVICE 拒絕。create 選計畫變更時沿原清空未保存的服務輸入；edit 重新建置替換選項時只保留目前输入中仍可選的數量，不帶入原保存清單，移除的未保存選項需可見說明。
 - 計畫候選維持 active 且目前個案 active，加既有 current 可讀計畫；fixedPlan 新增只該計畫。新增預選 fixedPlan 或第一個合法計畫。員工候選 active 加既有 current 可讀員工。未知／異型 current 不改為第一項。服務候選仍為目前可讀 service-items 與所選計畫服務 ID 的交集，不新增 item.status/date 篩選；停用／失效由 API 拒絕。
 - 不能無損預填的 missing/null/異型/CR/未知關聯/0000日期/ISO時段保持在 DOM 外，以保持／明確取代選擇。只有 note 可明確清空為空文字；note 保留 LF／空白，不 trim，明確新寫至多10000 UTF-16。保持超長原值不截斷。
 - 原生日期只接受可無損表示的0001至9999有效西元日期；原生時間只接受有效HH:mm。不把合法原ISO裁成HH:mm、不轉秒／offset／時區、不以舊字串 timeOrder 推斷原服務時序。所有跨欄、計畫涵蓋、衝突、鎖定仍由原 server merged 驗證決定。
@@ -38,10 +36,10 @@ admin/supervisor可寫；finance原唯讀API且無班表入口；caregiver只自
 
 有意義pure／HTTP／真Chromium測試：九欄七控制項、單欄變更／改回、省case/status、三態note、所有不相容值、ISO/0000私有保持、整services保持與替換、動態計畫交集、同案及跨案改派、超計畫數量仍合法、server時間分鐘／毗鄰與跨夜、員工／個案／approved請假衝突、各狀態紀錄鎖定及真競態、四角色／跨機構／逐版缺口、CAS／冪等／完整ACK、dirty/busy/focus/Escape、三新增入口與loaded/pending完整context、真已提交晚回應。
 
-讀區段核全十一表零寫；必要寫批次對帳total_changes，非shifts主檔與BLOB、六immutable triggers及核閱快照保持；核31既有報表出口及四BLOB下載。32個既有browser套件保留全部原驗收門檻；其中31個腳本保留原bytes，shift-history僅在原數量輸入前追加明確servicesIntent=replace，沿新核定的全欄保持／取代控制方式，保留原12個驗收門檻與全部既有斷言。沒有新PDF／marker，七artifact的72指定已封存參照只作SHA核對，不宣稱重看所有歷史複本。
+讀區段核全十一表零寫；必要寫批次對帳total_changes，非shifts主檔與BLOB、六immutable triggers及核閱快照保持；核31既有報表出口及四BLOB下載。32個既有browser套件保留全部原驗收門檻；其中31個腳本保留原bytes，shift-history僅在原數量輸入前追加明確servicesIntent=replace，沿新核定的全欄保持／取代控制方式，保留原12個驗收門檻與全部既有斷言。新畫面及必要共享流程畫面逐張檢視，root subset不重加。沒有新PDF／marker，七artifact的72指定已封存參照只作SHA核對，不宣稱重看所有歷史複本。
 
-完成必要整合、浏览器、fresh static/design audit與獨立追溯覆核才標implemented_verified；保留每次首次失敗，不自動重試。新後端若有規則問題需獨立範圍判定，不能弱化守門。OS原生popup幾何與headless popup鍵盤選值、人工UAT及正式上線不宣稱已驗。
+完成必要整合、浏览器、fresh static/design audit與獨立追溯覆核才標implemented_verified；保留每次首次失敗，不自動重試。既有4310只做匿名GET／PID／十一表及六trigger唯讀基準與終驗，不restart／seed／登入／寫資料。新後端若有規則問題需獨立範圍判定，不能弱化守門。OS原生popup幾何與headless popup鍵盤選值、人工UAT及正式上線不宣稱已驗。
 
-既有shift-history原數量輸入遇到核定的私有keep禁用控制，修復僅追加明確replace。
+首次瀏覽器失敗保留為未通過證據：新切片的慢lookup測試在已位於同一URL時使用goto而未重新載入，故未發出測試預期的lookup；修復僅對同URL分支明確reload。既有shift-history原數量輸入遇到核定的私有keep禁用控制，修復僅追加明確replace。兩者不修改產品、全19後端、ui.js、CSS或既有验收斷言；只在root明確授權並凍結新來源後執行新的驗證分支，沒有自動重試或覆蓋首次失敗。
 
-後續瀏覽器私有日期fixture改用null，仍核六個原值保持／取代控制、完整ACK與全上下文；這不代表物件日期的月份列表已支援或後端缺陷已修復。物件日期直接merged PATCH的422拒絕另由HTTP案例驗證，正常新增payload仍拒絕非文字日期。原月份列表缺陷列為本切片限制及獨立待辦，不能透過放寬unexpected500或修改正式資料隱藏。
+第二次新瀏覽器驗證因顯式匯入的物件型shift.date觸發原API月份篩選的startsWith型別錯誤而失敗，原失敗及500保留且不得視為通過。後續瀏覽器私有日期fixture改用null，仍核六個原值保持／取代控制、完整ACK與全上下文；這不代表物件日期的月份列表已支援或後端缺陷已修復。物件日期直接merged PATCH的422拒絕另由HTTP案例驗證，正常新增payload仍拒絕非文字日期。原月份列表缺陷列為本切片限制及獨立待辦，不能透過放寬unexpected500或修改正式資料隱藏。

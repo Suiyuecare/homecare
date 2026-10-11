@@ -1,8 +1,6 @@
 # 班表個案／人員篩選 0.42 凍結契約
 
-> 公開版本文件：記錄此功能版本的設計與驗收條件，並非目前公開副本已執行的驗收證明。私人盤點與 QA 產物未匯出；現行行為以 API.md 與原始碼為準，正式規則及部署仍須核定。
-
-2026-10-09。僅新系統本機合成切片；沿 0.41 日期檢視、既有 API 與共用 UI。
+2026-10-09。僅新系統本機合成切片；沿 0.41 日期檢視、既有 API 與共用 UI。原180功能全量等價、RM03 partial、正式權限／支付／薪資／評分／介接均不由此核定。
 
 ## 範圍與唯一 owner
 
@@ -16,7 +14,7 @@ public/modules/shift-calendar.js 為 business adapter；public/data/shift-calend
 
 每頁精確 items/total/page/pageSize 四 key，plain/null-prototype、own enumerable data；dense ordinary array；safe total 0..10000、精確頁碼、100 pageSize、精確本頁筆數、跨頁 total 相同、全域 ID 不重複、最終筆數等於 total。原記錄可有額外欄，但全部 own key 必須是 enumerable data string key；ID／orgId／version 必須是 own primitive 非空字串／目前機構／正 safe integer。拒絕 accessor／symbol／prototype，不呼叫 getter。
 
-只投影 id/orgId/version/number/name/status/selectionName/label：number=caseNo/employeeNo、name/status 只保留 primitive string；缺失或其它型別不 coercion；名稱回顯沿 server name || 固定「未取得個案名稱／未取得服務人員名稱」，原空白與 HTML/CR/LF 保留為文字。label 顯示編號（缺失用「未填編號」）、名稱、狀態與精確 ID，區別同名選項。狀態不明顯示「狀態未確認」。每類完整投影 JSON UTF-8 最多2MiB；此為 option 投影上限，非網路 body 上限。名單無 snapshot token，不宣稱跨頁原子快照；排序／total 未變也不能證明所有中途異動不存在。
+只投影 id/orgId/version/number/name/status/selectionName/label：number=caseNo/employeeNo、name/status 只保留 primitive string；缺失或其它型別不 coercion；名稱回顯沿 server name || 固定「未取得個案名稱／未取得服務人員名稱」，原空白與 HTML/CR/LF 保留為文字。label 顯示編號（缺失用「未填編號」）、名稱、狀態與精確 ID，區別同名選項。狀態不明顯示「狀態未確認」。每類完整投影 JSON UTF-8 最多2MiB；此為 option 投影上限，非網路 body 上限。名单無 snapshot token，不宣稱跨頁原子快照；排序／total 未變也不能證明所有中途異動不存在。
 
 ## 條件與失敗
 
@@ -30,4 +28,4 @@ lookup 任一失敗不顯示部分名單／舊結果；保留五欄條件與精�
 
 ## 驗收
 
-新增 pure、真實 HTTP/integration、browser suite；保留既有0.41 default/no lookup/context suite。涵蓋101+跨頁、同名不同ID、closed/inactive/缺name、完整與空結果、單／雙ID／status、缺失／外機構／getter／重複／改total／超限拒絕、撤權、413縮小恢復、lookup/export取消與晚回應、草稿及精確ID保存。十一表／六 trigger、版本、BLOB、計價快照唯讀保持；setup必要寫獨立對帳。所有 configured premium commands fresh actual，strict/design audit、1440/390px 真圖片與 relevant sibling 驗證完成後才 implemented_verified。原生select鍵盤選值／OS popup、人工UAT、完整WCAG、CI、部署未驗不可宣稱。失敗原始保留、不宣稱 first-pass／自動 retry。
+新增 pure、真實 HTTP/integration、browser suite；保留既有0.41 default/no lookup/context suite。涵蓋101+跨頁、同名不同ID、closed/inactive/缺name、完整與空結果、單／雙ID／status、缺失／外機構／getter／重複／改total／超限拒絕、撤權、413縮小恢復、lookup/export取消与晚回應、草稿及精確ID保存。十一表／六 trigger、版本、BLOB、計價快照唯讀保持；setup必要寫獨立對帳。所有 configured premium commands fresh actual，strict/design audit、1440/390px 真圖片與 relevant sibling 驗證完成後才 implemented_verified。原生select鍵盤選值／OS popup、人工UAT、完整WCAG、CI、部署未驗不可宣稱。只用合成 memory/temp/random-loopback，不存取既有DB／4310／原帳密／真實個資／正式申報付款訊息或部署。失敗原始保留、不宣稱 first-pass／自動 retry。

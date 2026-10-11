@@ -138,7 +138,7 @@ const reportSelect = () => page.getByLabel('報表類型', { exact: true });
 const reportMonth = () => page.getByLabel('報表月份', { exact: true });
 const reportBody = () => page.locator('.report-body');
 const displayReport = async kind => {
-  const waiting = page.waitForResponse(response => { const url = new URL(response.url()); return response.request().method() === 'GET' && url.pathname === '/api/reports/' + kind && url.searchParams.get('month') === fixture.month; });
+  const waiting = page.waitForResponse(response => { const url = new URL(response.url()); return response.request().method() === 'GET' && url.pathname === '/api/reports/' + kind && url.searchParams.get('month') === fixture.month && url.searchParams.get('spanMode') === 'calendar-two-day-v1'; });
   if (await reportSelect().inputValue() !== kind) await reportSelect().selectOption(kind); else await page.getByRole('button', { name: '重新查詢', exact: true }).click();
   const response = await waiting; assert.equal(response.status(), 200); const result = await response.json(); same(result, fixture.expected.frozenReports[kind], 'Saved source price snapshot equals restored actual report');
   await reportBody().getByRole('heading', { name: result.title, level: 2, exact: true }).waitFor();
@@ -216,7 +216,7 @@ try {
     await page.goto(gateway.origin + '/#/reports'); await page.getByRole('heading', { name: '報表中心', level: 1, exact: true }).waitFor(); await reportSelect().waitFor();
     for (const kind of ['fees', 'payroll']) {
       await displayReport(kind); await shot(`restored-${kind}-desktop.png`);
-      const response = await api(`reports/${kind}.csv?month=${fixture.month}`), bytes = await response.body(); assert(bytes.equals(fixture.expected.csvBytes[kind]));
+      const response = await api(`reports/${kind}.csv?month=${fixture.month}&spanMode=calendar-two-day-v1`), bytes = await response.body(); assert(bytes.equals(fixture.expected.csvBytes[kind]));
       const downloadWaiting = page.waitForEvent('download'); await page.getByRole('button', { name: '下載 CSV', exact: true }).first().click();
       const download = await downloadWaiting, stream = await download.createReadStream(), chunks = []; for await (const chunk of stream) chunks.push(chunk);
       const downloaded = Buffer.concat(chunks); assert.equal(await download.failure(), null); assert(downloaded.equals(bytes));

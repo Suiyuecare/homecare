@@ -1,3 +1,4 @@
+import { spanReportConfig } from '../data/span-report.js';
 import { mountReportView } from './report-view.js';
 
 // Match the persisted timeMinute contract: validate ISO text, but compare its saved
@@ -53,6 +54,8 @@ export const serviceReportConfig = Object.freeze({
   summary: (result, { complete }) => `符合條件共 ${result.total} 筆紀錄；實際分鐘合計 ${result.totals.serviceMinutes} 分鐘${complete ? '；以下為完整資料。' : `；本頁 ${result.rows.length} 筆。`}`,
 });
 
+export const serviceSpanReportConfig = spanReportConfig(serviceReportConfig, 'service-records');
+
 export function mountServiceReport(container, { isCurrent = () => true } = {}) {
-  return mountReportView(container, { config: serviceReportConfig, isCurrent });
+  return mountReportView(container, { config: serviceSpanReportConfig, isCurrent });
 }

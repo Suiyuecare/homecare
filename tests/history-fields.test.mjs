@@ -190,9 +190,9 @@ test('certification attachment history distinguishes metadata and replacement by
   assert.equal(JSON.stringify([previous, current]), source);
 });
 
-test('leave history exposes seven saved business fields without actor, balance or billing internals', () => {
+test('leave history exposes seven original fields and the explicit end date without actor, balance or billing internals', () => {
   assert.deepEqual(getHistoryFields('leave-requests').map(field => field.key), [
-    'employeeId', 'date', 'startTime', 'endTime', 'type', 'reason', 'status',
+    'employeeId', 'date', 'endDate', 'startTime', 'endTime', 'type', 'reason', 'status',
   ]);
   const saved = {
     employeeId: 'employee-a', date: '2026-10-08', startTime: '09:00', endTime: '10:00',
@@ -306,9 +306,9 @@ test('normalization and diff never mutate source snapshots or share mutable serv
   assert.equal(changes[0].key, 'services');
 });
 
-test('shift history exposes only its nine business fields and records reassignment, scheduling and state changes', () => {
+test('shift history exposes its nine original fields and explicit end date and records reassignment, scheduling and state changes', () => {
   assert.deepEqual(getHistoryFields('shifts').map(field => field.key), [
-    'caseId', 'employeeId', 'carePlanId', 'date', 'startTime', 'endTime', 'services', 'status', 'note',
+    'caseId', 'employeeId', 'carePlanId', 'date', 'endDate', 'startTime', 'endTime', 'services', 'status', 'note',
   ]);
   const previous = {
     caseId: 'case-a', employeeId: 'employee-a', carePlanId: 'plan-a', date: '2026-10-28',
@@ -363,9 +363,9 @@ test('shift normalization leaves frozen sources untouched and treats omitted not
   assert.equal(previous.services[1].quantity, 1);
 });
 
-test('service history retains its ten business fields and saved time text while excluding billing and metadata', () => {
+test('service history retains its ten original fields plus explicit actual end date and saved time text while excluding billing and metadata', () => {
   assert.deepEqual(getHistoryFields('service-records').map(field => field.key), [
-    'shiftId', 'caseId', 'employeeId', 'date', 'actualStart', 'actualEnd', 'services', 'status', 'note', 'reviewNote',
+    'shiftId', 'caseId', 'employeeId', 'date', 'actualEndDate', 'actualStart', 'actualEnd', 'services', 'status', 'note', 'reviewNote',
   ]);
   const previous = {
     shiftId: 'shift-a', caseId: 'case-a', employeeId: 'employee-a', date: '2026-10-08',

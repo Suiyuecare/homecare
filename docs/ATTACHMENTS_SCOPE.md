@@ -1,8 +1,6 @@
 # 個案附件切片（0.5）
 
-> 公開版本文件：記錄此功能版本的設計與驗收條件，並非目前公開副本已執行的驗收證明。私人盤點與 QA 產物未匯出；現行行為以 API.md 與原始碼為準，正式規則及部署仍須核定。
-
-本輪提供獨立本機附件流程；沿用已授權持續建置及合成資料限制。
+本輪提供獨立本機附件流程；沿用已授權持續建置及合成資料限制。RM-02與原個案基本頁仍partial；原醫事意見表仍not_started。原盤點notes/case-evidence.json只觀察到醫事意見頁的上傳入口，不推定原完整附件、保存期限、病毒掃描或儲存介接規則。
 
 ## 資料與保存
 
@@ -49,4 +47,4 @@ root擴充ui.js canonical file field：回File|null、不預填File、明示檔�
 
 整合測試核對格式／decoded byte邊界／base64／header注入、原128KiB維持、原子保存／Idempotency／CAS、同機構／固定個案／角色、metadata與舊檔下載、精確版缺口與篡改fileId/metadata拒絕、BLOB不可變、列表／歷程／下載零寫入、原case完整資料與版本不變及持久化重開。
 
-瀏覽器用真File、合成bytes、memory SQLite及隨機埠，驗證上傳／更換／metadata／停用恢復、下載bytes一致、真409選檔保留、28筆分頁／搜尋、角色／舊版、503重試、成功提交後JSON body讀取中斷/缺確認同鍵恢復及慢回應、鍵盤／焦點、1440/390px與逐圖檢查。完成後才將獨立附件切片標implemented_verified，
+瀏覽器用真File、合成bytes、memory SQLite及隨機埠，驗證上傳／更換／metadata／停用恢復、下載bytes一致、真409選檔保留、28筆分頁／搜尋、角色／舊版、503重試、成功提交後JSON body讀取中斷/缺確認同鍵恢復及慢回應、鍵盤／焦點、1440/390px與逐圖檢查。完成後才將獨立附件切片標implemented_verified，原RM-02保持partial。

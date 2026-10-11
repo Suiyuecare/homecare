@@ -1,8 +1,6 @@
 # 0.43 週／月班表完整報表銜接契約
 
-> 公開版本文件：記錄此功能版本的設計與驗收條件，並非目前公開副本已執行的驗收證明。私人盤點與 QA 產物未匯出；現行行為以 API.md 與原始碼為準，正式規則及部署仍須核定。
-
-本機切片，2026-10-10 凍結；本機功能，正式及原功能等價未驗。來源為已驗收 0.42、SHIFT_CALENDAR_SCOPE.md、SHIFT_CALENDAR_PERSON_FILTERS_SCOPE.md、SHIFT_REPORT_SCOPE.md 及現有伺服器授權。
+本機切片，2026-10-10 凍結；本機實作／驗收完成，正式及原功能等價未驗。來源為已驗收 0.42、SHIFT_CALENDAR_SCOPE.md、SHIFT_CALENDAR_PERSON_FILTERS_SCOPE.md、SHIFT_REPORT_SCOPE.md 及現有伺服器授權。
 
 已確認且非空的班表顯示「完整報表／下載」。只捕獲五個 primitive 字串 startDate/endDate/caseId/employeeId/status；週／月衍生區間、0000..9999 與原字串 ID 完整保持，不經 URL、storage、姓名或 native date input 傳遞。草稿改動撤下入口；錯誤、空結果或 pending 無入口。原日曆保持開啟；關閉內層預覽回入口焦點及原條件。管理者、督導、居服員沿原日曆及 API 範圍，居服員不得進入 /reports，不修改導覽、伺服器角色或資料 scope。
 
@@ -14,4 +12,10 @@ CSV 先 fresh 完整 JSON 確認再 GET /api/shift-report.csv，沿 ui.downloadC
 
 驗收需涵蓋：admin/supervisor/caregiver 與 finance 日曆／入口拒絕（既有班表報表API finance唯讀200保持）、未啟用及啟用人員條件、同名不同 ID、fresh 更名／新版、週月及日期邊界、empty/503/413/malformed/filter mismatch、retry、draft 撤回、close/Escape/focus、nested modal keyboard/390px、native print suppression、fresh print、CSV fresh/取消/重複/print競態/晚回應、loaded/pending 身分與路由失效、唯讀全表版本及快照不變。執行每個 configured command；只保存實際退出與來源雜湊、原始失敗及瀏覽器圖片/PDF。原 0.42 證據不可覆寫。
 
-不新增 schema、主檔、版本、計价、快照、資格／例休／薪資／支付／申報／介接、正式列印表單或部署。
+不新增 schema、主檔、版本、計价、快照、資格／例休／薪資／支付／申報／介接、正式列印表單或部署。原180功能全量對照仍未完成，RM-03 保持 partial；人工 UAT、完整 WCAG 與 OS native popup 不由本機測試推定。
+
+## 本機接受紀錄
+
+本機驗收：同一份255來源／66 public及src檔案，178 JavaScript檢查、755程式測試、45 configured／44 required加2補充，共47個原生子程序全部exit0；含45套browser、CIS9關、HTTPS合成Portal登入8關與班表報表銜接14關。最低Node22.13的24項Portal測試通過；strict audit零finding，DESIGN lint零error／10既有warning。原始失敗、修正與獨立作者視檢證據保留，不宣稱first-pass。metadata在QA後另封存，執行程式與測試保持接受來源的精確bytes。
+
+原glob未匹配/export與busy偽內容改變accessible name的測試失敗保留；只修路由glob與預先捕捉同一CSV按鈕，保持真abort、busy／disabled、防重複、完整CSV、唯讀ledger及原14關／逾時。

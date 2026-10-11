@@ -1,3 +1,4 @@
+import { spanReportConfig } from '../data/span-report.js';
 import { mountReportView } from './report-view.js';
 
 // Preserve the existing model.timeMinute contract and all saved time text.
@@ -54,6 +55,8 @@ export const leaveReportConfig = Object.freeze({
   summary: (result, { complete }) => `符合條件共 ${result.total} 筆請假紀錄${complete ? '；以下為完整資料。' : `；本頁 ${result.rows.length} 筆。`}`,
 });
 
+export const leaveSpanReportConfig = spanReportConfig(leaveReportConfig, 'leave-requests');
+
 export function mountLeaveReport(container, { isCurrent = () => true } = {}) {
-  return mountReportView(container, { config: leaveReportConfig, isCurrent });
+  return mountReportView(container, { config: leaveSpanReportConfig, isCurrent });
 }

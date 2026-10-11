@@ -117,8 +117,13 @@ export function calendarPersonSelection(person, lookups) {
 
 export function confirmCalendarPersonSelection(result, person, lookups) {
   const filters = calendarPersonFilters(person), expected = calendarPersonSelection(filters, lookups);
+  const legacyKeys = ['startDate', 'endDate', 'caseId', 'employeeId', 'status'];
+  const explicitKeys = [...legacyKeys, 'spanMode', 'rangeMode'];
+  const confirmedFilters = dataObject(result) && Object.hasOwn(result, 'filters')
+    && (exact(result.filters, legacyKeys) || (exact(result.filters, explicitKeys)
+      && result.filters.spanMode === 'calendar-two-day-v1' && result.filters.rangeMode === 'intersects'));
   if (!dataObject(result) || !Object.hasOwn(result, 'filters') || !Object.hasOwn(result, 'selection')
-    || !exact(result.filters, ['startDate', 'endDate', 'caseId', 'employeeId', 'status'])
+    || !confirmedFilters
     || !exact(result.selection, ['case', 'employee', 'status'])
     || personKeys.some(key => result.filters[key] !== filters[key])
     || result.selection.case !== expected.case || result.selection.employee !== expected.employee) throw resultError();

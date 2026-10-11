@@ -21,6 +21,19 @@ const same = (actual, expected, label) => assert(isDeepStrictEqual(actual, expec
 const emptyPerson = () => ({ caseId: '', employeeId: '' });
 const visibleKeys = ['date', 'caseNo', 'case', 'employeeNo', 'employee', 'startTime', 'endTime', 'services', 'statusLabel', 'version', 'note'];
 const rowKeys = ['shiftId', 'version', 'date', 'caseNo', 'case', 'employeeNo', 'employee', 'startTime', 'endTime', 'services', 'status', 'statusLabel', 'note'];
+// Original columns/row keys remain the legacy oracle; UI opts in additively.
+const spanVisibleKeys = visibleKeys.flatMap(key => key === 'date' ? [key, 'endDate'] : [key]);
+const spanRowKeys = [...rowKeys, 'endDate'];
+const fixedModes = Object.freeze({ spanMode: 'calendar-two-day-v1', rangeMode: 'intersects' });
+const spanFilters = value => ({ ...value, ...fixedModes });
+const primitiveFilters = value => Object.fromEntries(Object.keys(filters({ startDate: '', endDate: '' })).map(key => [key, value[key]]));
+// These unchanged fixtures contain same-day rows. Clock text is read independently;
+// raw ISO seconds/offsets stay intact in every original displayed value.
+const segmentOracle = row => {
+  assert.equal(row.endDate, row.date, 'Legacy same-day ending date is a read-only projection');
+  const clock = value => { const match = /^(?:\d{4}-\d{2}-\d{2}T)?(\d{2}:\d{2})(?:$|:)/.exec(value); assert(match, 'Independent persisted clock oracle'); return match[1]; };
+  return `${row.date} ${clock(row.startTime)}–${clock(row.endTime)}`;
+};
 const weekdays = ['週一', '週二', '週三', '週四', '週五', '週六', '週日'];
 const names = ['mode', 'anchor', 'status', 'caseId', 'employeeId'];
 const loadingText = '正在讀取完整週／月班表…';
@@ -59,7 +72,8 @@ function oracle(mode, anchor) {
   return { mode, anchor, dates, startDate: dates[0], endDate: dates.at(-1), previousAnchor, nextAnchor };
 }
 const filters = (period, status = '', person = emptyPerson()) => ({ startDate: period.startDate, endDate: period.endDate, caseId: person.caseId, employeeId: person.employeeId, status });
-const query = (period, status = '', person = emptyPerson()) => new URLSearchParams(Object.entries(filters(period, status, person)).filter(([, value]) => value !== '')).toString();
+const legacyQuery = (period, status = '', person = emptyPerson()) => new URLSearchParams(Object.entries(filters(period, status, person)).filter(([, value]) => value !== '')).toString();
+const query = (period, status = '', person = emptyPerson()) => new URLSearchParams(Object.entries(spanFilters(filters(period, status, person))).filter(([, value]) => value !== '')).toString();
 const matches = (request, period, status = '', person = emptyPerson()) => isExport(request) && new URL(request.url()).search === '?' + query(period, status, person);
 const today = () => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Taipei' }).format(new Date());
 
@@ -159,8 +173,11 @@ async function assertSequence(before, role = 'admin', expectedExport = true) {
 }
 async function assertFull(page, period, status = '', person = emptyPerson(), role = 'admin', returned) {
   const real = await fixture.request(fixture.clients[role], 'GET', exportPath + '?' + query(period, status, person)); assert.equal(real.status, 200); const result = real.body;
-  same(result.filters, filters(period, status, person)); assert.equal(Object.keys(result).length, 12); assert.equal(result.rows.length, result.total); assert.equal(result.page, 1); assert.equal(result.pageSize, result.total); assert.equal(result.totals.count, result.total);
-  same(result.columns.map(column => column.key), visibleKeys); for (const row of result.rows) same(Object.keys(row).sort(), [...rowKeys].sort());
+  same(primitiveFilters(result.filters), filters(period, status, person), 'All five original primitive filters remain exact'); same(result.filters, spanFilters(filters(period, status, person)), 'Only the two fixed explicit modes are added');
+  const legacy = await fixture.request(fixture.clients[role], 'GET', exportPath + '?' + legacyQuery(period, status, person)); assert.equal(legacy.status, 200);
+  same(legacy.body.filters, filters(period, status, person)); same(legacy.body.columns.map(column => column.key), visibleKeys); for (const row of legacy.body.rows) same(Object.keys(row).sort(), [...rowKeys].sort());
+  same(result.rows.map(({ endDate, ...row }) => row), legacy.body.rows, 'All original raw projection values still equal the untouched legacy API'); assert.equal(Object.keys(result).length, 12); assert.equal(result.rows.length, result.total); assert.equal(result.page, 1); assert.equal(result.pageSize, result.total); assert.equal(result.totals.count, result.total);
+  same(result.columns.map(column => column.key), spanVisibleKeys); for (const row of result.rows) same(Object.keys(row).sort(), [...spanRowKeys].sort());
   same(result.rows.map(row => row.shiftId).sort(), fixture.expectedShiftIds(filters(period, status, person), role).sort(), 'Independent saved shiftId→caseId/employeeId oracle proves real HTTP ID filtering');
   if (returned) same(returned.rows, result.rows, 'Loaded response is complete and matches fresh HTTP');
   const actual = await content(page).locator('.shift-calendar-agenda').evaluate(node => [...node.querySelectorAll(':scope > section[data-date]')].map(section => ({ date: section.dataset.date,
@@ -168,15 +185,15 @@ async function assertFull(page, period, status = '', person = emptyPerson(), rol
     headers: [...section.querySelectorAll('thead th')].map(th => ({ text: th.textContent, scope: th.scope })), empty: section.querySelector('p')?.textContent || null })));
   same(actual.map(day => day.date), period.dates); const ids = [];
   for (const day of actual) { const rows = result.rows.filter(row => row.date === day.date); same(day.rows.map(row => row.id), rows.map(row => row.shiftId)); if (rows.length) {
-      same(day.headers, result.columns.map(column => ({ text: column.label, scope: 'col' })));
-      for (let i = 0; i < rows.length; i++) { same(day.rows[i].values, visibleKeys.map(key => String(rows[i][key]))); assert(day.rows[i].wraps.every(value => value === 'pre-wrap')); }
+      same(day.headers, [{ text: '本日顯示區段', scope: 'col' }, ...result.columns.map(column => ({ text: column.label, scope: 'col' }))]);
+      for (let i = 0; i < rows.length; i++) { same(day.rows[i].values.filter((_, index) => index !== 0 && index !== 2), visibleKeys.map(key => String(rows[i][key])), 'All eleven original literal values are retained'); same(day.rows[i].values, [segmentOracle(rows[i]), ...spanVisibleKeys.map(key => String(rows[i][key]))]); assert(day.rows[i].wraps.every(value => value === 'pre-wrap')); }
     } else assert.equal(day.empty, '此日沒有班次。'); ids.push(...day.rows.map(row => row.id)); }
   same(ids, result.rows.map(row => row.shiftId)); assert.equal(new Set(ids).size, result.total);
   if (await field(page, 'caseId').count()) {
     assert.equal(await field(page, 'caseId').inputValue(), person.caseId); assert.equal(await field(page, 'employeeId').inputValue(), person.employeeId);
     for (const [label, value] of [['個案', result.selection.case], ['服務人員', result.selection.employee]]) assert.equal(await content(page).locator('.detail-grid > div').filter({ has: page.locator('dt', { hasText: new RegExp('^' + label + '$') }) }).locator('dd').textContent(), value);
   }
-  reportChecks.push({ role, filters: result.filters, rows: result.total, rowSha256: sha(JSON.stringify(result.rows)), independentIdOracle: true, completeRowsExactlyOnce: true, visibleColumns: 11 }); return result;
+  reportChecks.push({ role, filters: result.filters, rows: result.total, rowSha256: sha(JSON.stringify(result.rows)), independentIdOracle: true, completeRowsExactlyOnce: true, originalVisibleColumns: 11, visibleColumns: 13, reportColumns: 12 }); return result;
 }
 async function slowRoute(page, predicate) {
   const arrived = deferred(), release = deferred(), handled = deferred(); let used = false, finished = false, request;

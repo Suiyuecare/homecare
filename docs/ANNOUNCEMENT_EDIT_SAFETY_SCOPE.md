@@ -1,8 +1,6 @@
 # 公告安全編輯切片 0.25.0
 
-> 公開版本文件：記錄此功能版本的設計與驗收條件，並非目前公開副本已執行的驗收證明。私人盤點與 QA 產物未匯出；現行行為以 API.md 與原始碼為準，正式規則及部署仍須核定。
-
-本機  獨立功能；沿 0.24 公告歷程與原 CRUD/CAS/冪等、角色及機構範圍。原平台頁面、發送／閱讀追蹤及正式部署仍未驗收。
+本機 RM-07 獨立功能；沿 0.24 公告歷程與原 CRUD/CAS/冪等、角色及機構範圍。原平台頁面、發送／閱讀追蹤及正式部署仍未驗收。
 
 ## 保存政策
 
@@ -22,4 +20,6 @@
 
 ## 驗收
 
-合成資料驗證 normal/create/edit/revert、未知／空 audience、CRLF／特殊文字、非文字／缺失保留邊界、明確取代／清空、四欄型別／長度、2xx 欄位及 presence 不符、403/422/409/回應失敗、POST 穩定冪等、撤回草稿及歷程讀權。loaded/pending 的六種 context 都取消 edit 與 withdrawal；dirty/鍵盤/桌機與 390px 版面、finance/caregiver 不可寫、共用表單回歸、readonly DB/BLOB/計價/31 報表、現有實際資料與舊封存完整性皆需證據。
+合成資料驗證 normal/create/edit/revert、未知／空 audience、CRLF／特殊文字、非文字／缺失保留边界、明確取代／清空、四欄型別／長度、2xx 欄位及 presence 不符、403/422/409/回應失敗、POST 穩定冪等、撤回草稿及歷程讀權。loaded/pending 的六種 context 都取消 edit 與 withdrawal；dirty/鍵盤/桌機與 390px 版面、finance/caregiver 不可寫、共用表單回歸、readonly DB/BLOB/計價/31 報表、現有實際資料與舊封存完整性皆需證據。
+
+只在整合、瀏覽器與畫面人工檢視完成後標示本切片 implemented_verified；原 84/52/28/16/359 追溯及待核定規則不改。

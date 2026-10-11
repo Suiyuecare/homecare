@@ -134,6 +134,9 @@ try {
   const foreignEmployee = (await request('POST', 'employees', { name: '合成跨機構員工', employeeNo: 'SR-X', role: 'caregiver' }, 201, context, admin, orgB.id)).item;
   const allQuery = 'startDate=2026-10-01&endDate=2026-11-09';
   const full = () => request('GET', `shift-report/export?${allQuery}`);
+  // Keep full()/allQuery as the original legacy API oracle. Only UI transport opts in.
+  const uiQuery = allQuery + '&spanMode=calendar-two-day-v1&rangeMode=starts';
+  const fullUi = () => request('GET', `shift-report/export?${uiQuery}`);
   const masterState = app.db.prepare("SELECT * FROM records WHERE entity != 'shifts' ORDER BY id").all();
   startReads(); const initialCounts = counts();
   let dialog, trigger;
@@ -161,7 +164,9 @@ try {
   await resultRegion(page).locator('.table-scroll').evaluate(node => { node.scrollIntoView({ block: 'start' }); node.scrollLeft = node.scrollWidth; }); await shot(page, 'report-table-mobile-after.png'); await page.setViewportSize({ width: 1440, height: 1050 });
   mark('日期倒置保留輸入且語意錯誤/焦點正確；1440/390所有控制有label、整頁不溢出且寬表自身捲動');
 
-  const csvResponse = await fetchApi('GET', `shift-report.csv?${allQuery}`); assert.equal(csvResponse.status(), 200); const expectedCsv = await csvResponse.body();
+  const legacyCsvResponse = await fetchApi('GET', `shift-report.csv?${allQuery}`); assert.equal(legacyCsvResponse.status(), 200);
+  const legacyCsv = await legacyCsvResponse.body(); assert.deepEqual([...legacyCsv.subarray(0, 3)], [239, 187, 191]); assert.ok(legacyCsv.toString().includes('\r\n')); assert.ok(legacyCsv.toString().includes("'=SUM(1,2)")); assert.ok(legacyCsv.toString().includes('""引號""'));
+  const csvResponse = await fetchApi('GET', `shift-report.csv?${uiQuery}`); assert.equal(csvResponse.status(), 200); const expectedCsv = await csvResponse.body();
   assert.match(csvResponse.headers()['content-type'], /^text\/csv/); assert.match(csvResponse.headers()['content-disposition'], /shift-report\.csv/); assert.equal(csvResponse.headers()['x-content-type-options'], 'nosniff'); assert.match(csvResponse.headers()['cache-control'], /no-store/);
   assert.deepEqual([...expectedCsv.subarray(0, 3)], [239, 187, 191]); assert.ok(expectedCsv.toString().includes('\r\n')); assert.ok(expectedCsv.toString().includes("'=SUM(1,2)")); assert.ok(expectedCsv.toString().includes('""引號""'));
   const downloadPromise = page.waitForEvent('download'); await region(page).getByRole('button', { name: '下載 CSV', exact: true }).click(); const download = await downloadPromise; const csvFile = path.join(output, 'synthetic-shift-report.csv'); await download.saveAs(csvFile); assert.deepEqual(await readFile(csvFile), expectedCsv);
@@ -198,7 +203,7 @@ try {
 
   ({ dialog, trigger } = await openPreview(page)); tries = 0; const printsBeforeRetry = await printCount(page); await page.route(fullPattern, route => ++tries === 1 ? fail503(route) : route.continue());
   await dialog.getByRole('button', { name: '列印／另存 PDF', exact: true }).click(); await dialog.getByRole('button', { name: '重新讀取', exact: true }).waitFor(); assert.equal(await printCount(page), printsBeforeRetry); await shot(page, 'report-print-retry.png'); await dialog.getByRole('button', { name: '重新讀取', exact: true }).click(); await dialog.locator('tbody tr').first().waitFor(); assert.equal(await printCount(page), printsBeforeRetry); await dialog.getByRole('button', { name: '列印／另存 PDF', exact: true }).click(); await page.waitForFunction(n => window.__printCalls.length === n, printsBeforeRetry + 1); assert.equal(tries, 3); await page.unroute(fullPattern); await closeDialog(page, trigger);
-  ({ dialog, trigger } = await openPreview(page)); const empty = await full(); empty.rows = []; empty.total = 0; empty.totals.count = 0; empty.pageSize = 0; await page.route(fullPattern, route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(empty) })); const printBeforeEmpty = await printCount(page); await dialog.getByRole('button', { name: '列印／另存 PDF', exact: true }).click(); await dialog.getByText('目前已無符合條件的班次，請重新查詢。', { exact: true }).waitFor(); assert.equal(await printCount(page), printBeforeEmpty); await closeDialog(page, trigger); await page.unroute(fullPattern);
+  ({ dialog, trigger } = await openPreview(page)); const empty = await fullUi(); empty.rows = []; empty.total = 0; empty.totals.count = 0; empty.pageSize = 0; await page.route(fullPattern, route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(empty) })); const printBeforeEmpty = await printCount(page); await dialog.getByRole('button', { name: '列印／另存 PDF', exact: true }).click(); await dialog.getByText('目前已無符合條件的班次，請重新查詢。', { exact: true }).waitFor(); assert.equal(await printCount(page), printBeforeEmpty); await closeDialog(page, trigger); await page.unroute(fullPattern);
   mark('列印fresh GET503不印舊快取；重讀只恢復預覽、再按列印再fresh；當下空結果不列印');
 
   for (const action of ['preview', 'print']) {
@@ -267,7 +272,7 @@ try {
   }
   // One QA-only PDF from DOM captured synchronously inside a fresh authorized print.
   await loadReport(page); await setAllRange(page); await queryReport(page, 40); ({ dialog, trigger } = await openPreview(page)); await dialog.getByText(shifts[2].note, { exact: true }).waitFor();
-  const expectedPdf = await full(); await writeFile(path.join(output, 'pdf-expected.json'), JSON.stringify(expectedPdf, null, 2));
+  const expectedPdf = await fullUi(); await writeFile(path.join(output, 'pdf-expected.json'), JSON.stringify(expectedPdf, null, 2));
   const marker = process.env.HOME_CARE_QA_PDF_MARKER;
   if (marker && !process.env.PDF_OPERATION_ALREADY_MARKED) { const markerResult = spawnSync(process.execPath, [marker, '--operation-kind', 'create', '--expected-output-count', '1', '--output-format', 'pdf'], { encoding: 'utf8' }); assert.equal(markerResult.status, 0, markerResult.stderr); console.log(markerResult.stdout.trim()); }
   const pdfPath = path.join(output, 'synthetic-shift-report.pdf');
@@ -281,12 +286,14 @@ with pdfplumber.open(p/'synthetic-shift-report.pdf') as pdf:
  texts=[unicodedata.normalize('NFKC',page.extract_text() or '') for page in pdf.pages]
  assert len(texts)>1, 'Expected multi-page QA PDF'
  combined='\\n\\n'.join(texts); compact=re.sub(r'\\s+','',combined)
+ for row in expected['rows']:
+  assert row['endDate'].replace('-','/') in compact, ('Missing explicit ending date',row['endDate'])
  for index in range(1,41):
   marker=f'ROW-{index:03d}'; assert compact.count(marker)==1, (marker,compact.count(marker))
  for i,page in enumerate(pdf.pages):
   text=re.sub(r'\\s+','',texts[i]); assert text and len(text)>80, ('Blank page',i+1)
   assert page.width>page.height and abs(page.width-841.89)<3 and abs(page.height-595.28)<3, ('Not landscape A4',i,page.width,page.height)
-  for header in ['日期','案號','員工編號','交班備註']: assert header in text, ('Missing repeated table header',i+1,header)
+  for header in ['日期','案號','員工編號','交班備註','結束日期']: assert header in text, ('Missing repeated table header',i+1,header)
   for forbidden in ['報表中心','列印／另存PDF','查詢排班','清除條件','測試工作空間']: assert forbidden not in text, ('Background UI',i+1,forbidden)
   assert '\\ufffd' not in text and '\\u25a1' not in text, ('Missing glyph',i+1)
   chars=page.chars

@@ -108,9 +108,9 @@ async function fixture(t) {
 
 test('five original controls create nine saved fields and sparse real edits preserve all ten fields and precise actors', async t => {
   const f = await fixture(t), e = f.editor();
-  assert.deepEqual(e.fields.filter(field => !field.name.endsWith('Intent')).map(field => field.name), controls);
+  assert.deepEqual(e.fields.filter(field => !field.name.endsWith('Intent')).map(field => field.name), ['spanMode', 'plannedSpan', ...controls.slice(0, 2), 'actualEndDate', ...controls.slice(2)]); assert.equal(e.fields.find(field => field.name === 'plannedSpan').disabled, true);
   const payload = e.buildPayload({ actualStart: '08:01', actualEnd: '10:52', services: [{ serviceItemId: f.serviceA.id, quantity: 10000 }], note: ' 原服務觀察\n合成末行 ', status: 'draft' });
-  assert.deepEqual(Object.keys(payload).sort(), keys.filter(key => key !== 'reviewNote').sort());
+  assert.deepEqual(Object.keys(payload).sort(), keys.filter(key => key !== 'reviewNote').sort()); assert(!Object.hasOwn(payload, 'spanMode')); assert(!Object.hasOwn(payload, 'actualEndDate')); assert(!Object.hasOwn(payload, 'plannedSpan'));
   assert.equal(payload.shiftId, f.shift.id); assert.equal(payload.caseId, f.caseA.id); assert.equal(payload.employeeId, f.employeeA.id); assert.equal(payload.date, f.shift.date);
   const before = f.state(), item = await f.create('service-records', payload, f.clients.caregiver); e.confirm(item, f.admin.org, payload);
   assert.equal(f.state().changes - before.changes, 3); f.relatedUnchanged(before, [item.id]);

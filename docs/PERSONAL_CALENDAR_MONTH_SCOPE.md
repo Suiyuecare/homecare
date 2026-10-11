@@ -1,8 +1,6 @@
 # 本人事件月份檢視（0.52，本機獨立契約）
 
-> 公開版本文件：記錄此功能版本的設計與驗收條件，並非目前公開副本已執行的驗收證明。私人盤點與 QA 產物未匯出；現行行為以 API.md 與原始碼為準，正式規則及部署仍須核定。
-
-2026-10-10 凍結。原年度曆、機構曆、我的行事曆、例休假與正式出勤仍未核定。沿 frontend-design 與 frontend-design-premium 的既有 APM CIS／共用元件，不另建立樣式或控制器。
+2026-10-10 凍結。本切片延續已驗收的六欄本人事件，補上完整月份閱讀；屬 RM-07 本機能力，原180盤點列、九階段與所有 completed0 保持。原年度曆、機構曆、我的行事曆、例休假與正式出勤仍未核定。沿 frontend-design 與 frontend-design-premium 的既有 APM CIS／共用元件，不另建立樣式或控制器。
 
 ## 查詢
 
@@ -10,7 +8,7 @@
 
 回應封閉 {month,q,status,orgId,ownerUserId,items,total,undatedCount}。先本人機構與q/status篩選，只將有效保存YYYY-MM-DD且屬所選月份的事件放入items。其他合法日期月份不計；日期缺失、異型或不合法則以undatedCount表示符合q/status的本人事件筆數，不暴露內文，也不猜日期、修資料或計入本月total。items依date/startTime/endTime/id的字面升冪；非文字time排序鍵為空字串，不推算時間。total等於完整items.length；不使用分頁截斷。
 
-所有當月items及無法歸月計數的候選先沿原身份／安全版本檢查，於筆數界限前驗證；有效他月與其他owner異常不阻塞本月。保留完整DTO、六欄原值及own-presence，非文字由既有格式化函式顯示型別，巢狀內文不展開。整份回應最多1000事件與2MiB UTF-8 JSON，超過則422 CALENDAR_LIMIT，不回部分結果，提示加q/status縮小條件或回清單。非法版本保持原409；其他月份及他人異常不洩露。GET不新增entity/table/trigger/migration/seed/account、歷程、稽核或任何寫入。
+所有當月items及無法歸月計數的候選先沿原身份／安全版本檢查，於筆數界限前驗证；有效他月與其他owner異常不阻塞本月。保留完整DTO、六欄原值及own-presence，非文字由既有格式化函式顯示型別，巢狀內文不展開。整份回應最多1000事件與2MiB UTF-8 JSON，超過則422 CALENDAR_LIMIT，不回部分結果，提示加q/status縮小條件或回清單。非法版本保持原409；其他月份及他人異常不洩露。GET不新增entity/table/trigger/migration/seed/account、歷程、稽核或任何寫入。
 
 ## 共用閱讀流程
 
@@ -22,6 +20,6 @@
 
 ## 必要驗收與限制
 
-HTTP確認四角色self、同機構他人／跨機構、未知role早拒、closed query、年邊界／閏年、完整超25筆／literal排序、q/status、undatedCount、1000／2MiB拒絕及十一表／六trigger／schema／total_changes零寫。pure確認月份／Gregorian日格、回應完整和異常拒絕、原值／typed安全展示。Browser確認空月、完整查詢與索引、上一下一／邊界、本月、變條件撤除、503／不可信200／retry、loaded/pending情境與晚回應、鍵盤／焦點、1440及390長文／表內捲動、sibling以及既有事件CRUD/班表月份/APM CIS/HTTPS合成Portal回歸。
+HTTP確認四角色self、同機構他人／跨機構、未知role早拒、closed query、年邊界／閏年、完整超25筆／literal排序、q/status、undatedCount、1000／2MiB拒絕及十一表／六trigger／schema／total_changes零寫。pure確認月份／Gregorian日格、回應完整和異常拒絕、原值／typed安全展示。Browser確認空月、完整查詢與索引、上一下一／邊界、本月、變條件撤除、503／不可信200／retry、loaded/pending情境與晚回應、鍵盤／焦點、1440及390長文／表內捲動、sibling以及既有事件CRUD/班表月份/APM CIS/HTTPS合成Portal回歸。必要完整unit、最低Node22.13相關、source check、strict私人parser／DESIGN lint及每張新圖實際視檢後才標本機完成；不宣稱所有配置fresh、原生OS popup或人工UAT。
 
-原失敗與封存不改。正式持久主機／HTTPS／Portal發布與實際公司登入沿交接待辦。
+原失敗與封存不改。真帳號DB/env/binding/private備份／4310／DNS不存取，不部署／購買／申報／付款／發外部訊息。正式持久主機／HTTPS／Portal發布與實際公司登入沿交接待辦。

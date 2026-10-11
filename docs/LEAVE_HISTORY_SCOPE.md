@@ -1,8 +1,6 @@
 # 請假紀錄版本歷程（0.13 獨立本機切片）
 
-> 公開版本文件：記錄此功能版本的設計與驗收條件，並非目前公開副本已執行的驗收證明。私人盤點與 QA 產物未匯出；現行行為以 API.md 與原始碼為準，正式規則及部署仍須核定。
-
-2026-10-08 凍結。依既有本機 API 與程式，沿既有 leave-history-v0.13；合成資料，不使用原平台、真實個資或正式差勤結算。完成必要整合、瀏覽器與逐張視覺驗證後才 implemented_verified。原完整差勤、假別額度與結算仍 partial/unverified。
+2026-10-08 凍結。依既有本機 API 與程式，沿 RM-03 的 leave-history-v0.13；合成資料，不使用原平台、真實個資或正式差勤結算。完成必要整合、瀏覽器與逐張視覺驗證後才 implemented_verified。原完整差勤、假別額度與結算仍 partial/unverified。
 
 ## 目前紀錄與逐版授權
 
@@ -26,10 +24,10 @@ raw 保持 {version,snapshot,createdAt,source}。compare=previous 增加同一 a
 
 沿唯一 history.js openRecordHistory／ui.js openDetails，寬版、可展開版本卡、七欄保存內容及差異表自身橫捲；不另寫 async/controller、CSS 或 ui.js。傳入 user/org/role/employee/hash、generation、container 連線與 namespaced render stamp guard。已載入與慢讀的路徑、機構、角色、員工連結、同 container 重繪失效均清空、abort、關閉，晚回應不復活；重試／取消／Escape 焦點沿共享 owner。原列表搜尋／狀態／25筆分頁／寫入失敗保留／確認取消不升版保持。必要 guard 修改限 /leave 或共用 owner 的最小一致改動，不擴充其他產品範圍。
 
-## 驗收條件
+## 驗收與追溯
 
 Node：真 API 建立／修改／核准／駁回／取消與精確 actor；四角色 raw/compare／跨機構／active auth link；真改派 A→B→A、停用／歷史缺父項與 current 缺父項保留早版；baseline／缺版／28版頁界、actor 缺失／歧義／錯事件；完整10表 rawState/counts/total_changes 零寫，CAS／CSRF／冪等／append-only triggers，以及原雙向衝突與相接時段／核准 PATCH 重新驗證、approved 計價及 fees/payroll 舊5類報表不變。純差異測試覆蓋7欄、自由假別／原時段與 metadata 排除、來源不修改。
 
 真 Chromium：管理者建立→督導修改（含真員工更換）→管理者核准→督導取消等原合法 UI 流程；另真 UI 駁回、取消確認不寫及衝突失敗保留。核對四角色 API、A→B→A、精確 actor／相鄰版／原時間與名稱、28版分頁、baseline／缺版／未知名字或 actor／空歷程、503 重試／Escape 焦點、loaded/pending hash/org/role/employee/render 10情境。client role/employee fixture 明示僅 UI context；真 server auth 另以登入 session 驗證。逐段全部10表與 approved snapshots 不變，唯讀區間只 GET。1440/390 screenshot 逐張 view_image。
 
-新歷程無 PDF；既有三報表若重生 PDF 沿同 artifact envskip 和原 provenance/marker 限制，不假造送印或 operation marker。
+root 獨立全 Node 及舊12套 browser 回歸。新歷程無 PDF；既有三報表若重生 PDF 沿同 artifact envskip 和原 provenance/marker 限制，不假造送印或 operation marker。原84/52/28/16目錄、順序、來源hash、status/parity、9階段、0原completed與 localReportKinds5保留，僅 URL-b97f8cdb4e92／URL-89289081caa3 追加本機證據。0.7至0.12封存不覆寫，0.13 另保存本輪程式與證據。

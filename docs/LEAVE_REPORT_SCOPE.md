@@ -1,7 +1,5 @@
 # 請假紀錄總表：0.19 獨立本機切片
 
-> 公開版本文件：記錄此功能版本的設計與驗收條件，並非目前公開副本已執行的驗收證明。私人盤點與 QA 產物未匯出；現行行為以 API.md 與原始碼為準，正式規則及部署仍須核定。
-
 2026-10-08 凍結；本文件不是原平台表單或正式假額規則的核定。完成整合、瀏覽器及逐頁列印驗證前不得標示實作完成。
 
 ## 查詢與授權
@@ -26,10 +24,10 @@
 
 ## 共用介面與驗收
 
-薄 leave-report.js adapter，key `leave-report`、title「請假紀錄總表」、date labels「請假日期起／迄／範圍」、caseFilter:false、只 lookup employees。沿唯一 report-view 與 ui.js 的 dispose/context/abort/loaded/pending owner；不新增下載、列印或 stale controller。選單增加請假總表與七種類型說明；不新增主導覽。screen 1100px，日期欄不折行 表內捲動；A4 橫向 12mm／9pt、八欄 10/10/12/13/13/10/8/24%、重復表頭、原 ISO 及長原因換行；DESIGN 只更新幾何。
+薄 leave-report.js adapter，key `leave-report`、title「請假紀錄總表」、date labels「請假日期起／迄／範圍」、caseFilter:false、只 lookup employees。沿唯一 report-view 與 ui.js 的 dispose/context/abort/loaded/pending owner；不新增下載、列印或 stale controller。選單增加請假總表與七種類型說明；不新增主導覽。screen 1100px，日期欄不折行 表內捲動；A4 橫向 12mm／9pt、八欄 10/10/12/13/13/10/8/24%、重复表頭、原 ISO 及長原因换行；DESIGN 只更新幾何。
 
 必要驗收：四真 session、inactive/unlinked guards、保存親項缺失範圍、40 筆 25+15 與全數集合、狀態與篩選 AND/clear/empty、真實建立與改派 A→B→A/核准/駁回/取消、保存 HH:mm/ISO 原文、最新 CSV／預覽／列印、候選異常整份 409（含第二頁）、1000/2 MiB exact/+1、CSV 注入、10 種 loaded/pending context 失效、錯誤／MIME／空 body／late/native print guards。
 
 所有既有 Node 與 18 套瀏覽器驗收照原腳本重跑，22 個既有報表出口、兩種真合成 BLOB 下載、approved 計價快照及 11 表／六 immutable triggers 維持。新 QA 僅合成／memory/temp DB；一份新合成 PDF、首次成功 marker 一次、40 LEAVE 標記與每頁表頭/A4/安全邊界/全文、全頁 PNG 逐張 view_image。逐圖檢查新 UI/PDF、既有四報表及請假歷程的最新 regression 複本，不改舊封存。
 
-下一切片按 backlog 相依關係選定。
+完成後同步 API/UX/PRODUCT/BUILD_STATE/追溯清單及唯一 0.19.0 封存，核對前 2866 保存 copies 和當輪 source/evidence hashes。原 84/52/28/16 項順序、來源、狀態、parity、phases、mapping 不變，原完成仍 0；本機種類六→七（新增 leaves），只在相關原請假頁／REPORT-3587fa46c371 追加獨立 evidence，不宣稱原表單匹配。下一切片按 backlog 相依關係選定。

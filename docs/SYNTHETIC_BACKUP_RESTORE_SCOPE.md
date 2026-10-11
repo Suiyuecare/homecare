@@ -1,8 +1,6 @@
 # 合成 SQLite 備份與還原演練契約（0.39）
 
-> 公開版本文件：記錄此功能版本的設計與驗收條件，並非目前公開副本已執行的驗收證明。私人盤點與 QA 產物未匯出；現行行為以 API.md 與原始碼為準，正式規則及部署仍須核定。
-
-2026-10-09 凍結。本切片只建立可重跑的本機合成資料演練工具，沒有 HTTP 備份／還原入口。既有 public 與十九份後端來源保持；新工具不掛載到應用程式。原  正式階段 4／5／6／7 相依、migration-restore／role-matrix needs_contract 不因此完成。
+2026-10-09 凍結。本切片只建立可重跑的本機合成資料演練工具，沒有 HTTP 備份／還原入口。既有 public 與十九份後端來源保持；新工具不掛載到應用程式。原 RM-09 正式階段 4／5／6／7 相依、migration-restore／role-matrix needs_contract 不因此完成。
 
 ## 工具與能力邊界
 
@@ -34,7 +32,7 @@ closed WAL 檔案即使 readonly 檢查也可能產生 sidecar；因此 closed p
 
 成功：rename live→previous，再 staged→live；保留 original previous。強制回復的唯一注入點為第二次 rename 後，將 candidate live 移回 staged，再 previous 回 live，核對原 live 的 closed-main SHA 及 typed fingerprint；回傳明確 rolled_back 結果，不把注入的失敗稱為成功切換。任意 I/O 失敗若無法回復須明確報錯並保留可診斷 artifact，不能隱藏或刪除原代。這不是線上原子切換、crash／停電或所有 I/O failure 的復原保證。
 
-## 合成整合與驗收
+## 合成整合與验收
 
 Node-only fetch fixture 透過正常 API 建立四角色／雙機構、兩筆核閱服務、改價／改時薪後不變的保存快照、兩個非空 BLOB、各版 metadata／個案歷程及正常 idempotency replay。已知過期 session 僅合成 INSERT，另列寫入帳。原 session 原樣保存；restore 精確比較先於 app startup／登入。
 
@@ -44,4 +42,4 @@ Node-only fetch fixture 透過正常 API 建立四角色／雙機構、兩筆核
 
 ## 尚未包含
 
-合成 plaintext 本機演練；加密／金鑰保管／留存／存取稽核／備份排程／RPO-RTO／效能門檻及正式安全營運待核定。真實資料備份還原、正式 migration mapping／去重／外部匯入、production disaster recovery、人工 UAT、CI、原生 OS popup 完整人工驗收與正式部署均未完成。
+合成 plaintext 本機演練；加密／金鑰保管／留存／存取稽核／備份排程／RPO-RTO／效能門檻及正式安全營運待核定。真實資料備份還原、正式 migration mapping／去重／外部匯入、production disaster recovery、人工 UAT、CI、原生 OS popup 完整人工驗收與正式部署均未完成。原 180 功能等價、正式支付／薪資／評分／介接仍待核定。不得讀取工作區既有 DB、4310、原平台帳密或真實個資，不申報／付款／發外部訊息。

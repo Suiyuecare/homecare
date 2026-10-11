@@ -14,10 +14,11 @@ const field = (result, key) => result.fields.find(item => item.key === key);
 const unconfirmed = error => error.code === 'INTERVIEW_RECORD_DETAILS_UNCONFIRMED'
   && error.message === '面試紀錄回應無法確認；請重新讀取。';
 
-test('eight field labels preserve the existing interview contract and are immutable', () => {
+test('eighteen local field labels retain the original eight in order and add explicit manual extension labels', () => {
   const contract = [
     ['name', '姓名'], ['phone', '電話'], ['interviewDate', '面試日期'], ['city', '縣市'],
     ['district', '鄉鎮區'], ['interviewContent', '面試內容'], ['note', '備註'], ['status', '名單狀態'],
+    ['appliedPosition','應徵職務'],['education','學歷說明'],['workExperience','工作經歷'],['availableFrom','可到職日期'],['availableHours','可配合時段'],['certificateNotes','證照說明'],['interviewQuestions','面試提問與回應'],['interviewerEmployeeId','面試員工'],['decision','人工評估'],['decisionReason','本次人工判斷原因'],
   ];
   assert.deepEqual(INTERVIEW_RECORD_FIELDS.map(item => [item.key, item.label]), contract);
   assert.deepEqual(getHistoryFields('interview-applicants').map(item => [item.key, item.label]), contract);
@@ -134,7 +135,7 @@ test('unknown record fields are neither enumerated nor read, including getters a
     getOwnPropertyDescriptor(target, key) { descriptors.push(key); return Reflect.getOwnPropertyDescriptor(target, key); },
   });
   const result = confirm(guarded);
-  assert.equal(result.fields.length, 8);
+  assert.equal(result.fields.length, 18);
   assert.equal(calls, 0);
   assert(!descriptors.includes('unknownSecret'));
   assert(!JSON.stringify(result).includes('unknownSecret'));
@@ -158,7 +159,7 @@ test('absent business fields remain missing; own data presence is not inferred f
   const item = { id, orgId, version: 1, createdAt: '', updatedAt: '' };
   Object.defineProperty(item, 'note', { enumerable: false, value: '明確保存的資料描述元' });
   const result = confirm(item);
-  assert.equal(result.fields.filter(entry => entry.kind === 'missing').length, 7);
+  assert.equal(result.fields.filter(entry => entry.kind === 'missing').length, 17);
   assert.equal(field(result, 'note').kind, 'text');
   assert.equal(field(result, 'note').text, '明確保存的資料描述元');
 });

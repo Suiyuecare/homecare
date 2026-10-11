@@ -1,8 +1,6 @@
 # 班表週／月唯讀日期檢視（0.41 凍結契約）
 
-> 公開版本文件：記錄此功能版本的設計與驗收條件，並非目前公開副本已執行的驗收證明。私人盤點與 QA 產物未匯出；現行行為以 API.md 與原始碼為準，正式規則及部署仍須核定。
-
-這是新系統獨立本機切片；只有完成必要整合與實際瀏覽器驗證後才標示實作完成。原個人行事曆、例休假、我的行事曆三列與正式差勤、定位、支付、薪資、角色／App契約保持未完成或待核定。
+這是新系統獨立本機切片；只有完成必要整合與實際瀏覽器驗證後才標示實作完成。原個人行事曆、例休假、我的行事曆三列與正式差勤、定位、支付、薪資、角色／App契約保持未完成或待核定。0.40封存與全部既有來源基線保持。只使用合成資料與自有隨機localhost/memory SQLite；不得存取既有DB／4310、原平台帳密、真實個資、申報、付款、外部訊息或部署。
 
 ## 功能與 canonical owner
 
@@ -26,7 +24,7 @@ calendarFilters重新從period.mode/anchor算期間並核對period.startDate/end
 
 ## 唯一完整資料及確認
 
-每次開啟／查詢／翻期／今天／重新讀取沿 `GET /api/shift-report/export`，只有合法五query（空caseId/employeeId可省略），不帶page/pageSize、不用泛用month前綴清單、不拼多頁、不另查lookup。零新API、後端、schema、migration或寫入。
+每次开啟／查詢／翻期／今天／重新讀取沿 `GET /api/shift-report/export`，只有合法五query（空caseId/employeeId可省略），不帶page/pageSize、不用泛用month前綴清單、不拼多頁、不另查lookup。零新API、後端、schema、migration或寫入。
 
 原後端先membership／org／scopedRows授權；admin/supervisor/finance的API沿機構範圍，caregiver須同機構active linked employee且只回本人班次，每次fresh GET重新驗證。名稱及員編不是授權證據；原報表只有 organization.name，無orgId／employeeId echo，完整context綁定不補造回顯。
 
@@ -44,8 +42,8 @@ agenda按dates依序，每個日期section有日期／星期／完整count，原
 
 ## 完成與證據
 
-純函式至少覆蓋嚴格型別、400年獨立weekday oracle／閏年、跨week/month/year與0000/0099/9999、TZ獨立、slot/日期/導航、原DTO與deepfreeze、不完整分頁／重複ID／版次／狀態／echo／排序、1000／1001、UTF-8恰2MiB／+1 byte及恰一次分組原reference。HTTP／整合以真自有server驗fresh scope／改派／inactive/membership／all rows／超限／日期邊界及pure讀十一表／六trigger／版本／回執／計價快照／兩非空BLOB全部bytes與total_changes不變；登入／setup另列。
+純函式至少覆蓋嚴格型別、400年獨立weekday oracle／閏年、跨week/month/year與0000/0099/9999、TZ獨立、slot/日期/導航、原DTO與deepfreeze、不完整分頁／重複ID／版次／狀態／echo／排序、1000／1001、UTF-8恰2MiB／+1 byte及恰一次分組原reference。HTTP／整合以真自有server驗fresh scope／改派／inactive/membership／all rows／超限／日期边界及pure讀十一表／六trigger／版本／回執／計價快照／兩非空BLOB全部bytes與total_changes不變；登入／setup另列。
 
 新browser驗兩頁入口、完整>25/>100班次、週／月與日期導航、draft撤銷、空／loading／503／timeout／錯2xx／413與同條件retry、loaded/pending完整context（user/logout/org/role/employee/hash/container stamp／DOM）清空關閉、真取消／晚回應不復活、server撤權與client fixtures分開、keyboard/label/focus／長原文／desktop與390。本輪不宣稱loading可換期，亦不以截圖取代DTO／SQL證據。
 
-source／evidence／副本SHA及獨立review封存；失敗／診斷／必要修稿原始保留，不宣稱first-pass、自動重試、CI、人工UAT、正式部署或原完整功能等價。
+所有premium-ui.json配置指令各自fresh實際執行，保存每個child completion/log SHA及outer工具結束；原39個local里程碑、229來源基線與57來源ordered prefix、180原盤點／359題／4來源／12契約／9階段保持。source／evidence／副本SHA及獨立review封存；失敗／診斷／必要修稿原始保留，不宣稱first-pass、自動重試、CI、人工UAT、正式部署或原完整功能等價。

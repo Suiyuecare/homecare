@@ -27,6 +27,21 @@ const roles = ['admin', 'supervisor', 'finance', 'caregiver'];
 const widths = [375, 390, 760, 1023, 1024, 1440];
 const desktop = { width: 1440, height: 1000 }, mobile = { width: 390, height: 844 };
 const routeDefinitions = [
+  ['/surveys', '本機匿名填答與QR', '問卷與 QR 填答'],
+  ['/group-overview', '群組營運總覽', '群組營運總覽'],
+  ['/service-payroll','服務轉薪資','服務轉薪資'],
+  ['/service-billing','服務轉帳單','服務轉帳單'],
+  ['/shift-substitution','人工代班申請','人工代班申請'], ['/contract-deadlines','契約期限提醒','契約期限提醒'], ['/internal-notifications','內部通知與本人回執','站內通知與回覆'],
+  ['/institution-holidays','機構人工假日','機構人工假日'],
+  ['/training-credits','人工年度訓練積分','年度人工積分'],
+  ['/shift-series','永久週期排班','永久週期排班'],
+  ['/case-contracts','個案契約與期限','契約與期限'],
+  ['/internal-tasks','內部待辦','內部待辦'],
+  ['/local-imports','本機資料匯入','本機資料匯入'], ['/attendance-exceptions','人工出勤例外','人工出勤例外'],
+  ['/custom-forms','自訂表單','自訂表單'],
+  ['/claim-batches', '離線核銷與人工對帳', '離線核銷與人工對帳'],
+  ['/billing-documents', '人工帳單與收款', '人工帳單與收款'], ['/payroll-statements', '人工薪資結算', '人工薪資結算'],
+  ['/institution-calendar', '機構行事曆', '機構行事曆'], ['/complaints', '申訴案件管理', '申訴案件'], ['/business-rules', '業務規則設定', '業務規則設定'],
   ['/', '今日服務工作台', '工作台'], ['/personal-calendar', '個人行事曆', '個人行事曆'],
   ['/cases', '個案', '個案管理'], ['/case-followup-worklist', '人工追蹤查詢', '人工追蹤查詢'],
   ['/plans', '照顧計畫', '照顧計畫'], ['/shifts', '班表', '排班調度'],
@@ -40,6 +55,21 @@ const routeDefinitions = [
   ['/audit', '操作紀錄', '異動紀錄'], ['/help', '使用說明', '使用說明'],
 ];
 const permitted = (role, route) => {
+  if (route === '/surveys') return ['admin', 'supervisor'].includes(role);
+  if (route === '/group-overview') return role === 'admin';
+  if(route==='/shift-substitution')return ['admin','supervisor','caregiver'].includes(role);
+  if(route==='/contract-deadlines')return ['admin','supervisor'].includes(role);
+  if(route==='/internal-notifications')return true;
+  if(route==='/local-imports')return role==='admin';
+  if(route==='/attendance-exceptions')return ['admin','supervisor','caregiver'].includes(role);
+  if(route==='/institution-holidays')return ['admin','supervisor'].includes(role);
+  if(route==='/training-credits')return ['admin','supervisor','caregiver'].includes(role);
+  if(['/shift-series','/case-contracts','/custom-forms'].includes(route))return ['admin','supervisor'].includes(role);
+  if(route==='/internal-tasks')return true;
+  if (['/service-payroll', '/service-billing', '/claim-batches', '/billing-documents', '/payroll-statements'].includes(route)) return ['admin', 'finance'].includes(role);
+  if (route === '/institution-calendar') return true;
+  if (route === '/business-rules') return ['admin', 'supervisor', 'finance'].includes(role);
+  if (route === '/complaints') return ['admin', 'supervisor'].includes(role);
   if (route === '/personal-calendar') return true;
   if (['/interviews', '/supervisory-visits', '/needs-assessments', '/case-followup-worklist'].includes(route)) return ['admin', 'supervisor'].includes(role);
   if (role === 'caregiver') return ['/', '/my-services', '/cases', '/certifications', '/training', '/announcements', '/help'].includes(route);
@@ -178,7 +208,7 @@ try {
   assert.equal(app.db.prepare('SELECT COUNT(*) n FROM certification_attachment_files WHERE length(content)>0').get().n, 1);
   assert(app.db.prepare("SELECT data FROM records WHERE entity='service-records'").all().some(row => Object.hasOwn(JSON.parse(row.data), 'billingSnapshot')));
   routeDefinitions.push(['/cases/' + fixture.mainCase.id, fixture.mainCase.name, '個案管理']);
-  assert.equal(routeDefinitions.length, 23);
+  assert.equal(routeDefinitions.length, 44);
   mark('G1 owned memory/random loopback with reusable identical synthetic rows, four real auth roles, BLOBs and approved snapshot');
 
   await readOnly('G2 paired eight-state desktop/mobile capture', async () => {
@@ -199,7 +229,7 @@ try {
   mark('G2 sixteen before/after-comparable viewport screenshots with the same case/shift/personnel/report data and no writes');
 
   if (mode === 'after') {
-    await readOnly('G3 all original 23 routes and four role permission boundaries', async () => {
+    await readOnly('G3 all 42 routes and four role permission boundaries', async () => {
       for (const role of roles) {
         const page = actors[role].page; await resize(page, mobile);
         for (const [route, heading, navigationName] of routeDefinitions) {
@@ -213,7 +243,7 @@ try {
           await geometry(page, role + ':' + route);
         }
       }
-    }); mark('G3 all 92 role/route combinations preserve permitted page headings, names, metadata access and forbidden boundaries');
+    }); mark(`G3 all ${routeChecks.length} role/route combinations preserve permitted page headings, names, metadata access and forbidden boundaries`);
 
     await readOnly('G4 six-width admin complete-route layout and native control sizing', async () => {
       const page = actors.admin.page;
@@ -221,7 +251,7 @@ try {
         await resize(page, { width, height: width < 1024 ? 844 : 1000 });
         for (const [route, heading] of routeDefinitions) { await load(page, route, heading); await geometry(page, 'admin:' + width + ':' + route); }
       }
-    }); mark('G4 all 23 routes at 375/390/760/1023/1024/1440 stay within the document, retain table scrolling, 44px controls and labelled mobile 16px inputs');
+    }); mark('G4 all 42 routes at 375/390/760/1023/1024/1440 stay within the document, retain table scrolling, 44px controls and labelled mobile 16px inputs');
 
     await readOnly('G5 role-aware finance homepage CTA', async () => {
       const page = actors.finance.page; await resize(page, mobile); await load(page, '/', '今日服務工作台');

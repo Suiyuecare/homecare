@@ -1,11 +1,14 @@
+import { createEndDateControl } from './shift-span-editor.js';
 // Pure single-shift adapter. Saved JSON and selectable membership remain private.
-const names = ['caseId', 'employeeId', 'carePlanId', 'date', 'startTime', 'endTime', 'services', 'status', 'note'];
+const names = ['caseId', 'employeeId', 'carePlanId', 'date', 'startTime', 'endTime', 'services', 'status', 'note', 'endDate'];
 const controls = ['carePlanId', 'employeeId', 'date', 'startTime', 'endTime', 'services', 'note'];
 const labels = { carePlanId: '個案與照顧計畫', employeeId: '服務人員', date: '服務日期', startTime: '開始時間', endTime: '結束時間', services: '本次服務與數量', note: '交班備註' };
 const statuses = { scheduled: '已排班', completed: '已完成', cancelled: '已取消' };
 const own = (value, key) => Object.hasOwn(value, key);
 const plain = value => value !== null && typeof value === 'object' && !Array.isArray(value)
-  && [Object.prototype, null].includes(Object.getPrototypeOf(value));
+  && [Object.prototype, null].includes(Object.getPrototypeOf(value))
+  && Reflect.ownKeys(value).every(key => typeof key === 'string' && Object.getOwnPropertyDescriptor(value, key)?.enumerable
+    && Object.hasOwn(Object.getOwnPropertyDescriptor(value, key), 'value'));
 const singleLine = value => typeof value === 'string' && !/[\r\n]/.test(value);
 const safeId = value => singleLine(value) && value.trim() !== '' && value.length <= 500;
 const put = (object, key, value) => Object.defineProperty(object, key, { value, enumerable: true, configurable: true, writable: true });
@@ -59,6 +62,7 @@ export function formatShiftServices(services, items) {
 
 export function createShiftEditor({ existing, cases = [], employees = [], carePlans = [], serviceItems = [], defaultDate = '', fixedPlanId = '' } = {}) {
   const editing = existing !== undefined && existing !== null;
+  const spanControl = createEndDateControl({ existing, entity: 'shifts' });
   if (editing && !plain(existing)) invalid('carePlanId', '原班次資料格式無法取得，請重新讀取。');
   const original = {}, baseline = {}, fields = [], requiredIntents = new Set();
   const identity = editing ? Object.fromEntries(['id', 'orgId', 'version'].filter(name => own(existing, name)).map(name => [name, copyJson(existing[name])])) : null;
@@ -123,13 +127,17 @@ export function createShiftEditor({ existing, cases = [], employees = [], carePl
       ...(name === 'employeeId' ? { placeholder: '請選擇服務人員', options: employeeOptions.map(value => ({ ...value })) } : {}),
       ...(name === 'services' ? { wide: true, preserveWhenDisabled: true, options: [], help: '填寫大於 0 的數量才會加入本次服務；0 代表未選取。計畫數量不代表班次数量額度。更換計畫時，取代輸入只保留新計畫仍可選的項目；保持原清單不受影響。' } : {}),
       ...(name === 'note' ? { wide: true, help: editing ? '已有服務紀錄的班次不能改派、改時段或取消。' : '排班重疊、已核准請假或計畫不適用時，系統會拒絕儲存。' } : {}),
-      ...(['startTime', 'endTime'].includes(name) ? { help: '取代時填同日時間；保持原 ISO 時段不裁切或換算，改日期後仍須通過同日驗證。' } : {}),
+      ...(['startTime', 'endTime'].includes(name) ? { help: '舊同日格式保持原 ISO 原文；完整日期模式須明確填 HH:mm 與同日／翌日結束日。' } : {}),
     });
   }
+  Object.assign(baseline, spanControl.initial);
+  fields.unshift(spanControl.fields[0]);
+  const dateIndex = fields.findIndex(field => field.name === 'date');
+  fields.splice(dateIndex + 1, 0, ...spanControl.fields.slice(1));
   const allowed = new Set(Object.keys(baseline));
   const valueOf = (values, key) => own(values, key) ? values[key] : baseline[key];
-  const needsIntent = name => requiredIntents.has(name);
-  const enabled = (name, values = {}) => allowed.has(name) && plain(values) && (!needsIntent(name) || valueOf(values, name + 'Intent') === 'replace');
+  const needsIntent = name => requiredIntents.has(name) || ['spanMode', 'endDate', 'endDateIntent'].includes(name);
+  const enabled = (name, values = {}) => spanControl.enabled(name, values) ?? (allowed.has(name) && plain(values) && (!requiredIntents.has(name) || valueOf(values, name + 'Intent') === 'replace'));
   function selectedPlan(values) {
     if (!plain(values)) return null;
     const planId = needsIntent('carePlanId') && valueOf(values, 'carePlanIdIntent') === 'keep' ? original.carePlanId : valueOf(values, 'carePlanId');
@@ -161,11 +169,14 @@ export function createShiftEditor({ existing, cases = [], employees = [], carePl
   }
   function buildPayload(values) {
     if (!plain(values)) invalid('carePlanId', '表單資料格式不正確，請保留輸入並重試。');
-    for (const key of Object.keys(values)) if (!allowed.has(key)) invalid(key, '表單包含未知欄位，請重新讀取。');
+    for (const key of Reflect.ownKeys(values)) {
+      const descriptor = Object.getOwnPropertyDescriptor(values, key);
+      if (typeof key !== 'string' || !allowed.has(key) || !descriptor?.enumerable || !Object.hasOwn(descriptor, 'value')) invalid(typeof key === 'string' ? key : 'spanMode', '表單包含未知欄位或存取器，請重新讀取。');
+    }
     const payload = {};
     for (const name of controls) {
       let value = valueOf(values, name);
-      if (needsIntent(name)) {
+      if (requiredIntents.has(name)) {
         const intent = valueOf(values, name + 'Intent');
         if (!['keep', 'replace', ...(name === 'note' ? ['clear'] : [])].includes(intent)) invalid(name + 'Intent', '請選擇有效的保存處理方式。');
         if (intent === 'keep') continue;
@@ -180,7 +191,7 @@ export function createShiftEditor({ existing, cases = [], employees = [], carePl
       if (!editing || !own(original, 'caseId') || original.caseId !== plan.caseId) put(payload, 'caseId', plan.caseId);
     }
     if (!editing) payload.status = 'scheduled';
-    return payload;
+    return spanControl.apply(payload, values, original);
   }
   function confirm(item, orgId, payload) {
     try {
@@ -192,7 +203,7 @@ export function createShiftEditor({ existing, cases = [], employees = [], carePl
       for (const name of Object.keys(payload)) if (!names.includes(name) && !(editing && name === 'version' && payload.version === identity.version)) unconfirmed();
       for (const name of names) {
         const supplied = own(payload, name), present = supplied || (editing && own(original, name));
-        if ((!editing && !supplied) || own(item, name) !== present) unconfirmed();
+        if ((!editing && !supplied && name !== 'endDate') || own(item, name) !== present) unconfirmed();
         if (present && JSON.stringify(copyJson(item[name])) !== JSON.stringify(supplied ? copyJson(payload[name]) : original[name])) unconfirmed();
       }
     } catch { unconfirmed(); }

@@ -1,7 +1,5 @@
 # 員工證照紀錄總表：0.23 獨立本機切片
 
-> 公開版本文件：記錄此功能版本的設計與驗收條件，並非目前公開副本已執行的驗收證明。私人盤點與 QA 產物未匯出；現行行為以 API.md 與原始碼為準，正式規則及部署仍須核定。
-
 2026-10-08 凍結。依保存證照與既有效期提醒，不推定正式資格、排班資格或原報表匹配；整合、瀏覽器及逐圖完成後才標本機完成。
 
 ## 授權與日期
@@ -26,7 +24,7 @@ full≤1000及JSON envelope UTF-8≤2097152 bytes（等於允許/+1整份413）�
 
 ## 唯一共用介面
 
-薄certification-report adapter。唯一report-view加有限 `asOf:{label:'效期截至日期'}`、`expiry:{label:'效期狀態',selectionKey:'expiry',emptyLabel:'全部效期',labels}`，keys/echo/selection/default/validate/內容／control沿同owner；未opt-in報表語義不變；date.displayRowKeys有限顯示鍵只格式化額外expiresOn，預設仍只rowKey。asOf必填/clear今日、expiry按合法labels；所有條件都進signature。無新async/download/print/controller。adapter只純DTO核對日期／expiryLabel與截至日、status/employee/q/count-only，不作新業務寫入。
+薄certification-report adapter。唯一report-view加有限 `asOf:{label:'效期截至日期'}`、`expiry:{label:'效期狀態',selectionKey:'expiry',emptyLabel:'全部效期',labels}`，keys/echo/selection/default/validate/內容／control沿同owner；未opt-in報表語義不變；date.displayRowKeys有限顯示鍵只格式化額外expiresOn，預設仍只rowKey。asOf必填/clear今日、expiry按合法labels；所有條件都進signature。無新async/download/print/controller。adapter只純DTO核對日期／expiryLabel與截至日、status/employee/q/count-only，不作新業務写入。
 
 admin/sup原報表中心加「證照總表」，finance隱藏並server403；caregiver原/certifications及本人API保持，不新增報表導覽。localKinds8→9，admin9/sup7/finance7；原五legacy API仍五。螢幕最小1400px自身横捲、核發及到期日不折行；A4橫向12mm/9pt十欄寬7/10/13/10/11/9/9/7/8/16%，重複header/長備註及證號換行。只新certification CSS，tokens/其他報表geometry維持。
 
@@ -34,8 +32,8 @@ admin/sup原報表中心加「證照總表」，finance隱藏並server403；care
 
 真新增/sup修改核發/到期/證號/issuer/備註/撤銷/恢復與不可改employee、CAS409；40 CERT標記25+15、日期AND/expiry與asOf變更、過期/當日/30/31/空/撤銷及未來核發含義、q200與literal、empty/clear/lookup-only；15keys/10columns/countonly、wrongDTO date/expiryLabel/asOf/extra keys拒絕。四真role sessions、caregiver本人/他人/inactive恢復、finance早403、缺父scope；imported非法頁外與expiry排除仍全409、strict query、exact1000/JSON2MiB/+1、CSV原文保護、fresh預覽後真修改再fresh單次列印。
 
-沿loaded/pending10context、取消/晚回應/503/MIME/空body/AbortError/native-beforeprint抑制；31報表出口（原28+新3）。11表raw/count/total_changes唯讀與刻意寫分開對帳，六trigger SQL/雙非空BLOB原bytesSHA/核閱費薪snapshot保持。完整既有293 Node及22browser原script SHA回歸。
+沿loaded/pending10context、取消/晚回應/503/MIME/空body/AbortError/native-beforeprint抑制；31報表出口（原28+新3）。11表raw/count/total_changes唯讀與刻意寫分開對帳，六trigger SQL/雙非空BLOB原bytesSHA/核閱費薪snapshot保持。完整既有293 Node及22browser原script SHA回歸。全部合成memory/random port；actual DB不複製/seed，實際4310正常重啟前後11表/trigger/health/setup/session只讀核對。
 
 一新QA PDF／首次成功marker一次，actual fresh授權print DOM/CSS→JS-disabled capture，40 CERT各一次、十headers/A4邊界/全部可見文字/末頁；全部新UI/PDF逐張view_image。新產品上人員11、人員歷程18與訓練28UI的fresh回歸副本也逐圖；原六個報表PDF只原script程式驗證或同artifact修訂，不冒稱新人工舊頁驗收。保留QA shell session並取得OS exitCode；fixture失败及產品/脚本變更時序如實保存。
 
-未知正式支付/薪資/評分/外部介接仍待核定。
+同步state/product/API/UX/design/backlog及不可覆寫0.23.0，基準141source/16舊proof SHA/4409歷史copy不寫，新copy逐份核SHA。原84/52/28/16/359題/四来源SHA/status/parity/9phases/0原completed保持；原「證書」只是相關CRUD，沒有精確report映射，不改任何原row，只RM04局部證據與獨立milestone。未知正式支付/薪資/評分/外部介接仍待核定。

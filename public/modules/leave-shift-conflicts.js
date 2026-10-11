@@ -1,3 +1,5 @@
+import { shiftSpan, spansOverlap } from '../data/shift-span.js';
+import { assertSpanData, spanRecordText } from '../data/shift-span-editor.js';
 import { api, el, button, getContext, openDetails, pagination } from '../ui.js';
 
 const PAGE_SIZE = 25;
@@ -27,10 +29,8 @@ function savedMinute(value, date) {
   if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(value) && value.slice(0, 10) === date && Number.isFinite(Date.parse(value))) return savedMinute(value.slice(11, 16), date);
   return NaN;
 }
-function validInterval(item) {
-  const start = savedMinute(item.startTime, item.date), end = savedMinute(item.endTime, item.date);
-  return validDate(item.date) && Number.isFinite(start) && Number.isFinite(end) && end > start;
-}
+function conflictSpan(item) { return shiftSpan({ date: item.date, startTime: item.startTime, endTime: item.endTime, ...(Object.hasOwn(item, 'endDate') ? { endDate: item.endDate } : {}) }); }
+function validInterval(item) { try { return Boolean(conflictSpan(item)); } catch { return false; } }
 function validTimestamp(value) {
   if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z$/.test(value) || !validDate(value.slice(0, 10))) return false;
   return Number(value.slice(11, 13)) < 24 && Number(value.slice(14, 16)) < 60 && Number(value.slice(17, 19)) < 60 && Number.isFinite(Date.parse(value));
@@ -43,13 +43,14 @@ function validCase(value) {
   return value === null || (keys(value, ['id', 'name', 'caseNo', 'status']) && text(value.id) && nullableText(value.name)
     && nullableText(value.caseNo) && Object.hasOwn(caseStatuses, value.status));
 }
-function validateResponse(value, id, page) {
+export function confirmLeaveShiftConflicts(value, id, page) {
   const invalid = () => { throw new Error('未取得完整且有效的衝突班次資料，請重新讀取。'); };
+  assertSpanData(value);
   if (!keys(value, ['leave', 'generatedAt', 'items', 'total', 'page', 'pageSize', 'note'])
     || !validTimestamp(value.generatedAt) || !text(value.note) || !Array.isArray(value.items)
     || !Number.isSafeInteger(value.total) || value.total < 0 || value.page !== page || value.pageSize !== PAGE_SIZE) invalid();
   const leave = value.leave;
-  if (!keys(leave, ['id', 'version', 'employee', 'date', 'startTime', 'endTime', 'type', 'status'])
+  if (!keys(leave, ['id', 'version', 'employee', 'date', 'startTime', 'endTime', 'type', 'status', ...(Object.hasOwn(leave, 'endDate') ? ['endDate'] : [])])
     || leave.id !== id || !positiveInteger(leave.version) || !validEmployee(leave.employee)
     || !validInterval(leave) || !text(leave.type) || !Object.hasOwn(leaveStatuses, leave.status)) invalid();
   const expectedCount = Math.min(PAGE_SIZE, Math.max(0, value.total - (page - 1) * PAGE_SIZE));
@@ -57,13 +58,13 @@ function validateResponse(value, id, page) {
   const ids = new Set();
   let previous;
   for (const item of value.items) {
-    if (!keys(item, ['shiftId', 'version', 'date', 'startTime', 'endTime', 'status', 'employee', 'case', 'hasServiceRecord'])
+    if (!keys(item, ['shiftId', 'version', 'date', 'startTime', 'endTime', 'status', 'employee', 'case', 'hasServiceRecord', ...(Object.hasOwn(item, 'endDate') ? ['endDate'] : [])])
       || !text(item.shiftId) || ids.has(item.shiftId) || !positiveInteger(item.version) || !validInterval(item)
-      || item.date !== leave.date || !Object.hasOwn(shiftStatuses, item.status) || !validEmployee(item.employee)
+      || !Object.hasOwn(shiftStatuses, item.status) || !validEmployee(item.employee)
       || !['id', 'name', 'employeeNo', 'status'].every(key => item.employee[key] === leave.employee[key])
       || !validCase(item.case) || typeof item.hasServiceRecord !== 'boolean') invalid();
-    const start = savedMinute(item.startTime, item.date), end = savedMinute(item.endTime, item.date);
-    if (!(start < savedMinute(leave.endTime, leave.date) && savedMinute(leave.startTime, leave.date) < end)) invalid();
+    const interval = conflictSpan(item), start = interval.start, end = interval.end;
+    if (!spansOverlap(interval, conflictSpan(leave))) invalid();
     if (previous && (previous.start > start || (previous.start === start && (previous.end > end || (previous.end === end && previous.id > item.shiftId))))) invalid();
     previous = { start, end, id: item.shiftId };
     ids.add(item.shiftId);
@@ -94,7 +95,7 @@ function shiftCard(item, index) {
     el('h3', {}, `衝突班次 ${index}`),
     fields([
       ['班次識別碼', el('code', {}, item.shiftId)], ['班次版本', `第 ${item.version} 版`],
-      ['班次日期', item.date], ['保存開始時間', item.startTime], ['保存結束時間', item.endTime],
+      ['班次完整日期時段', spanRecordText(item)], ['保存開始日期', item.date], ...(Object.hasOwn(item, 'endDate') ? [['保存明確結束日期', item.endDate]] : []), ['保存開始時間', item.startTime], ['保存結束時間', item.endTime],
       ['班次狀態', shiftStatuses[item.status]], ['目前員工', employeeNode(item.employee)], ['目前個案', caseNode(item.case)],
       ['服務紀錄鎖定', item.hasServiceRecord ? '已有服務紀錄' : '目前沒有服務紀錄'],
     ]),
@@ -104,7 +105,7 @@ function contentNode(response, { reload, isCurrent }, changePage) {
   const { leave } = response;
   const summary = el('section', { 'aria-label': '本次請假資料' }, el('h3', {}, '本次請假資料'),
     fields([
-      ['目前員工', employeeNode(leave.employee)], ['請假日期', leave.date],
+      ['目前員工', employeeNode(leave.employee)], ['請假完整日期時段', spanRecordText(leave)], ['保存開始日期', leave.date], ...(Object.hasOwn(leave, 'endDate') ? [['保存明確結束日期', leave.endDate]] : []),
       ['保存開始時間', leave.startTime], ['保存結束時間', leave.endTime], ['假別', leave.type],
       ['請假狀態', leaveStatuses[leave.status]], ['請假版本', `第 ${leave.version} 版`],
       ['資料讀取時間（UTC）', el('time', { datetime: response.generatedAt }, response.generatedAt)],
@@ -131,7 +132,7 @@ export function openLeaveShiftConflicts({ id, isCurrent = () => true }) {
     load: async (signal, helpers) => {
       for (let attempt = 0; attempt < 3; attempt += 1) {
         if (signal.aborted || !helpers.isCurrent()) throw new DOMException('查詢已取消', 'AbortError');
-        const response = validateResponse(await api(`/api/leave-requests/${encodeURIComponent(id)}/shift-conflicts?page=${page}&pageSize=${PAGE_SIZE}`, { signal }), id, page);
+        const response = confirmLeaveShiftConflicts(await api(`/api/leave-requests/${encodeURIComponent(id)}/shift-conflicts?page=${page}&pageSize=${PAGE_SIZE}`, { signal }), id, page);
         if (signal.aborted || !helpers.isCurrent()) throw new DOMException('查詢已取消', 'AbortError');
         const lastPage = Math.max(1, Math.ceil(response.total / PAGE_SIZE));
         // A concurrent change can remove the requested last page. Read its new last page afresh.

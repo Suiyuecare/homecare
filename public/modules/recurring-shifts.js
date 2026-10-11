@@ -1,3 +1,5 @@
+import { recurringShiftSpan } from '../data/shift-span.js';
+import { assertSpanData, spanRecordText, sameEndingDate } from '../data/shift-span-editor.js';
 import { api, el, badge, openForm, toast, formatDate, today, getContext } from '../ui.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -24,18 +26,19 @@ const serviceSignature = services => JSON.stringify((Array.isArray(services) ? s
 const definitionSignature = definition => JSON.stringify([
   definition?.caseId, definition?.employeeId, definition?.carePlanId, definition?.startDate, definition?.endDate,
   definition?.intervalWeeks, Array.isArray(definition?.weekdays) ? [...definition.weekdays].sort((a, b) => a - b) : null,
-  definition?.startTime, definition?.endTime, serviceSignature(definition?.services), definition?.note || '',
+  definition?.startTime, definition?.endTime, Object.hasOwn(definition || {}, 'endDay'), definition?.endDay, serviceSignature(definition?.services), definition?.note || '',
 ]);
 
-function confirmPreview(result, definition) {
+export function confirmRecurringPreview(result, definition) {
   const invalid = () => { throw new Error('未取得完整的排班預覽，請保留輸入後重試。'); };
+  assertSpanData(result); assertSpanData(definition);
   if (!result || definitionSignature(result.definition) !== definitionSignature(definition)
     || !Number.isSafeInteger(result.total) || result.total < 1 || result.total > 93
     || !Array.isArray(result.items) || result.items.length !== result.total) invalid();
   let previous = '', ready = 0, conflicts = 0;
   for (const item of result.items) {
     if (!Number.isFinite(calendarDay(item?.date)) || item.date < definition.startDate || item.date > definition.endDate || item.date <= previous
-      || item.startTime !== definition.startTime || item.endTime !== definition.endTime || !Array.isArray(item.conflicts)) invalid();
+      || item.startTime !== definition.startTime || item.endTime !== definition.endTime || !sameEndingDate(item, recurringShiftSpan(item.date, { startTime: definition.startTime, endTime: definition.endTime, ...(Object.hasOwn(definition, 'endDay') ? { endDay: definition.endDay } : {}) })) || Object.keys(item).some(key => !['date', 'startTime', 'endTime', 'endDate', 'status', 'conflicts'].includes(key)) || !Array.isArray(item.conflicts)) invalid();
     previous = item.date;
     if (item.status === 'ready' && item.conflicts.length === 0) ready++;
     else if (item.status === 'conflict' && item.conflicts.length > 0 && item.conflicts.every(conflict => typeof conflict.message === 'string' && conflict.message)) conflicts++;
@@ -55,22 +58,23 @@ function previewContent(preview) {
       const state = badge(item.status === 'ready' ? 'active' : 'returned'); state.textContent = item.status === 'ready' ? '可建立' : '有衝突';
       return el('article', { class: 'recurring-date-card', 'aria-label': `${formatDate(item.date)} ${weekdayLabel(item.date)}` },
         el('div', { class: 'section-heading' }, el('strong', {}, el('time', { datetime: item.date }, formatDate(item.date)), ` ${weekdayLabel(item.date)}`), state),
-        el('p', {}, `${item.startTime}–${item.endTime}`),
+        el('p', {}, spanRecordText(item)),
         item.conflicts.length > 0 && el('ul', { class: 'recurring-conflicts' }, item.conflicts.map(conflict => el('li', {}, conflict.message))),
       );
     })),
   );
 }
 
-function confirmBatch(result, preview, definition) {
+export function confirmRecurringBatch(result, preview, definition) {
   const invalid = () => { throw new Error('未取得完整的整批排班儲存確認，請保留輸入並使用原表單重試。'); };
+  assertSpanData(result); confirmRecurringPreview(preview, definition);
   if (typeof result?.batchId !== 'string' || !result.batchId.trim() || result.total !== preview.total
     || !Array.isArray(result.items) || result.items.length !== preview.total) invalid();
   const dates = new Set(preview.items.map(item => item.date)), ids = new Set();
   for (const item of result.items) {
     if (typeof item?.id !== 'string' || !item.id.trim() || ids.has(item.id) || !Number.isSafeInteger(item.version) || item.version < 1
       || !dates.has(item.date) || item.caseId !== definition.caseId || item.employeeId !== definition.employeeId || item.carePlanId !== definition.carePlanId
-      || item.startTime !== definition.startTime || item.endTime !== definition.endTime || item.status !== 'scheduled'
+      || item.startTime !== definition.startTime || item.endTime !== definition.endTime || !sameEndingDate(item, recurringShiftSpan(item.date, { startTime: definition.startTime, endTime: definition.endTime, ...(Object.hasOwn(definition, 'endDay') ? { endDay: definition.endDay } : {}) })) || item.status !== 'scheduled'
       || serviceSignature(item.services) !== serviceSignature(definition.services) || (item.note || '') !== definition.note) invalid();
     ids.add(item.id); dates.delete(item.date);
   }
@@ -96,6 +100,7 @@ export function openRecurringShifts({ data, refresh, isCurrent = () => true }) {
   const headers = { 'Idempotency-Key': crypto.randomUUID() };
 
   function definitionFor(values) {
+    assertSpanData(values);
     const plan = plans.find(item => item.id === values.carePlanId);
     if (!plan) throw failure('carePlanId', '請選擇有效的照顧計畫。');
     if (!employees.some(item => item.id === values.employeeId)) throw failure('employeeId', '請選擇使用中的服務人員。');
@@ -108,24 +113,25 @@ export function openRecurringShifts({ data, refresh, isCurrent = () => true }) {
     if (!Number.isInteger(intervalWeeks) || intervalWeeks < 1 || intervalWeeks > 4) throw failure('intervalWeeks', '請選擇每隔 1 至 4 週。');
     if (!Array.isArray(values.weekdays) || !values.weekdays.length || values.weekdays.some(day => !Number.isInteger(day) || day < 1 || day > 7) || new Set(values.weekdays).size !== values.weekdays.length) throw failure('weekdays', '請至少選擇一個服務星期。');
     if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(values.startTime)) throw failure('startTime', '請填寫有效的開始時間。');
-    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(values.endTime) || values.endTime <= values.startTime) throw failure('endTime', '結束時間必須晚於開始時間；本次不接受跨夜班次。');
+    if (!['legacy', 'same', 'next'].includes(values.endDay)) throw failure('endDay', '請明確選擇每班日期格式。');
+    try { recurringShiftSpan(values.startDate, { startTime: values.startTime, endTime: values.endTime, ...(values.endDay !== 'legacy' ? { endDay: values.endDay } : {}) }); } catch { throw failure('endTime', '請依明確日期格式填寫完整有效HH:mm；不猜測翌日。'); }
     const allowed = new Set(serviceOptions(plan.id).map(item => item.value));
     if (!Array.isArray(values.services) || !values.services.length || values.services.length > 100
       || values.services.some(item => !allowed.has(item.serviceItemId) || !Number.isSafeInteger(item.quantity) || item.quantity < 1 || item.quantity > 10000)
       || new Set(values.services.map(item => item.serviceItemId)).size !== values.services.length) throw failure('services', '請選擇計畫允許且使用中的服務，數量須為 1 至 10000 的整數。');
-    const note = String(values.note || '').trim();
+    assertSpanData(values); const note = typeof values.note === 'string' ? values.note : '';
     if (note.length > 10000) throw failure('note', '交班備註最多可填寫 10000 個字元。');
     return {
       caseId: plan.caseId, employeeId: values.employeeId, carePlanId: plan.id,
       startDate: values.startDate, endDate: values.endDate, intervalWeeks, weekdays: [...values.weekdays].sort((a, b) => a - b),
-      startTime: values.startTime, endTime: values.endTime,
+      startTime: values.startTime, endTime: values.endTime, ...(values.endDay !== 'legacy' ? { endDay: values.endDay } : {}),
       services: values.services.map(item => ({ serviceItemId: item.serviceItemId, quantity: item.quantity })), note,
     };
   }
 
   return openForm({
     title: '週期排班', previewLabel: '預覽排班', submitLabel: '建立全部班次',
-    initial: { carePlanId: selectedPlanId, employeeId: '', startDate, endDate, intervalWeeks: 1, weekdays: [], startTime: '09:00', endTime: '10:00', services: [], note: '' },
+    initial: { carePlanId: selectedPlanId, employeeId: '', startDate, endDate, intervalWeeks: 1, weekdays: [], startTime: '09:00', endTime: '10:00', endDay: 'legacy', services: [], note: '' },
     fields: [
       field('carePlanId', '個案與照顧計畫', 'select', { required: true, options: plans.map(plan => ({ value: plan.id, label: `${cases.get(plan.caseId).name}｜${plan.validFrom} 起${plan.validTo ? `至 ${plan.validTo}` : ''}` })), help: '服務項目隨計畫調整；更換計畫後須重新填寫服務數量。' }),
       field('employeeId', '服務人員', 'select', { required: true, placeholder: '請選擇服務人員', options: employees.map(item => ({ value: item.id, label: `${item.employeeNo || ''} ${item.name}`.trim() })) }),
@@ -133,6 +139,7 @@ export function openRecurringShifts({ data, refresh, isCurrent = () => true }) {
       field('endDate', '結束日期', 'date', { required: true, help: '含起訖日期，最多 93 個日曆日；不自動跳過假日。只建立所選區間，不會持續自動排班。' }),
       field('intervalWeeks', '每隔幾週', 'select', { required: true, options: [1, 2, 3, 4].map(value => ({ value, label: `每 ${value} 週` })), help: '以週一至週日為同一週，從第 1 週起依間隔選週。' }),
       field('weekdays', '服務星期', 'checkbox-group', { required: true, wide: true, options: weekdayOptions, help: '至少選一天；每個符合的日期建立一班。' }),
+      field('endDay', '每班日期格式', 'select', { required: true, options: [{ value: 'legacy', label: '舊同日格式（不另存結束日）' }, { value: 'same', label: '明確同日結束' }, { value: 'next', label: '明確翌日結束' }], help: '上方起迄是產班日期範圍；此欄單獨決定每班的結束日。' }),
       field('startTime', '開始時間', 'time', { required: true }), field('endTime', '結束時間', 'time', { required: true }),
       field('services', '本次服務與數量', 'services', { required: true, wide: true, options: serviceOptions(selectedPlanId), help: '此服務與數量套用至每一筆班次。' }),
       field('note', '交班備註', 'textarea', { wide: true, maxLength: 10000, help: '此備註套用至每一筆班次；預覽不會建立班次。' }),
@@ -152,7 +159,7 @@ export function openRecurringShifts({ data, refresh, isCurrent = () => true }) {
       const result = await api('/api/recurring-shifts/preview', { method: 'POST', body: definition, signal });
       ensureCurrent();
       if (signal.aborted || requestedRevision !== revision) throw cancelled();
-      const preview = confirmPreview(result, definition);
+      const preview = confirmRecurringPreview(result, definition);
       confirmedPreview = { definition, preview, revision };
       return { content: previewContent(preview), canSubmit: preview.canCommit };
     },
@@ -169,7 +176,7 @@ export function openRecurringShifts({ data, refresh, isCurrent = () => true }) {
         if (error.code === 'BATCH_CONFLICT') {
           error.invalidatePreview = true; confirmedPreview = null;
           if (current()) {
-            try { error.previewContent = previewContent(confirmPreview(error.details?.preview, definition)); }
+            try { error.previewContent = previewContent(confirmRecurringPreview(error.details?.preview, definition)); }
             catch { /* Keep the server's conflict message if its preview cannot be confirmed. */ }
           }
         } else if (error.code === 'IDEMPOTENCY_CONFLICT') {
@@ -179,7 +186,7 @@ export function openRecurringShifts({ data, refresh, isCurrent = () => true }) {
         throw error;
       }
       if (!current()) return;
-      confirmBatch(result, confirmed.preview, definition);
+      confirmRecurringBatch(result, confirmed.preview, definition);
       await refresh();
       if (current()) toast(`已建立 ${result.total} 筆班次。`, 'success');
     },

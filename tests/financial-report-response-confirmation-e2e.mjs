@@ -212,7 +212,7 @@ try {
   }); mark('錯誤inline重新讀取恢復真200，原month/kind與核閱試算註記保留，只有確認完成可匯出');
 
   await readOnly('loading-disabled-and-true-month-abort-new-body-wins', async () => {
-    await selectReport(page, 'fees'); const pattern = `**/api/reports/fees?month=${month}`, slow = await delayRoute(page, pattern);
+    await selectReport(page, 'fees'); const pattern = `**/api/reports/fees?month=${month}&spanMode=calendar-two-day-v1`, slow = await delayRoute(page, pattern);
     try {
       await reloadButton(page).click(); await slow.arrived.promise; await body(page).getByText('正在整理報表…', { exact: true }).waitFor(); assert(await csvButton(page).isDisabled()); await shot(page, 'financial-fees-confirmation-loading.png');
       const abort = page.waitForEvent('requestfailed', { predicate: r => matches({ url: () => r.url(), request: () => r }, 'fees', month), timeout: 10000 });
@@ -231,7 +231,7 @@ try {
 
   await readOnly('real-csv-current-fresh-bytes-not-constructed-from-json', async () => {
     for (const [role, kind] of [['admin', 'fees'], ['finance', 'payroll']]) {
-      const actor = actors[role]; await selectReport(actor.page, kind); const response = await actor.client.request.get(`${base}/api/reports/${kind}.csv?month=${month}`, { headers: { 'X-Org-Id': orgId } }); assert.equal(response.status(), 200); const expected = await response.body(); assert.match(response.headers()['content-type'], /^text\/csv/);
+      const actor = actors[role]; await selectReport(actor.page, kind); const response = await actor.client.request.get(`${base}/api/reports/${kind}.csv?month=${month}&spanMode=calendar-two-day-v1`, { headers: { 'X-Org-Id': orgId } }); assert.equal(response.status(), 200); const expected = await response.body(); assert.match(response.headers()['content-type'], /^text\/csv/);
       assert.deepEqual([...expected.subarray(0, 3)], [239, 187, 191]); assert(expected.toString().includes('\r\n')); assert(expected.toString().includes('未核定規則'));
       const waiting = actor.page.waitForEvent('download'); await csvButton(actor.page).click(); const download = await waiting; assert.equal(download.suggestedFilename(), `歲悅-${kind}-${month}.csv`);
       const filename = `synthetic-${kind}-${month}.csv`; await download.saveAs(path.join(output, filename)); assert.deepEqual(await readFile(path.join(output, filename)), expected);

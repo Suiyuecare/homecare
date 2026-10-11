@@ -1,8 +1,6 @@
 # 附件描述安全編輯（0.54）
 
-> 公開版本文件：記錄此功能版本的設計與驗收條件，並非目前公開副本已執行的驗收證明。私人盤點與 QA 產物未匯出；現行行為以 API.md 與原始碼為準，正式規則及部署仍須核定。
-
-凍結日期：2026-10-10。沿既有個案附件及證照附件的獨立本機流程、docs/ATTACHMENTS_SCOPE.md 與 docs/CERTIFICATION_ATTACHMENTS_SCOPE.md；這是已授權持續建置範圍內的安全改進。
+凍結日期：2026-10-10。沿既有個案附件及證照附件的獨立本機流程、docs/ATTACHMENTS_SCOPE.md 與 docs/CERTIFICATION_ATTACHMENTS_SCOPE.md；這是已授權持續建置範圍內的安全改進。RM-02／RM-01 仍 partial，原180目錄全部欄位、九階段與原完成數不變，不宣稱原平台附件全量等價。
 
 ## 原規則與限定操作
 
@@ -32,4 +30,4 @@ metadata／status 成功須確認 item 非空 ID、精確目前 orgId、固定�
 
 真瀏覽器驗 case 及 cert 編輯／status、no-op零PATCH、未改CR/LF／型別／缺失、修復、非法2xx、真正409／422／連線錯誤與原輸入保持、清單拒絕及重試、loaded／pending完整情境、busy／dirty／Escape／回焦、1440／390px。手機長備註尾句以實際捲動、Range／hit-test與 actual PNG檢視核 footer；不能以DOM bounds單獨代替。原附件兩套、聯絡人安全編輯、case安全編輯、history/core、APM CIS及真正HTTPS合成Portal沿必要回歸；不把未執行配置稱為fresh。
 
-凍結來源、實際程序退出碼、原作者／整合失敗、必要瀏覽器與逐圖證據保持；必要整合與瀏覽器完成後才標示 implemented_verified。本輪沒有DNS、正式部署、付款、申報、外部訊息或未核定規則。
+凍結來源、實際程序退出碼、原作者／整合失敗、必要瀏覽器與逐圖證據保持；必要整合與瀏覽器完成後才標示 implemented_verified。仅合成資料／隨機loopback／隔離clone，實際帳號DB／env／binding／私人備份／4310不存取或重置；正式持久主機、HTTPS、Portal發布與本人UAT沿原部署交接待辦。本輪沒有DNS、正式部署、付款、申報、外部訊息或未核定規則。

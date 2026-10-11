@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0.62.0",
+  "version": "0.78.0",
   "status": "local-partial",
   "purpose": "public-project-roadmap",
   "notice": "獨立本機測試系統，使用合成資料；本文件不包含原平台盤點、私人開通或完整開發追溯，亦不宣稱全部功能等價或正式部署完成。",
@@ -130,12 +130,54 @@
       "contract": "docs/SERVICE_ITEM_RECORD_DETAILS_SCOPE.md",
       "originalParityVerified": false,
       "productionDeployed": false
+    },
+    {
+      "id": "internal-workflows",
+      "summary": "機構假日、合約與任務、人工表單、個案家系／健康／足跡、內部提示、培訓與期限管理",
+      "status": "local-verified",
+      "originalParityVerified": false,
+      "productionDeployed": false
+    },
+    {
+      "id": "shift-span",
+      "summary": "單班與週期跨日、整組移日、代班／人工出勤異常及完整實際服務日期",
+      "status": "local-verified",
+      "originalParityVerified": false,
+      "productionDeployed": false
+    },
+    {
+      "id": "local-financial-workflows",
+      "summary": "人工服務帳單／薪資來源、核閱價格快照、申報批次與CSV／列印；正式規則待核定",
+      "status": "local-verified",
+      "originalParityVerified": false,
+      "productionDeployed": false
+    },
+    {
+      "id": "group-overview",
+      "summary": "已授權機構的營運總覽、七日趨勢及逐筆追查",
+      "status": "local-verified",
+      "originalParityVerified": false,
+      "productionDeployed": false
+    },
+    {
+      "id": "survey-qr",
+      "summary": "管理者明確核准題目的匿名問卷與一次性QR；不含外部訊息",
+      "status": "local-verified",
+      "originalParityVerified": false,
+      "productionDeployed": false
+    },
+    {
+      "id": "synthetic-encrypted-backup",
+      "summary": "工廠合成十一表與附件捕捉、加密檔完整還原及切換失敗回復；非正式營運工具",
+      "status": "local-verified",
+      "originalParityVerified": false,
+      "productionDeployed": false
     }
   ],
   "authentication": {
     "cis": "local-accepted",
     "portalReceiver": "local-synthetic-accepted",
-    "publicExportVerification": "pending",
+    "publicExportVerification": "synthetic-local-and-ci-per-commit",
     "realAccountIncluded": false
   },
   "remains": [
@@ -176,5 +218,15 @@
     }
   ],
   "evidencePolicy": "本機能力已有合成驗收；公開副本、CI、部署與 UAT 各自以實際來源、命令、退出碼及可取得產物驗收。",
-  "pendingLocalCapabilities": []
+  "pendingLocalCapabilities": [],
+  "fullRegression": {
+    "version": "0.78.0",
+    "configuredCommands": 90,
+    "status": "local-verified",
+    "ci": "two-node-versions-and-six-browser-shards",
+    "productionDeployed": false,
+    "unitPassed": 2060,
+    "nativePassCoverage": 90,
+    "privacy": "public-program-synthetic-tests-and-documents-only"
+  }
 }

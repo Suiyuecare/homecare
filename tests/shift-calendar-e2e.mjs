@@ -21,6 +21,19 @@ const same = (actual, expected, label) => assert(isDeepStrictEqual(actual, expec
 const compareRows = (a, b) => { for (const key of ['date', 'startTime', 'caseNo', 'employeeNo', 'shiftId']) { if (a[key] < b[key]) return -1; if (a[key] > b[key]) return 1; } return 0; };
 const visibleKeys = ['date', 'caseNo', 'case', 'employeeNo', 'employee', 'startTime', 'endTime', 'services', 'statusLabel', 'version', 'note'];
 const rowKeys = ['shiftId', 'version', 'date', 'caseNo', 'case', 'employeeNo', 'employee', 'startTime', 'endTime', 'services', 'status', 'statusLabel', 'note'];
+// Original columns/row keys remain the legacy oracle; UI opts in additively.
+const spanVisibleKeys = visibleKeys.flatMap(key => key === 'date' ? [key, 'endDate'] : [key]);
+const spanRowKeys = [...rowKeys, 'endDate'];
+const fixedModes = Object.freeze({ spanMode: 'calendar-two-day-v1', rangeMode: 'intersects' });
+const spanFilters = value => ({ ...value, ...fixedModes });
+const primitiveFilters = value => Object.fromEntries(Object.keys(filters({ startDate: '', endDate: '' })).map(key => [key, value[key]]));
+// These unchanged fixtures contain same-day rows. Clock text is read independently;
+// raw ISO seconds/offsets stay intact in every original displayed value.
+const segmentOracle = row => {
+  assert.equal(row.endDate, row.date, 'Legacy same-day ending date is a read-only projection');
+  const clock = value => { const match = /^(?:\d{4}-\d{2}-\d{2}T)?(\d{2}:\d{2})(?:$|:)/.exec(value); assert(match, 'Independent persisted clock oracle'); return match[1]; };
+  return `${row.date} ${clock(row.startTime)}–${clock(row.endTime)}`;
+};
 const weekdays = ['週一', '週二', '週三', '週四', '週五', '週六', '週日'];
 const exportPattern = '**/api/shift-report/export?*';
 const calendarPath = '/api/shift-report/export';
@@ -59,7 +72,8 @@ function oracle(mode, anchor) {
   return { mode, anchor, slots, dates, startDate: dates[0], endDate: dates.at(-1), previousAnchor, nextAnchor, rangeClipped: mode === 'week' && slots.some(value => value === null) };
 }
 const filters = (period, status = '') => ({ startDate: period.startDate, endDate: period.endDate, caseId: '', employeeId: '', status });
-const query = (period, status = '') => new URLSearchParams(Object.entries(filters(period, status)).filter(([, value]) => value !== '')).toString();
+const legacyQuery = (period, status = '') => new URLSearchParams(Object.entries(filters(period, status)).filter(([, value]) => value !== '')).toString();
+const query = (period, status = '') => new URLSearchParams(Object.entries(spanFilters(filters(period, status))).filter(([, value]) => value !== '')).toString();
 const isExport = request => request.method() === 'GET' && new URL(request.url()).pathname === calendarPath;
 const matchesQuery = (request, period, status = '') => isExport(request) && new URL(request.url()).search === '?' + query(period, status);
 const taipeiToday = () => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Taipei' }).format(new Date());
@@ -115,10 +129,13 @@ const submit = async (page, mode, anchor, status = '', expectedStatus = 200) => 
 async function assertFull(page, period, status = '', role = 'admin', returned) {
   const real = await fixture.request(fixture.clients[role], 'GET', calendarPath + '?' + query(period, status));
   assert.equal(real.status, 200); const result = real.body;
-  assert.equal(Object.keys(result).length, 12); same(result.filters, filters(period, status), 'Exactly the full interval and fixed empty IDs are requested');
+  assert.equal(Object.keys(result).length, 12); same(primitiveFilters(result.filters), filters(period, status), 'Exactly the original full interval and fixed empty IDs are requested'); same(result.filters, spanFilters(filters(period, status)), 'Only the two fixed explicit modes are added');
+  const legacy = await fixture.request(fixture.clients[role], 'GET', calendarPath + '?' + legacyQuery(period, status)); assert.equal(legacy.status, 200);
+  same(legacy.body.filters, filters(period, status)); same(legacy.body.columns.map(column => column.key), visibleKeys, 'Eleven original visible columns'); for (const row of legacy.body.rows) same(Object.keys(row).sort(), [...rowKeys].sort(), 'Thirteen persisted legacy projection keys');
+  same(result.rows.map(({ endDate, ...row }) => row), legacy.body.rows, 'All original raw projection values still equal the untouched legacy API');
   assert.equal(result.rows.length, result.total); assert.equal(result.page, 1); assert.equal(result.pageSize, result.total); assert.equal(result.totals.count, result.total);
-  same(result.columns.map(column => column.key), visibleKeys, 'Eleven original visible columns');
-  for (const row of result.rows) same(Object.keys(row).sort(), [...rowKeys].sort(), 'Thirteen persisted projection keys');
+  same(result.columns.map(column => column.key), spanVisibleKeys, 'Twelve additive explicit-mode report columns');
+  for (const row of result.rows) same(Object.keys(row).sort(), [...spanRowKeys].sort(), 'Fourteen additive explicit-mode projection keys');
   if (returned) same(returned.rows, result.rows, 'Browser loaded the complete real server response');
   const actual = await content(page).locator('.shift-calendar-agenda').evaluate(node => [...node.querySelectorAll(':scope > section[data-date]')].map(section => ({
     date: section.dataset.date, heading: section.querySelector('h3').textContent, tabIndex: section.querySelector('h3').tabIndex,
@@ -134,8 +151,8 @@ async function assertFull(page, period, status = '', role = 'admin', returned) {
     same(day.rows.map(row => row.id), rows.map(row => row.shiftId), 'Daily row ID/order equals the complete API');
     if (!rows.length) assert.equal(day.empty, '此日沒有班次。');
     else {
-      same(day.headers, result.columns.map(column => ({ text: column.label, scope: 'col' })), 'Semantic table headers retain the report labels');
-      for (let i = 0; i < rows.length; i++) { same(day.rows[i].values, visibleKeys.map(key => String(rows[i][key])), 'All eleven raw displayed values remain exact literal strings'); assert(day.rows[i].preWrap.every(value => value === 'pre-wrap')); }
+      same(day.headers, [{ text: '本日顯示區段', scope: 'col' }, ...result.columns.map(column => ({ text: column.label, scope: 'col' }))], 'Semantic table headers retain every report label and the daily segment');
+      for (let i = 0; i < rows.length; i++) { same(day.rows[i].values.filter((_, index) => index !== 0 && index !== 2), visibleKeys.map(key => String(rows[i][key])), 'All eleven raw displayed values remain exact literal strings'); same(day.rows[i].values, [segmentOracle(rows[i]), ...spanVisibleKeys.map(key => String(rows[i][key]))], 'Daily segment and explicit end date are independently confirmed'); assert(day.rows[i].preWrap.every(value => value === 'pre-wrap')); }
     }
     allIds.push(...day.rows.map(row => row.id));
   }
@@ -144,7 +161,7 @@ async function assertFull(page, period, status = '', role = 'admin', returned) {
   same(index.headers, weekdays.map(text => ({ text, scope: 'col' }))); assert.equal(index.rows, period.mode === 'week' ? 1 : 6); same(index.slots, period.slots); assert.equal(index.invalidButtons, 0);
   assert.equal(await nav(page, '上一期').isDisabled(), period.previousAnchor === null); assert.equal(await nav(page, '下一期').isDisabled(), period.nextAnchor === null);
   assert.equal(await content(page).locator('script,img').count(), 0, 'HTML-looking saved text is never executed or inserted as markup');
-  calendarChecks.push({ mode: period.mode, anchor: period.anchor, status, role, startDate: period.startDate, endDate: period.endDate, slots: period.slots.length, availableDates: period.dates.length, rows: result.total, rawRowsSha256: sha(JSON.stringify(result.rows)), realFreshGet: true, agendaExactlyOnce: true, visibleColumns: 11, rowKeys: 13 });
+  calendarChecks.push({ mode: period.mode, anchor: period.anchor, status, role, startDate: period.startDate, endDate: period.endDate, slots: period.slots.length, availableDates: period.dates.length, rows: result.total, rawRowsSha256: sha(JSON.stringify(result.rows)), realFreshGet: true, agendaExactlyOnce: true, originalVisibleColumns: 11, originalRowKeys: 13, visibleColumns: 13, reportColumns: 12, rowKeys: 14 });
   return result;
 }
 const slowRoute = async (page, predicate = isExport) => {

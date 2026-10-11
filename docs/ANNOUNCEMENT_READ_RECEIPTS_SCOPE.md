@@ -1,8 +1,6 @@
 # 公告已讀回執（0.40，獨立本機切片）
 
-> 公開版本文件：記錄此功能版本的設計與驗收條件，並非目前公開副本已執行的驗收證明。私人盤點與 QA 產物未匯出；現行行為以 API.md 與原始碼為準，正式規則及部署仍須核定。
-
-2026-10-09 凍結。；依 0.24/0.25 的公告權限、CRUD、版本歷程與 0.39 合成備份基礎。只用合成 SQLite／隨機 localhost／Chromium。必要整合、全部 configured premium commands、瀏覽器與逐圖檢視通過後才標 implemented_verified。原公告與 180 項原平台全量等價仍未完成。
+2026-10-09 凍結。RM-07；依 0.24/0.25 的公告權限、CRUD、版本歷程與 0.39 合成備份基礎。只用合成 SQLite／隨機 localhost／Chromium。必要整合、全部 configured premium commands、瀏覽器與逐圖檢視通過後才標 implemented_verified。原公告與 180 項原平台全量等價仍未完成。
 
 ## 本人動作與版次
 
@@ -29,7 +27,7 @@
 新路由都在既有 auth/Origin/CSRF 下，沒有外部服務：
 
 1. GET `/api/announcements/:id/read-state`：optional `version`，無值選 current。回 `{announcement,currentVersion,canAcknowledge,receipt}`。
-2. POST `/api/announcements/:id/read-state`：body 只有 `{version}`，positive safe integer；未知 key 422 `UNKNOWN_FIELD`，不接受 caller user/name/role/time/org。
+2. POST `/api/announcements/:id/read-state`：body 只有 `{version}`，positive safe integer；未知 key 422 `UNKNOWN_FIELD`，不接受 caller user/name/role/time/org。首次 201、原 tuple 再送 200；回 `{receipt}`。
 3. GET `/api/announcements/:id/read-receipts`：僅 admin/supervisor；optional `version,page,pageSize`，預設 current/1/25、max100。回 `{announcement,currentVersion,items,total,page,pageSize}`。只列選定版實際回執，readAt DESC/id ASC；無 cohort、未讀人數或完成率。finance/caregiver 403 `ROLE_FORBIDDEN`。
 
 announcement 投影固定 id/orgId/version/createdAt/updatedAt/title/body/audience/status，值沿授權 immutable snapshot；currentVersion 為目前公告版次。canAcknowledge 只有 target=current 且上述合法文字/published 規則成立才 true。GET 不能改寫資料。
@@ -54,8 +52,8 @@ HTTP/pure gates 覆蓋四角色、current/逐版/機構/撤權、GET 零寫、�
 
 合成 WAL/backup/restore 將新回執及其 audit/idem/session 全數保存、startup0；兩代有不同閱讀狀態，closed forced rollback 恢復原 live bytes 與值、success 保留 previous。不改原0.39 fixture；必要新合成寫與登入分帳，raw text 用已驗證 SQL full hex oracle。
 
-Chromium 包含本人明確提交／pending防重／新版未讀、admin/sup分頁/版次/empty/503、finance/caregiver無他人名冊、非法2xx與同key重試、409重讀、真requestfailed abort／context切換／same-identity刷新、literalHTML/typed安全、手機/鍵盤/焦點與相關 sibling。
+Chromium 包含本人明確提交／pending防重／新版未讀、admin/sup分頁/版次/empty/503、finance/caregiver無他人名冊、非法2xx與同key重試、409重讀、真requestfailed abort／context切换／same-identity刷新、literalHTML/typed安全、手機/鍵盤/焦點與相關 sibling。所有 premium-ui configured commands 實際執行，初始失敗與修正來源/log/process/outer保留，不自動 mutation retry；最終唯一畫面逐圖檢視。
 
-只追加本機能力與證據，metadata 後另hash封存。
+維持原84/52/28/16/359／4 sources／12 contracts／9 phases、原completed0、前38 local milestones、RM09 scoped partial與正式相依、支付／薪資／評分／介接 needs_contract。只追加本機能力與證據，metadata 後另hash封存。不讀、重啟、reload、probe、登入或写既有 DB/4310，不用原帳密／個資，不做 CI/UAT/申報/付款/外部訊息/正式部署。
 
 原公告 audience/其他原角色/正式閱讀與保留政策仍待核定。immutable 回執僅證明操作紀錄，無理解或法定簽收保證；讀取可能掃描機構 JSON receipt rows，分頁不宣稱索引效能或大型資料 SLA。既有缺 head 的 initDb 修補行為未改，但新receipt驗證拒絕baseline；不宣稱正式資料移轉、DR、RPO/RTO、加密或 retention已驗。

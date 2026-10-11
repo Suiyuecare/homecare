@@ -1,9 +1,12 @@
+import { createEndDateControl } from './shift-span-editor.js';
 // Pure adapter: keep saved JSON and option membership outside mutable form descriptors.
-const names = ['employeeId', 'date', 'startTime', 'endTime', 'type', 'reason', 'status'];
-const controls = names.slice(0, -1);
+const names = ['employeeId', 'date', 'startTime', 'endTime', 'type', 'reason', 'status', 'endDate'];
+const controls = names.slice(0, -2);
 const labels = { employeeId: '員工', date: '請假日期', startTime: '開始時間', endTime: '結束時間', type: '假別', reason: '請假原因' };
 const plain = value => value !== null && typeof value === 'object' && !Array.isArray(value)
-  && [Object.prototype, null].includes(Object.getPrototypeOf(value));
+  && [Object.prototype, null].includes(Object.getPrototypeOf(value))
+  && Reflect.ownKeys(value).every(key => typeof key === 'string' && Object.getOwnPropertyDescriptor(value, key)?.enumerable
+    && Object.hasOwn(Object.getOwnPropertyDescriptor(value, key), 'value'));
 const own = (value, key) => Object.hasOwn(value, key);
 const put = (object, key, value) => Object.defineProperty(object, key, { value, enumerable: true, configurable: true, writable: true });
 function invalid(name, message) { const error = new Error(message); error.fields = { [name]: message }; throw error; }
@@ -36,6 +39,7 @@ function savedKind(present, value) {
 
 export function createLeaveEditor({ existing, employees = [], defaultDate = '' } = {}) {
   const editing = existing !== undefined && existing !== null;
+  const spanControl = createEndDateControl({ existing, entity: 'leave-requests' });
   if (editing && !plain(existing)) invalid('employeeId', '原請假資料格式無法取得，請重新讀取。');
   const employeeIds = new Set(), employeeOptions = [];
   for (const employee of Array.isArray(employees) ? employees : []) {
@@ -73,20 +77,27 @@ export function createLeaveEditor({ existing, employees = [], defaultDate = '' }
       ...(name === 'employeeId' ? { options: employeeOptions.map(option => ({ ...option })) } : {}),
       ...(name === 'reason' ? { wide: true } : {}),
       ...(name === 'type' ? { help: '由機構依實際假別填寫。' } : {}),
-      ...(['startTime', 'endTime'].includes(name) ? { help: '取代時填同日時間；保留原 ISO 時段不截短或換算，改日期後仍須通過同日驗證。' } : {}),
+      ...(['startTime', 'endTime'].includes(name) ? { help: '舊同日格式保留 ISO 原文；完整日期模式须明確填 HH:mm 與同日／翌日結束日。' } : {}),
     });
   }
+  Object.assign(baseline, spanControl.initial);
+  fields.unshift(spanControl.fields[0]);
+  const dateIndex = fields.findIndex(field => field.name === 'date');
+  fields.splice(dateIndex + 1, 0, ...spanControl.fields.slice(1));
   const allowed = new Set(Object.keys(baseline));
   const valueOf = (values, key) => own(values, key) ? values[key] : baseline[key];
-  const needsIntent = name => requiredIntents.has(name);
-  const enabled = (name, values = {}) => allowed.has(name) && plain(values) && (!needsIntent(name) || valueOf(values, name + 'Intent') === 'replace');
+  const needsIntent = name => requiredIntents.has(name) || ['spanMode', 'endDate', 'endDateIntent'].includes(name);
+  const enabled = (name, values = {}) => spanControl.enabled(name, values) ?? (allowed.has(name) && plain(values) && (!requiredIntents.has(name) || valueOf(values, name + 'Intent') === 'replace'));
   function buildPayload(values) {
     if (!plain(values)) invalid('employeeId', '表單資料格式不正確，請保留輸入並重試。');
-    for (const key of Object.keys(values)) if (!allowed.has(key)) invalid(key, '表單包含未知欄位，請重新讀取。');
+    for (const key of Reflect.ownKeys(values)) {
+      const descriptor = Object.getOwnPropertyDescriptor(values, key);
+      if (typeof key !== 'string' || !allowed.has(key) || !descriptor?.enumerable || !Object.hasOwn(descriptor, 'value')) invalid(typeof key === 'string' ? key : 'spanMode', '表單包含未知欄位或存取器，請重新讀取。');
+    }
     const payload = {};
     for (const name of controls) {
       let value = valueOf(values, name);
-      if (needsIntent(name)) {
+      if (requiredIntents.has(name)) {
         const intent = valueOf(values, name + 'Intent');
         if (!['keep', 'replace', ...(name === 'reason' ? ['clear'] : [])].includes(intent)) invalid(name + 'Intent', '請選擇有效的保存處理方式。');
         if (intent === 'keep') continue;
@@ -96,7 +107,7 @@ export function createLeaveEditor({ existing, employees = [], defaultDate = '' }
       if (!editing || !own(original, name) || JSON.stringify(original[name]) !== JSON.stringify(value)) payload[name] = value;
     }
     if (!editing) payload.status = 'pending';
-    return payload;
+    return spanControl.apply(payload, values, original);
   }
   function confirm(item, orgId, payload) {
     try {
@@ -108,7 +119,7 @@ export function createLeaveEditor({ existing, employees = [], defaultDate = '' }
       for (const name of Object.keys(payload)) if (!names.includes(name) && !(editing && name === 'version' && payload.version === identity.version)) unconfirmed();
       for (const name of names) {
         const supplied = own(payload, name), present = supplied || (editing && own(original, name));
-        if ((!editing && !supplied) || own(item, name) !== present) unconfirmed();
+        if ((!editing && !supplied && name !== 'endDate') || own(item, name) !== present) unconfirmed();
         if (present && JSON.stringify(copyJson(item[name])) !== JSON.stringify(supplied ? copyJson(payload[name]) : original[name])) unconfirmed();
       }
     } catch { unconfirmed(); }

@@ -1,3 +1,4 @@
+import { entitySpan } from './shift-span.mjs';
 import { HttpError, dateValid, fail, leaveShiftConflicts, now, scopedRows, timeMinute } from './model.mjs';
 
 export function guardLeaveShiftConflicts(ctx) {
@@ -35,8 +36,8 @@ export function readLeaveShiftConflicts(db, ctx, recordId, { page, pageSize }) {
     if (error instanceof HttpError && error.code === 'TIME_RANGE') invalid();
     throw error;
   }
-  conflicts.sort((a, b) => timeMinute(a.startTime, a.date) - timeMinute(b.startTime, b.date)
-    || timeMinute(a.endTime, a.date) - timeMinute(b.endTime, b.date)
+  conflicts.sort((a, b) => entitySpan('shifts',a).start - entitySpan('shifts',b).start
+    || (Object.hasOwn(a,'endDate') || Object.hasOwn(b,'endDate') ? entitySpan('shifts',a).end - entitySpan('shifts',b).end : timeMinute(a.endTime, a.date) - timeMinute(b.endTime, b.date))
     || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
   const cases = new Map(scopedRows(db, ctx, 'cases').map(item => [item.id, item]));
   // All same-organization record statuses participate in the existing shift lock.
@@ -45,11 +46,11 @@ export function readLeaveShiftConflicts(db, ctx, recordId, { page, pageSize }) {
   return {
     leave: {
       id: leave.id, version: leave.version, employee: person, date: leave.date,
-      startTime: leave.startTime, endTime: leave.endTime, type: leave.type, status: leave.status,
+      startTime: leave.startTime, endTime: leave.endTime, ...(Object.hasOwn(leave,'endDate')?{endDate:leave.endDate}:{}), type: leave.type, status: leave.status,
     },
     generatedAt: now(),
     items: conflicts.slice((page - 1) * pageSize, page * pageSize).map(shift => ({
-      shiftId: shift.id, version: shift.version, date: shift.date, startTime: shift.startTime, endTime: shift.endTime,
+      shiftId: shift.id, version: shift.version, date: shift.date, startTime: shift.startTime, endTime: shift.endTime, ...(Object.hasOwn(shift,'endDate')?{endDate:shift.endDate}:{}),
       status: shift.status, employee: person, case: caseView(cases.get(shift.caseId)), hasServiceRecord: recordedShifts.has(shift.id),
     })),
     total: conflicts.length, page, pageSize,

@@ -11,11 +11,11 @@ const settings = config => ({
   person: { ...DEFAULT_PERSON_FILTER, ...config.personFilter },
   date: config.date === false ? false : { ...DEFAULT_DATE, ...config.date },
   caseFilter: config.caseFilter !== false, search: config.search || false,
-  asOf: config.asOf || false, expiry: config.expiry || false,
+  asOf: config.asOf || false, expiry: config.expiry || false, fixed: config.fixedFilters || {},
 });
-const filterKeys = ({ person, date, caseFilter, search, asOf, expiry }) => [
+const filterKeys = ({ person, date, caseFilter, search, asOf, expiry, fixed }) => [
   ...(date ? ['startDate', 'endDate'] : []), ...(search ? [search.key] : []),
-  ...(caseFilter ? ['caseId'] : []), person.key, 'status', ...(asOf ? ['asOf'] : []), ...(expiry ? ['expiry'] : []),
+  ...(caseFilter ? ['caseId'] : []), person.key, 'status', ...(asOf ? ['asOf'] : []), ...(expiry ? ['expiry'] : []), ...Object.keys(fixed),
 ];
 const identity = () => {
   const context = getContext();
@@ -26,7 +26,7 @@ const abortError = () => new DOMException('操作已取消', 'AbortError');
 const validDate = value => /^\d{4}-\d{2}-\d{2}$/.test(value) && Number.isFinite(Date.parse(`${value}T00:00:00Z`)) && new Date(`${value}T00:00:00Z`).toISOString().slice(0, 10) === value;
 const timestamp = value => new Intl.DateTimeFormat('zh-TW', { timeZone: 'Asia/Taipei', dateStyle: 'short', timeStyle: 'medium' }).format(new Date(value));
 const defaultFilters = options => {
-  const filters = Object.fromEntries(filterKeys(options).map(key => [key, '']));
+  const filters = { ...Object.fromEntries(filterKeys(options).map(key => [key, ''])), ...options.fixed };
   if (options.asOf) filters.asOf = today();
   if (!options.date) return filters;
   const month = today().slice(0, 7), [year, number] = month.split('-').map(Number);
@@ -37,12 +37,14 @@ const filterQuery = (keys, filters) => new URLSearchParams(keys.filter(key => fi
 // Pure response confirmation shared by all reports; adapters cannot replace async guards.
 export function confirmReport(config, result, filters, { page = 1, complete = false } = {}) {
   const options = settings(config), { person, date, caseFilter, asOf, expiry } = options, keys = filterKeys(options);
+  if (config.confirmEnvelope && !config.confirmEnvelope(result)) throw new Error('未取得完整日期報表的封閉資料確認。');
   const selectionKeys = [...(caseFilter ? ['case'] : []), person.selectionKey, 'status', ...(expiry ? [expiry.selectionKey] : [])];
   const invalid = () => { throw new Error('未取得與查詢條件一致的完整報表確認，請重新查詢。'); };
   if (!result || typeof result !== 'object' || result.title !== config.title
     || typeof result.organization?.name !== 'string' || !result.organization.name.trim()
     || !result.filters || Object.keys(result.filters).length !== keys.length
     || keys.some(key => result.filters[key] !== filters[key])
+    || Object.entries(options.fixed).some(([key, value]) => filters[key] !== value)
     || !result.selection || Object.keys(result.selection).length !== selectionKeys.length
     || selectionKeys.some(key => typeof result.selection[key] !== 'string' || !result.selection[key].trim())
     || result.selection.status !== (config.statuses[filters.status] || '全部狀態')
@@ -65,7 +67,7 @@ export function confirmReport(config, result, filters, { page = 1, complete = fa
         ? !Number.isSafeInteger(row[key]) || row[key] < 1
         : type === 'employee-regions' ? !isNormalizedEmployeeRegions(row[key]) : typeof row[key] !== 'string')
       || !row[config.idKey] || ids.has(row[config.idKey])
-      || (date && (!validDate(row[date.rowKey]) || row[date.rowKey] < filters.startDate || row[date.rowKey] > filters.endDate))
+      || (date && (!validDate(row[date.rowKey]) || (!date.intersects && (row[date.rowKey] < filters.startDate || row[date.rowKey] > filters.endDate))))
       || !Object.hasOwn(config.statuses, row.status) || row.statusLabel !== config.statuses[row.status]
       || (filters.status && row.status !== filters.status)
       || (config.validateRow && !config.validateRow(row, { filters }))) invalid();
@@ -80,6 +82,7 @@ function reportTable(config, result) {
   const node = table(config.columns.map(column => ({ ...column, render: row => date && (column.key === date.rowKey || date.displayRowKeys?.includes(column.key)) && row[column.key] !== '' ? formatDate(row[column.key]) : el('span', { class: 'pre-wrap' }, column.type === 'employee-regions' ? formatEmployeeRegions(row[column.key]) : row[column.key] === '' ? '—' : String(row[column.key])) })), result.rows,
     { emptyText: config.copy.emptyTable, caption: config.title });
   node.classList.add('report-table', `${config.key}-table`);
+  if (config.fixedFilters?.spanMode === 'calendar-two-day-v1') node.classList.add('calendar-span-report-table');
   return node;
 }
 
@@ -176,7 +179,7 @@ export function mountReportView(container, { config, isCurrent = () => true } = 
   let controller, lookupController, downloadController, confirmed = null, loading = false, downloading = false, composing = false;
   const controls = new Map(), fieldErrors = new Map();
   const current = () => !disposed && container.isConnected && identity() === startedIdentity && window.location.hash === startedHash && isCurrent();
-  const values = () => Object.fromEntries(keys.map(key => [key, controls.get(key).value]));
+  const values = () => Object.fromEntries(keys.map(key => [key, Object.hasOwn(options.fixed, key) ? options.fixed[key] : controls.get(key).value]));
   const outputCurrent = captured => current() && confirmed === captured && signature(values()) === captured.signature;
   const summary = el('div', { class: 'form-summary', role: 'alert', hidden: true });
   const lookupStatus = el('div', { 'aria-live': 'polite' });
@@ -186,7 +189,7 @@ export function mountReportView(container, { config, isCurrent = () => true } = 
   const queryButton = button(config.copy.queryButton, null, { type: 'submit', disabled: true });
   const clearButton = button('清除條件', () => {
     const defaults = defaultFilters(options);
-    for (const key of keys) controls.get(key).value = defaults[key];
+    for (const key of keys) if (controls.has(key)) controls.get(key).value = defaults[key];
     invalidate(); page = 1; void load();
   }, { variant: 'outline' });
   const csvButton = button('下載 CSV', () => download(), { variant: 'outline', disabled: true });
@@ -246,7 +249,7 @@ export function mountReportView(container, { config, isCurrent = () => true } = 
     el('div', { class: 'actions' }, queryButton, clearButton),
   );
   const initial = defaultFilters(options);
-  for (const key of keys) controls.get(key).value = initial[key];
+  for (const key of keys) if (controls.has(key)) controls.get(key).value = initial[key];
   if (caseFilter) controls.get('caseId').disabled = true;
   controls.get(person.key).disabled = true;
   form.addEventListener('submit', event => { event.preventDefault(); if (composing) return; page = 1; void load(); });

@@ -1,7 +1,5 @@
 # 費用／薪資試算回應確認（0.37，本機切片）
 
-> 公開版本文件：記錄此功能版本的設計與驗收條件，並非目前公開副本已執行的驗收證明。私人盤點與 QA 產物未匯出；現行行為以 API.md 與原始碼為準，正式規則及部署仍須核定。
-
 2026-10-09。先凍結本契約，再實作。沿 PRODUCT.md、API.md、0.36 已保存計價快照及既有報表介面；此切片不核定正式支付或薪資規則。
 
 ## 交付與界線
@@ -31,14 +29,15 @@ CSV 仍由既有下載流程另發 fresh GET，沿 MIME／非空／context／中
 
 後端全部保持，包括同機構／四角色、失效居服員403、CSRF／Origin、CAS／版本、append-only、approved 核閱快照、選內缺快照409、選外缺快照排除、價格及費率分組、legacy JSON/CSV 相容。其餘七類 advanced 報表及建立／編輯流程保持。
 
-## 驗收條件
+## 驗收與證據
 
 1. 純測試覆蓋合法／零值／空資料／重複列、原始月份前綴、數字型別與安全整數邊界、完整欄位／順序／note、精確合計、不可變及不可猜測的薪資月份。
 2. HTTP 整合由合成 memory SQLite／隨機 localhost 驗證真回應、四角色／機構、快照及 fresh CSV，相同讀取保持十一表、六 trigger、版本及 BLOB。
 3. 真 Chromium 測試錯誤2xx、inline錯誤／重試／CSV停用、loading／empty／success、完整 context及查詢／下載晚回應、键盤／390px／zh-TW／sibling；截圖必須檢視後才標示完成。native OS popup 幾何不宣稱完整人工驗證。
 4. 全 Node／source check、premium-ui.json 全部 configured commands及 strict audit、DESIGN lint使用實際退出結果；歷史證據不重加到本輪fresh。
+5. 同步 BUILD_STATE、PRODUCT、API、backlog、README及本機封存；原180功能、359固定題、RM-01/RM-02及原來源保持，RM-03/RM-04 partial，不宣稱完整原平台等價、人工UAT、CI或正式部署。
 
-只用合成測試資料。未知正式支付、薪資、評分及介接仍待核定。
+只用合成測試資料。本輪不存取工作區 data.db／既有4310／原平台帳密、真實個資、付款、正式申報、外部訊息或部署。未知正式支付、薪資、評分及介接仍待核定。
 
 ## 已知既存顯示界線及後續候選
 

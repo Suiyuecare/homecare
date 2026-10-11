@@ -290,3 +290,8 @@ canonical元件及CSS/tokens保持；僅services的preserveWhenDisabled opt-in�
 原三讀角色列表沿唯一saved-record-details pure與UI／openDetails guardedRead，只新增service-item薄profile與row入口。八欄順序沿history白名單、備註field-wide／pre-wrap，桌機與390px長文完整閱讀。known狀態及原碼並列、unknown原文、五種保存型別清楚；分鐘只呈numeric primitive，試算分值沿原formatter，日期不解析。每次explicit open／manual retry才fresh單筆；user/org/role/employee、outer context/hash/alive/trigger連線失效沿同一owner撤除與真abort，沒有重複controller或新增CSS。finance僅查看、其他三維護操作保持；caregiver不增導覽，原API範圍不變。來源 docs/SERVICE_ITEM_RECORD_DETAILS_SCOPE.md 與 docs/API.md，業務正式支付契約仍待核定。
 
 0.62本輪必要驗收：1,239程式／最低Node122／268JS、九套browser104項、新12項與十張PNG實看；APM CIS／合成HTTPS Portal、服務項目原安全編輯與歷程、員工與面試共用詳情及四角色視覺回歸通過。原sourcefreeze與失敗保留；只新browser G2補直接inert斷言，runtime107及舊tests精確，十類同消費來源承接、四次affected native通過，共十八次程序含原員工timeout，根因未確立，未宣稱first-pass或所有來源同批fresh。strict沿已接受私人parser零finding；官方auditor原逾時失敗保留，未重跑或宣稱官方pass。DESIGN零error／10既有warning；正式支付／薪資／申報契約待核定。原180目錄／9階段／12契約／2增強及60里程碑／105來源前綴保持，追加61／107；RM05仍needs_contract。正式主機、HTTPS、Portal發布及真實公司登入UAT另驗。
+
+
+## 共用介面修復（0.78）
+
+忙碌狀態保留按鈕尺寸，但原文字立即隱藏，不與「處理中」疊字。非互動通知保留 aria-live／原位置及時效，不能攔截底層按鈕的滑鼠或觸控。列印 html 畫布及紙本背景採白色；螢幕 APM 色彩、表格欄寬與共用幾何不變。

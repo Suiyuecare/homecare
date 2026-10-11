@@ -1,8 +1,6 @@
 # 個案總表查詢與完整本機輸出（0.10）
 
-> 公開版本文件：記錄此功能版本的設計與驗收條件，並非目前公開副本已執行的驗收證明。私人盤點與 QA 產物未匯出；現行行為以 API.md 與原始碼為準，正式規則及部署仍須核定。
-
-原收案/結案/停復案日期、完整正式欄位、分組與版面未核對；不宣稱原報表已匹配。使用合成資料，不接原平台，不碰正式申報或支付。舊五類reports端點保持相容，localReportKinds仍5；cases同類改用進階介面。
+本輪依RM-04與現有cases製作獨立本機報表，原REPORT-d934fea8697c「個案總表」保持partial/unverified。原收案/結案/停復案日期、完整正式欄位、分組與版面未核對；不宣稱原報表已匹配。使用合成資料，不接原平台，不碰正式申報或支付。舊五類reports端點保持相容，localReportKinds仍5；cases同類改用進階介面。
 
 ## 資料與日期
 
@@ -38,4 +36,4 @@ CSS .case-report-table螢幕自身橫捲，12欄print權重依序10/6/9/4/4/7/7/
 
 Node：40跨月cases/25+15與全數聯集、status/督導/case交集、未指派/停用/role改字/缺主檔、四角色/跨org/目前own shift改派立即縮scope；UTC15:59:59.999/16:00與月底16:00臺北跨日、合法offset/非法createdAt/updatedAt整份拒絕、保留建立日非birthday/status日期、白名單/CMS文字/CSV注入、精確1000/2MiB邊界+1拒絕。真case建立/編輯/暫停/恢復/結案與版本/稽核、預覽後真更新version及fresh內容；全10表rawState與total_changes唯讀不變，核閱快照及舊5+shift/service API相容。
 
-真Chromium：40cases/25+15、所有filter/清除/空結果/count、CSV bytes=freshAPI、預覽後真case PATCH升版與下次列印fresh；錯誤MIME/empty/503/AbortError、缺確認、lookup錯誤、slow/cancel/Escape/focus/類型/機構/hash/靜默filterbeforeprint、四角色/標籤/鍵盤/1440/390。新單一合成多頁QA PDF取自fresh按鈕window.print同步beforeprint已放行的實際DOM/CSS snapshot（QA新頁停用JS、無產品授權旁路），第一次page.pdf前marker成功1次，後續同檔修訂envskip；全文40markers各1、最新版本/臺北日期/CMS與備註/每頁欄頭/A4/邊界，render全部頁並逐張view_image。
+真Chromium：40cases/25+15、所有filter/清除/空結果/count、CSV bytes=freshAPI、預覽後真case PATCH升版與下次列印fresh；錯誤MIME/empty/503/AbortError、缺確認、lookup錯誤、slow/cancel/Escape/focus/類型/機構/hash/靜默filterbeforeprint、四角色/標籤/鍵盤/1440/390。新單一合成多頁QA PDF取自fresh按鈕window.print同步beforeprint已放行的實際DOM/CSS snapshot（QA新頁停用JS、無產品授權旁路），第一次page.pdf前marker成功1次，後續同檔修訂envskip；全文40markers各1、最新版本/臺北日期/CMS與備註/每頁欄頭/A4/邊界，render全部頁並逐張view_image。root獨立全Node及7套一般browser，協作重跑shift14/service17；新case18類及舊PDF回歸也逐頁view；必要驗證全過才0.10獨立implemented_verified。原84/52/28/16源目錄/status/parity/源hash/9階段/0original completed保留；0.7/0.8/0.9 immutable不可覆寫，新0.10另存。

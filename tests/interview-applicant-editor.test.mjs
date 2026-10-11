@@ -191,10 +191,10 @@ test('strict opt-in list confirmation validates captured requested page, org, co
   for (const filters of [{ status: 'inactive' }, { interviewDate: '2026-10-11' }, { status: 'toString' }, { interviewDate: '0000-01-01' }]) assert.throws(() => confirmInterviewApplicantList(filtered, { ...opts, ...filters }), /清單回應無法確認/);
 });
 
-test('safe list/history projections expose exactly eight fields and never nested unknown values', () => {
+test('safe list/history keeps original eight fields, adds ten known optional fields and never exposes nested unknown values', () => {
   assert.equal(formatInterviewText({ private: true }), '內容未取得'); assert.equal(formatInterviewDate('0000-01-01'), '日期未取得');
   assert.equal(formatInterviewDate('2026-10-10'), '2026/10/10'); assert.equal(formatInterviewStatus('toString'), '狀態未取得');
-  assert.deepEqual(getHistoryFields('interview-applicants').map(f => f.key), names);
+  assert.deepEqual(getHistoryFields('interview-applicants').map(f => f.key), [...names,'appliedPosition','education','workExperience','availableFrom','availableHours','certificateNotes','interviewQuestions','interviewerEmployeeId','decision','decisionReason']);
   const projection = normalizeHistorySnapshot('interview-applicants', row({ city: { secret: 'hidden' }, note: 7, unknownSecret: 'hidden' }));
   assert.deepEqual(projection.city, { invalid: true }); assert.deepEqual(projection.note, { invalid: true });
   assert(!JSON.stringify(projection).includes('hidden'));

@@ -1,3 +1,4 @@
+import { spanRecordText, CALENDAR_SPAN_MODE } from './data/shift-span-editor.js';
 import { api, el, button, badge, pageHeader, table, getContext, setContext, createForm, navigate, toast, today, formatDate, errorState, onSessionExpired, fetchAll, openDetails } from './ui.js';
 import { renderOperations } from './modules/operations.js';
 import { renderAdmin } from './modules/admin.js';
@@ -47,10 +48,13 @@ function showPortalAuth(notice = '') {
   location.replace(authSettings.portalLoginUrl);
 }
 const navItems = [
-  ['日常照顧', '/', '工作台', 'home'], ['/cases', '個案管理', 'cases'], ['/plans', '照顧計畫', 'clipboard'], ['/shifts', '排班調度', 'shifts'], ['/records', '服務核閱', 'records'], ['/my-services', '我的服務', 'services'], ['/personal-calendar', '個人行事曆', 'calendar'],
+  ['日常照顧', '/', '工作台', 'home'], ['/cases', '個案管理', 'cases'], ['/plans', '照顧計畫', 'clipboard'], ['/shifts', '排班調度', 'shifts'], ['/shift-series', '永久週期排班', 'shifts'], ['/case-contracts', '契約與期限', 'clipboard'], ['/records', '服務核閱', 'records'], ['/my-services', '我的服務', 'services'], ['/personal-calendar', '個人行事曆', 'calendar'],
   ['人員與機構', '/employees', '員工管理', 'users'], ['/interviews', '面試者登錄', 'interview'], ['/certifications', '證照與期限', 'certificate'], ['/training', '訓練紀錄', 'book'], ['/leave', '請假與差勤', 'leave'], ['/service-items', '服務項目', 'layers'], ['/announcements', '機構公告', 'announcement'],
-  ['紀錄與報表', '/assessments', '評估表單', 'clipboard'], ['/supervisory-visits', '督導訪視查詢', 'visit'], ['/needs-assessments', '需求評估查詢', 'search'], ['/case-followup-worklist', '人工追蹤查詢', 'activity'], ['/reports', '報表中心', 'reports'],
-  ['系統管理', '/settings', '機構設定', 'settings'], ['/audit', '異動紀錄', 'history'], ['/help', '使用說明', 'help']
+  ['/shift-substitution', '人工代班申請', 'leave'], ['/contract-deadlines', '契約期限提醒', 'calendar'], ['/internal-notifications', '站內通知與回覆', 'announcement'],
+  ['/attendance-exceptions', '人工出勤例外', 'leave'], ['/institution-holidays', '機構人工假日', 'calendar'], ['/training-credits', '年度人工積分', 'book'], ['/institution-calendar', '機構行事曆', 'calendar'], ['/internal-tasks', '內部待辦', 'clipboard'], ['/complaints', '申訴案件', 'clipboard'], ['/business-rules', '業務規則設定', 'settings'],
+  ['紀錄與報表', '/assessments', '評估表單', 'clipboard'], ['/custom-forms', '自訂表單', 'clipboard'], ['/supervisory-visits', '督導訪視查詢', 'visit'], ['/needs-assessments', '需求評估查詢', 'search'], ['/case-followup-worklist', '人工追蹤查詢', 'activity'], ['/reports', '報表中心', 'reports'], ['/group-overview', '群組營運總覽', 'reports'], ['/surveys', '問卷與 QR 填答', 'clipboard'],
+  ['財務作業', '/service-billing', '服務轉帳單', 'reports'], ['/billing-documents', '人工帳單與收款', 'reports'], ['/service-payroll', '服務轉薪資', 'reports'], ['/payroll-statements', '人工薪資結算', 'reports'], ['/claim-batches', '離線核銷與人工對帳', 'reports'],
+  ['系統管理', '/settings', '機構設定', 'settings'], ['/local-imports', '本機資料匯入', 'layers'], ['/audit', '異動紀錄', 'history'], ['/help', '使用說明', 'help']
 ];
 const names = Object.fromEntries(navItems.map(item => item.length === 4 ? [item[1], item[2]] : [item[0], item[1]]));
 function brand(workspaceLabel = '') {
@@ -60,6 +64,21 @@ function brand(workspaceLabel = '') {
 }
 function canView(route) {
   const role = getContext().role;
+  if (route === '/surveys') return ['admin', 'supervisor'].includes(role);
+  if (route === '/group-overview') return role === 'admin';
+  if (route === '/shift-substitution') return ['admin','supervisor','caregiver'].includes(role);
+  if (route === '/contract-deadlines') return ['admin','supervisor'].includes(role);
+  if (route === '/internal-notifications') return ['admin','supervisor','finance','caregiver'].includes(role);
+  if (route === '/local-imports') return role === 'admin';
+  if (route === '/attendance-exceptions') return ['admin','supervisor','caregiver'].includes(role);
+  if (route === '/institution-holidays') return ['admin', 'supervisor'].includes(role);
+  if (route === '/training-credits') return ['admin', 'supervisor', 'caregiver'].includes(role);
+  if (['/shift-series', '/case-contracts', '/custom-forms'].includes(route)) return ['admin', 'supervisor'].includes(role);
+  if (route === '/internal-tasks') return ['admin', 'supervisor', 'caregiver', 'finance'].includes(role);
+  if (['/service-payroll', '/service-billing', '/claim-batches', '/billing-documents', '/payroll-statements'].includes(route)) return ['admin', 'finance'].includes(role);
+  if (route === '/institution-calendar') return ['admin', 'supervisor', 'caregiver', 'finance'].includes(role);
+  if (route === '/business-rules') return ['admin', 'supervisor', 'finance'].includes(role);
+  if (route === '/complaints') return ['admin', 'supervisor'].includes(role);
   if (route === '/personal-calendar') return ['admin', 'supervisor', 'caregiver', 'finance'].includes(role);
   if (['/interviews', '/supervisory-visits', '/needs-assessments', '/case-followup-worklist'].includes(route)) return ['admin', 'supervisor'].includes(role);
   if (role === 'caregiver') return ['/', '/my-services', '/cases', '/certifications', '/training', '/announcements', '/help'].includes(route);
@@ -200,7 +219,8 @@ async function dashboard(container) {
     el('span', {}, roleLabels[ctx.role] || ctx.role)));
   let data, cases, employees;
   try {
-    data = await api(`/api/dashboard?date=${date}`);
+    data = await api(`/api/dashboard?date=${date}&spanMode=${CALENDAR_SPAN_MODE}`);
+    if (data.spanMode !== CALENDAR_SPAN_MODE) throw new Error('排班時段模式無法確認，請重新讀取。');
     if (!current()) { stale(); return; }
     [cases, employees] = await Promise.all([fetchAll('cases'), fetchAll('employees')]);
     if (!current()) { stale(); return; }
@@ -217,12 +237,12 @@ async function dashboard(container) {
     el('h2', {}, '工作摘要'), el('div', { class: 'dashboard-metrics' }, countDefs.map(([name, value, hint]) => el('div', { class: 'dashboard-metric' }, el('span', {}, name), el('strong', {}, value), el('small', {}, hint)))));
   const services = shifts.length ? el('ul', { class: 'dashboard-service-list', 'aria-label': '今日服務安排' }, shifts.map(r =>
     el('li', { class: 'dashboard-service-row' },
-      el('div', { class: 'dashboard-service-time' }, el('span', { class: 'sr-only' }, '時段：'), `${r.startTime}–${r.endTime}`),
+      el('div', { class: Object.hasOwn(r, 'endDate') ? 'dashboard-service-time pre-wrap' : 'dashboard-service-time' }, el('span', { class: 'sr-only' }, '時段：'), Object.hasOwn(r, 'endDate') ? spanRecordText(r, 'shifts') : `${r.startTime}–${r.endTime}`),
       el('div', { class: 'dashboard-service-case' }, el('span', { class: 'sr-only' }, '個案：'), el('a', { href: `#/cases/${r.caseId}` }, r.caseName || casesMap.get(r.caseId) || '個案')),
       el('div', { class: 'dashboard-service-employee' }, el('span', { class: 'sr-only' }, '服務人員：'), r.employeeName || staffMap.get(r.employeeId) || '未指定'),
       el('div', { class: 'dashboard-service-status' }, el('span', { class: 'sr-only' }, '狀態：'), badge(r.status)))))
     : table([], [], { emptyText: '今天尚無班次，可到排班調度安排服務。' });
-  const work = el('section', { class: 'panel dashboard-schedule' }, el('div', { class: 'section-heading' }, el('h2', {}, '今日服務安排'), el('span', { class: 'small muted' }, '服務資訊以最新排班為準')), services);
+  const work = el('section', { class: 'panel dashboard-schedule' }, el('div', { class: 'section-heading' }, el('h2', {}, '今日服務安排'), el('span', { class: 'small muted' }, '服務資訊以最新排班為準；包含前日開始而於本日延續的班次')), services);
   const next = el('section', { class: 'panel dashboard-next' }, el('h2', {}, '接下來的工作'));
   const links = ctx.role === 'caregiver' ? [['/my-services', '填寫我的服務紀錄', '核對班次後，記錄實際服務時間與項目。'], ['/cases', '查閱服務個案', '服務前先確認聯絡資訊與照顧注意事項。']] : [['/records', `核閱服務紀錄${pending.length ? ` · ${pending.length} 筆` : ''}`, '檢查實際時間、服務項目與數量。'], ['/plans', '確認照顧計畫', '排班依據個案有效計畫與服務項目。'], ['/reports', '查看作業報表', '核對服務明細與費用試算。']];
   for (const [route, name, hint] of links) if (canView(route)) next.append(el('a', { href: `#${route}`, class: 'next-action' },
@@ -266,7 +286,7 @@ async function renderRoute() {
     else if (route === '/help') help(container);
     else if (['/cases', '/plans', '/shifts', '/records', '/my-services'].includes(base)) await renderOperations(route, container);
     else if (['/certifications', '/training'].includes(base)) await renderPersonnel(route, container);
-    else if (['/personal-calendar', '/employees', '/interviews', '/service-items', '/leave', '/assessments', '/supervisory-visits', '/needs-assessments', '/case-followup-worklist', '/announcements', '/reports', '/settings', '/audit'].includes(base)) await renderAdmin(route, container);
+    else if (['/surveys', '/group-overview', '/service-payroll', '/service-billing', '/shift-substitution', '/contract-deadlines', '/internal-notifications', '/local-imports', '/attendance-exceptions', '/institution-holidays', '/training-credits', '/shift-series', '/case-contracts', '/internal-tasks', '/custom-forms', '/claim-batches', '/billing-documents', '/payroll-statements', '/business-rules', '/institution-calendar', '/complaints', '/personal-calendar', '/employees', '/interviews', '/service-items', '/leave', '/assessments', '/supervisory-visits', '/needs-assessments', '/case-followup-worklist', '/announcements', '/reports', '/settings', '/audit'].includes(base)) await renderAdmin(route, container);
     else container.append(pageHeader('找不到這個頁面'), button('回到工作台', () => navigate('/')));
     if (token !== routeVersion) return;
   } catch (e) { if (token === routeVersion) container.replaceChildren(errorState(e, renderRoute)); }

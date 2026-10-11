@@ -1,8 +1,6 @@
 # 個案暫停與結案追蹤 — 0.46 凍結範圍
 
-> 公開版本文件：記錄此功能版本的設計與驗收條件，並非目前公開副本已執行的驗收證明。私人盤點與 QA 產物未匯出；現行行為以 API.md 與原始碼為準，正式規則及部署仍須核定。
-
-本輪為本機獨立實作，依  未完成的原因、區間及追蹤補足可操作紀錄。獨立保存個案暫停／結案的人工原因、區間與追蹤；正式欄位、文件、期限與結案標準仍待核定，不表示完整外部流程等價。
+本輪為本機獨立實作，依 RM-02 未完成的原因、區間及追蹤補足可操作紀錄。原入口 URL-9bb9d86dbcdd／P-92BBAC1B 觀察到日期、狀態、請假區間、原因、備註；原欄位與正式文件、列印、結案標準未核定，不宣稱完整等價。原目錄 status/mappingStatus 保持 partial/unverified。
 
 ## 保存與行為
 
@@ -29,6 +27,8 @@ GET `/api/case-status-followups` 沿 page/pageSize（25 預設、最大100）、
 
 ## 驗收與邊界
 
-以來源隔離 clone 合成資料驗證：四角色與跨機構、不可改個案、日期/長度/未知欄/查詢/CSRF/Origin、冪等、CAS、歷程 actor 與 exact previous、純讀零寫入、既有案件/班次/核閱快照不變。真瀏覽器：新增編輯、結果確認、篩選分頁、無資料與錯誤重試、衝突/離線/busy/重送、鍵盤 dirty/Escape/焦點、機構/路由切換與晚回應、390px長原因及桌機 sibling 視檢。必要既有 API/個案/聯絡人/history/CIS/Portal SSO regression 通過後才標本機完成。
+以來源隔離 clone 合成資料验证：四角色與跨機構、不可改個案、日期/長度/未知欄/查詢/CSRF/Origin、冪等、CAS、歷程 actor 與 exact previous、純讀零寫入、既有案件/班次/核閱快照不變。真瀏覽器：新增編輯、結果確認、篩選分頁、無資料與錯誤重試、衝突/離線/busy/重送、鍵盤 dirty/Escape/焦點、機構/路由切換與晚回應、390px長原因及桌機 sibling 視檢。必要既有 API/個案/聯絡人/history/CIS/Portal SSO regression 通過後才標本機完成。
 
-正式主機/HTTPS/Portal發布依既有交接仍待完成。
+所有測試使用合成資料，不讀或修改 root care.sqlite、真實 authorized administrator 綁定、私人備份、秘密或 DNS；不部署、不發外部訊息、不正式申報/付款。正式主機/HTTPS/Portal發布依既有交接仍待完成。
+
+狀態：本機獨立實作已驗收，接受日期2026-10-10。190 JavaScript、801完整測試及最低Node22.13相關88通過；七套必要browser含新13關與新14张實際圖片視檢。原始失敗與修訂留證，完整驗收見outputs/software/case-status-followups-qa/verification.json；正式原欄位與部署未驗。

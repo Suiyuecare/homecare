@@ -1,3 +1,5 @@
+import { spanReportRows, spanReportColumns } from './span-report.mjs';
+import { entitySpan } from './shift-span.mjs';
 import { scopedRows } from './model.mjs';
 import { parseReportQuery, validateReportReferences, assertReportExportLimit } from './report-query.mjs';
 const statusLabels = Object.freeze({ scheduled: '已排班', completed: '已完成', cancelled: '已取消' });
@@ -13,15 +15,11 @@ const compareText = (a, b) => a < b ? -1 : a > b ? 1 : 0;
 
 /** Fresh scoped reads only. Full exports and paginated lists use this same projection. */
 export function readShiftReport(db, ctx, params, { full = false } = {}) {
-  const { filters, page, pageSize } = parseReportQuery(params, { full, statusLabels, statusMessage: '不支援的班次狀態' });
+  const { filters, page, pageSize } = parseReportQuery(params, { full, statusLabels, statusMessage: '不支援的班次狀態', span:true, range:true });
   const cases = new Map(scopedRows(db, ctx, 'cases').map(item => [item.id, item]));
   const employees = new Map(scopedRows(db, ctx, 'employees').map(item => [item.id, item]));
   validateReportReferences(filters, cases, employees);
-  const shifts = scopedRows(db, ctx, 'shifts').filter(item =>
-    item.date >= filters.startDate && item.date <= filters.endDate &&
-    (!filters.caseId || item.caseId === filters.caseId) &&
-    (!filters.employeeId || item.employeeId === filters.employeeId) &&
-    (!filters.status || item.status === filters.status));
+  const shifts = spanReportRows(db,ctx,'shifts',filters,{range:true});
   if (full) assertReportExportLimit(shifts.length);
   const services = new Map(scopedRows(db, ctx, 'service-items').map(item => [item.id, item]));
   const projected = shifts.map(shift => {
@@ -32,7 +30,7 @@ export function readShiftReport(db, ctx, params, { full = false } = {}) {
       return name + ' × ' + service.quantity;
     }).join('；');
     return {
-      shiftId: shift.id, version: shift.version, date: text(shift.date),
+      shiftId: shift.id, version: shift.version, date: text(shift.date), ...(filters.spanMode?{endDate:Object.hasOwn(shift,'endDate')?shift.endDate:shift.date}:{}),
       caseNo: text(caseItem?.caseNo), case: display(caseItem?.name, '未取得個案名稱'),
       employeeNo: text(employee?.employeeNo), employee: display(employee?.name, '未取得服務人員名稱'),
       startTime: text(shift.startTime), endTime: text(shift.endTime), services: serviceText,
@@ -55,7 +53,7 @@ export function readShiftReport(db, ctx, params, { full = false } = {}) {
       employee: filters.employeeId ? display(employees.get(filters.employeeId)?.name, '未取得服務人員名稱') : '全部可讀人員',
       status: filters.status ? statusLabels[filters.status] : '全部狀態',
     },
-    generatedAt: new Date().toISOString(), columns,
+    generatedAt: new Date().toISOString(), columns:spanReportColumns(columns,'endDate','結束日期',filters),
     rows: full ? projected : projected.slice((page - 1) * pageSize, page * pageSize),
     totals: { count: total }, total, page: full ? 1 : page, pageSize: full ? total : pageSize,
     note: '本機測試報表；個案、人員與服務使用目前主檔名稱，服務數量為排班數量，非正式申報。',

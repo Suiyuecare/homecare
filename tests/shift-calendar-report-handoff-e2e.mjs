@@ -21,6 +21,10 @@ const exportPath = '/api/shift-report/export', csvPath = '/api/shift-report.csv'
 const previewTitle = '班表明細列印預覽', entryName = '完整報表／下載';
 const routePattern = '**/api/shift-report**';
 const columns = ['date', 'caseNo', 'case', 'employeeNo', 'employee', 'startTime', 'endTime', 'services', 'statusLabel', 'version', 'note'];
+const spanColumns = columns.flatMap(key => key === 'date' ? [key, 'endDate'] : [key]);
+const fixedModes = Object.freeze({ spanMode: 'calendar-two-day-v1', rangeMode: 'intersects' });
+const spanFilters = value => ({ ...value, ...fixedModes });
+const primitiveFilters = value => Object.fromEntries(['startDate', 'endDate', 'caseId', 'employeeId', 'status'].map(key => [key, value[key]]));
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 const same = (actual, expected, message) => assert(isDeepStrictEqual(actual, expected), message);
 const pathname = request => new URL(request.url()).pathname;
@@ -33,7 +37,8 @@ async function bounded(promise, label, ms = 10000) {
   finally { clearTimeout(timer); }
 }
 const filters = (startDate, endDate, person = {}, status = '') => ({ startDate, endDate, caseId: person.caseId || '', employeeId: person.employeeId || '', status });
-const query = value => new URLSearchParams(Object.entries(value).filter(([, text]) => text !== '')).toString();
+const legacyQuery = value => new URLSearchParams(Object.entries(value).filter(([, text]) => text !== '')).toString();
+const query = value => new URLSearchParams(Object.entries(spanFilters(value)).filter(([, text]) => text !== '')).toString();
 const matches = (request, value, target = exportPath) => request.method() === 'GET' && pathname(request) === target && new URL(request.url()).search === '?' + query(value);
 const calendar = page => page.getByRole('dialog', { name: '週／月班表', exact: true });
 const content = page => calendar(page).locator('.shift-calendar');
@@ -108,20 +113,23 @@ async function openPreview(page, value, { keyboard = false, ready = true } = {})
 }
 async function assertReport(page, value, role = 'admin', returned) {
   const real = await fixture.request(fixture.clients[role], 'GET', exportPath + '?' + query(value)); assert.equal(real.status, 200);
-  const result = real.body; same(result.filters, value, 'Five primitive filters remain exact');
+  const result = real.body; same(primitiveFilters(result.filters), value, 'Five primitive filters remain exact'); same(result.filters, spanFilters(value), 'Only the two fixed explicit modes are added');
+  const legacy = await fixture.request(fixture.clients[role], 'GET', exportPath + '?' + legacyQuery(value)); assert.equal(legacy.status, 200); same(legacy.body.filters, value); same(legacy.body.columns.map(column => column.key), columns);
+  same(result.rows.map(({ endDate, ...row }) => row), legacy.body.rows, 'All original projection values and ordering still equal the untouched legacy API');
   same(result.rows.map(row => row.shiftId).sort(), fixture.expectedShiftIds(value, role), 'Independent persisted shiftId→caseId/employeeId oracle proves the server scope');
   if (returned) same(returned.rows, result.rows, 'Handoff rows equal fresh server rows');
   assert.equal(result.rows.length, result.total); assert.equal(result.pageSize, result.total);
-  same(result.columns.map(column => column.key), columns);
+  same(result.columns.map(column => column.key), spanColumns);
   const visible = await printable(page).locator('tbody tr').evaluateAll(nodes => nodes.map(node => [...node.children].map(cell => cell.textContent)));
-  same(visible, result.rows.map(row => columns.map(key => key === 'date' ? row.date.replaceAll('-', '/') : row[key] === '' ? '—' : String(row[key]))), 'All eleven shared report columns preserve exact values and complete ordered rows');
+  same(visible.map(cells => cells.filter((_, index) => index !== 1)), result.rows.map(row => columns.map(key => key === 'date' ? row.date.replaceAll('-', '/') : row[key] === '' ? '—' : String(row[key]))), 'All eleven shared report columns preserve exact values and complete ordered rows');
+  same(visible, result.rows.map(row => spanColumns.map(key => ['date', 'endDate'].includes(key) ? row[key].replaceAll('-', '/') : row[key] === '' ? '—' : String(row[key]))), 'The additive ending date is also displayed exactly');
   same(await printable(page).locator('thead th').evaluateAll(nodes => nodes.map(node => ({ label: node.textContent, scope: node.scope }))), result.columns.map(column => ({ label: column.label, scope: 'col' })));
   for (const [label, text] of [['機構', result.organization.name], ['個案', result.selection.case], ['服務人員', result.selection.employee], ['班次狀態', result.selection.status]]) {
     assert.equal(await printable(page).locator('.detail-grid > div').filter({ has: page.locator('dt', { hasText: new RegExp('^' + label + '$') }) }).locator('dd').textContent(), text);
   }
   assert.equal(await printable(page).locator('script,img').count(), 0, 'Literal names and notes never become markup');
   assert(await printButton(page).isEnabled()); assert(await csvButton(page).isEnabled());
-  reports.push({ role, filters: value, count: result.total, rowSha256: sha(JSON.stringify(result.rows)), independentSavedIdOracle: true, visibleColumns: 11 }); return result;
+  reports.push({ role, filters: value, count: result.total, rowSha256: sha(JSON.stringify(result.rows)), independentSavedIdOracle: true, originalVisibleColumns: 11, visibleColumns: 12 }); return result;
 }
 async function slow(page, predicate) {
   const arrived = deferred(), release = deferred(), handled = deferred(); let used = false, finished = false, request;

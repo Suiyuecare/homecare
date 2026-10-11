@@ -1,8 +1,6 @@
 # 員工總表查詢／完整CSV／本機列印（0.18）
 
-> 公開版本文件：記錄此功能版本的設計與驗收條件，並非目前公開副本已執行的驗收證明。私人盤點與 QA 產物未匯出；現行行為以 API.md 與原始碼為準，正式規則及部署仍須核定。
-
-2026-10-08 凍結。employee-report-v0.18、，沿目前本機員工主檔製作獨立六欄報表。原員工頁僅追加獨立證據，不修改原status/parity/缺口。合成資料、memory/臨時SQLite及本機隨機埠，不用原平台、真實個資、正式付款申報訊息或部署。
+2026-10-08 凍結。employee-report-v0.18、RM-04，沿目前本機員工主檔製作獨立六欄報表。原 REPORT-17709457dc6c 員工總表保持 not_started/unverified/none，原欄位、分組、正式輸出版面未核對；不能把本機切片算成原項完成。原員工頁僅追加獨立證據，不修改原status/parity/缺口。合成資料、memory/臨時SQLite及本機隨機埠，不用原平台、真實個資、正式付款申報訊息或部署。
 
 ## 查詢、權限與原資料
 
@@ -42,11 +40,11 @@ confirmReport仍精確filters/columns/rowkeys/count/page/allrows確認，新增e
 
 Node真四角色scopes/foreignID/active link/無班可讀、40筆25+15與full聯集、q大小寫/不trim/200邊界/AND/不匹配secret/不跨array、typedregions及未知marker/empty/literal/非法不洩漏、strict unknown/duplicate/page/export、invalid候選version/status409、1000/2MiB精確邊界+1、CSV正確含JSON literal/公式/BOM/CRLF、11表raw/count/total_changes與兩真BLOB位元組下載/六trigger零寫、核閱snapshot/fees/payroll及19舊report出口相容。原200測完整保留，新增必要integration及共用pure測。
 
-Chromium真UI員工新增/編輯/停用恢復與v/audit，40結果分页/各filter/清除/empty，全CSVbytes=freshAPI；預覽後真PATCH、再次列印只含最新name/資格/區域、真停用caregiver403與回復，lookup只employees。錯誤MIME/empty/503/bodyAbortError/缺echo、取消下載/slowlate/route/kind/org/role/employee/render、原生print抑制、11表/兩BLOB/核閱不變、鍵盤label/1440/390全部必要gate。
+Chromium真UI員工新增/編輯/停用恢復與v/audit，40結果分页/各filter/清除/empty，全CSVbytes=freshAPI；預覽後真PATCH、再次列印只含最新name/資格/區域、真停用caregiver403與回復，lookup只employees。錯誤MIME/empty/503/bodyAbortError/缺echo、取消下載/slowlate/route/kind/org/role/employee/render、原生print抑制、11表/兩BLOB/核阅不變、鍵盤label/1440/390全部必要gate。
 
-同artifact修訂才envskip，舊三PDF不重製。新PDF核全文40員工marker各一次、最新資料、六欄表頭、每頁重複表頭/無裁切/最後一列/A4全部，render每頁PNG逐張view_image。數位QA不是正式文件或實體送印。依PDFskill取目前bundledPython/Poppler已有環境；無新增外部發送。
+首次新的synthetic-employee-report.pdf創作前，PDF技能mark_artifact_operation_started create expectedOutputCount1成功一次，保留stdout/exit/time；從真productfresh按鈕同步beforeprint放行capture DOM/CSS，再JS-disabled QA頁創作一個PDF（無產品授權旁路）。同artifact修訂才envskip，舊三PDF不重製。新PDF核全文40員工marker各一次、最新資料、六欄表頭、每頁重複表頭/無裁切/最後一列/A4全部，render每頁PNG逐張view_image。數位QA不是正式文件或實體送印。依PDFskill取目前bundledPython/Poppler已有環境；無新增外部發送。
 
-正式薪資／資格／出勤／輸版規則依然pending。
+root全Node及原17套browser／新employee報表，三舊report42UI+14PDF、員工歷程29圖與全部新UI/PDF逐張view；root另独立抽查≥6新圖，至少PDF首末頁。必要測試/全部視覺完成後才local implemented_verified，0.7–0.17共2535舊副本SHA先核、新0.18另封存119sources及證據。原84/52/28/16順序/來源/status/parity/hash/statusCounts/九階段/0原completed不變，只原員工總表和列表/基本資料追加局部證據；此真新employee JSON/CSV種類完成後，localReportKinds5→6明確列五legacy加employee-report新三端，與原52不能相加。正式薪資／資格／出勤／輸版規則依然pending。
 
 ## 實作時確認的相容邊界
 

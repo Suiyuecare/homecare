@@ -1,7 +1,5 @@
 # 0.32 照顧計畫安全編輯：凍結實作契約
 
-> 公開版本文件：記錄此功能版本的設計與驗收條件，並非目前公開副本已執行的驗收證明。私人盤點與 QA 產物未匯出；現行行為以 API.md 與原始碼為準，正式規則及部署仍須核定。
-
 本輪是既有本機合成系統的照顧計畫安全編輯與保存確認；不是正式照顧計畫表、額度引擎或原平台全量複製驗收。原十九後端、API 權限、資料驗證、版本與稽核機制保持。僅新增純 editor adapter，窄接既有 operations 照顧計畫表單／狀態動作及必要計畫專屬安全呈現；共用 services 控件只加入下述有限 opt-in。不得改其他 editor、排班、服務紀錄、報表、附件或歷程授權規則。
 
 七個保存欄位依原 schema 為 caseId、validFrom、validTo、status、services、goals、note。新增七控制項沿原順序與標籤：個案、生效日期、結束日期、計畫狀態、服務項目與計畫數量、照顧目標、計畫備註；新增狀態僅 draft／active，預設 draft，生效日期採合法 native defaultDate，結束日期空，服務空清單，兩描述欄空字串。新增送齊七欄。編輯六控制項不曝光 status，狀態只由原獨立確認動作維護；不新增 ended 的 UI 恢復動作。原標題『新增照顧計畫／編輯照顧計畫』、draft 的『啟用』與 active 的『結束計畫』、確認標題及按鈕『啟用照顧計畫／結束照顧計畫』保持。詳情原有新增計畫入口、計畫歷程與新增排班保持，不新增詳情計畫編輯入口。
@@ -26,6 +24,6 @@ admin／supervisor維護。finance原 plan GET／history 可讀但不能寫，�
 
 驗收先作者 pure／真HTTP測試，完整產品凍結後才執行。涵蓋七欄create、原選項/新選值、未改與改回、所有私有keep／明確replace／兩optionalclear、services全值順序／extra／duplicates／unknown／inactive、date0000／CRLF、seven-field confirmation矩陣；真合法同org換案、原 merged errors、scheduled鎖定／race／數量不當額度、completed/cancelled不鎖、CAS／CSRF／POST同鍵、四真角色、28版25+3與逐版case缺口。瀏覽器由獨立擁有者建立新script；30既有script位元保持，history既有驗收目標保持，但因編輯服務預設whole-keep，必要fixture先明確選replace並重建原完整清單；首次失敗另存；包含原plans新增／編輯與case detail新增、狀態、busy／dirty／keyboard、1440／390、長文真末段、services keep禁用/replace啟用/回keep及失敗復原、24 loaded/pending edit/status×六context與兩真先提交晚回應分列。
 
-全部使用 :memory: SQLite／隨機本機port／合成資料。required異常、複合JSON、缺parent等必須明示INSERT-only memory import，不能當成正常API產生；不得UPDATE／DELETE不可變歷史。十一表唯讀區間與必要寫入分開，雙非空合成BLOB四份目前／版本下載、六不可變trigger、核閱費薪快照及31報表出口保持，另核不cascade關聯。正式附件needs_contract、人工UAT、OS-owned popup幾何或headless原生popup鍵盤選值、正式額度／CMS／給付／積分／資格與全量匹配均不宣稱已完成。
+全部使用 :memory: SQLite／隨機本機port／合成資料。required異常、複合JSON、缺parent等必須明示INSERT-only memory import，不能當成正常API產生；不得UPDATE／DELETE不可變歷史。十一表唯讀區間與必要寫入分開，雙非空合成BLOB四份目前／版本下載、六不可變trigger、核閱費薪快照及31報表出口保持，另核不cascade關聯。0新PDF／marker；不動actual4310/資料庫、原平台帳密、舊封存。原180目錄／16模板359題／四source／九phase／12contracts／0原completed／report種類9保持；只新增本機獨立切片。正式附件needs_contract、人工UAT、OS-owned popup幾何或headless原生popup鍵盤選值、正式額度／CMS／給付／積分／資格與全量匹配均不宣稱已完成。
 
-model僅加非空關聯參照必須為字串的型別守門，沿同一INVALID_REFERENCE／422拒絕，不寫資料、不新增業務規則或放寬權限；undefined／null／空字串沿原空值語意。false／0／數字／object／array均不能bind。新HTTP同一驗收列擴充異型矩陣，新browser精確驗422與省略caseId，所有未預期500仍拒絕。新長文fixture搜尋必須使用實际已保存的唯一目標片段；保留其首次查無結果終止。最終完整來源重新凍結、整合與browser通過後才驗收；不把首輪521／14新browser gates或部分old31當成最終成功。
+首次合成INSERT-only驗證揭露：異型caseId保持省略後，原merged ref會把非字串送入SQLite造成500。model僅加非空關聯參照必須為字串的型別守門，沿同一INVALID_REFERENCE／422拒絕，不寫資料、不新增業務規則或放寬權限；undefined／null／空字串沿原空值語意。false／0／數字／object／array均不能bind。新HTTP同一驗收列擴充異型矩陣，新browser精確驗422與省略caseId，所有未預期500仍拒絕。新長文fixture搜尋必須使用實际已保存的唯一目標片段；保留其首次查無結果終止。最終完整來源重新凍結、整合與browser通過後才驗收；不把首輪521／14新browser gates或部分old31當成最終成功。

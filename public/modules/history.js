@@ -1,3 +1,4 @@
+import { spanRecordText } from '../data/shift-span-editor.js';
 import { api, el, table, pagination, errorState, openDetails, getContext, formatDate, formatFileSize } from '../ui.js';
 import { ATTACHMENT_CATEGORIES, ATTACHMENT_STATUSES, CONTACT_CATEGORIES, CONTACT_STATUSES, getHistoryFields, normalizeHistorySnapshot, diffHistorySnapshots, formatTrialPriceCents } from '../data/history-fields.js';
 import { compareAssessmentAnswers } from '../data/assessment-answers.js';
@@ -7,6 +8,31 @@ import { PERSONAL_CALENDAR_STATUSES, isPersonalCalendarDate } from '../data/pers
 
 const PAGE_SIZE = 25;
 const labels = {
+  'deadline-status':{pending:'待處理',in_progress:'處理中',completed:'已人工完成',cancelled:'已取消'},
+  'deadline-priority':{low:'低',normal:'一般',high:'高'},
+  'substitution-status':{submitted:'待人工審核',approved:'人工核准並已改派',rejected:'人工拒絕'},
+  'internal-notification-status':{draft:'草稿',published:'已發布',cancelled:'已取消'},
+  'attendance-kind':{lateness:'遲到',early_leave:'早退',missed_clock:'漏打卡',absence:'缺勤',other:'其他人工例外'},
+  'attendance-status':{recorded:'已記錄',resolved:'人工已處理',voided:'已作廢'},
+  'family-kind':{parent:'父母 → 子女（人工指定方向）',spouse:'伴侶（人工紀錄）',other:'其他人工關係'},
+  'interview-decision':{pending:'待人工評估',considering:'人工考慮中',selected:'人工選用意向',not_selected:'人工未選用意向'},
+  'holiday-kind':{holiday:'機構指定假日','working-day':'機構指定工作日',closure:'機構停止服務日',other:'其他人工指定'},
+  'training-credit-status':{draft:'草稿',verified:'人工已核對',voided:'已作廢'},
+  'series-status':{active:'使用中',paused:'暫停',ended:'已結束'},
+  'contract-status':{draft:'草稿',active:'人工記錄生效',terminated:'人工終止',expired:'人工到期處理',cancelled:'已取消草稿'},
+  'task-status':{pending:'待處理',in_progress:'處理中',completed:'已完成',cancelled:'已取消'},
+  'task-priority':{low:'低',normal:'一般',high:'優先'},
+  'form-template-status':{draft:'草稿',published:'已發布',inactive:'已停用'},
+  'form-record-status':{draft:'草稿',submitted:'已提交'},
+  'claim-status': { draft: '草稿', verified: '已核對鎖定', reconciling: '人工對帳中', closed: '人工對帳完成', cancelled: '已取消' },
+  'billing-status': { draft: '草稿', issued: '已開立', voided: '已作廢' },
+  'payroll-status': { draft: '草稿', reviewed: '已覆核', closed: '已關帳', voided: '已取消' },
+  'receipt-status': { active: '有效收款紀錄', cancelled: '已取消' },
+  'receipt-method': { cash: '現金', transfer: '轉帳', other: '其他' },
+  'institution-event-category': { meeting: '會議', training: '訓練', administration: '行政', other: '其他' },
+  'institution-event-status': { active: '啟用', cancelled: '已取消' },
+  'complaint-category': { service_quality: '服務品質', personnel: '人員', safety: '安全', fees: '費用', other: '其他' },
+  'complaint-status': { received: '已受理', in_progress: '處理中', closed: '已結案', cancelled: '已取消' },
   'announcement-status': { draft: '草稿', published: '已發布至本系統' },
   'announcement-audience': { all: '全體同仁', caregiver: '居服員', supervisor: '督導', finance: '財務', admin: '管理者' },
   'assessment-status': { draft: '草稿', submitted: '已提交' },
@@ -29,7 +55,7 @@ const labels = {
   'interview-status': Object.fromEntries(INTERVIEW_STATUSES.map(item => [item.value, item.label])),
   'personal-calendar-status': Object.fromEntries(PERSONAL_CALENDAR_STATUSES.map(item => [item.value, item.label])),
 };
-const titles = { 'personal-calendar-events': '個人行事曆版本歷程', announcements: '內部公告版本歷程', assessments: '評鑑填答版本歷程', cases: '個案版本歷程', 'care-plans': '照顧計畫版本歷程', shifts: '班次版本歷程', 'service-records': '服務紀錄版本歷程', 'service-items': '服務項目版本歷程', employees: '員工版本歷程', 'interview-applicants': '面試者版本歷程', 'case-contacts': '聯絡人版本歷程', 'case-status-followups': '暫停與結案追蹤版本歷程', 'case-attachments': '附件版本歷程', 'certification-attachments': '證照附件版本歷程', 'employee-certifications': '證照版本歷程', 'employee-training': '訓練版本歷程', 'leave-requests': '請假版本歷程' };
+const titles = { 'contract-deadline-reminders':'契約期限提醒版本歷程', 'shift-substitution-requests':'人工代班申請版本歷程', 'internal-notifications':'站內通知版本歷程', 'case-family-members':'人工家庭成員版本歷程', 'case-family-links':'人工家庭連線版本歷程', 'attendance-exceptions':'人工出勤例外版本歷程', 'case-contact-footprints': '人工接觸足跡版本歷程', 'institution-holidays': '機構人工假日版本歷程', 'employee-training-credits': '人工積分版本歷程', 'shift-series': '永久週期設定版本歷程', 'case-contracts': '個案契約版本歷程', 'internal-tasks': '內部待辦版本歷程', 'form-templates': '自訂模板版本歷程', 'form-records': '自訂填答版本歷程', 'claim-batches': '離線核銷批次版本歷程', 'case-vaccinations': '疫苗紀錄版本歷程', 'case-infection-records': '感染觀察版本歷程', 'case-vitals': '生理量測版本歷程', 'billing-documents': '人工帳單版本歷程', 'payment-receipts': '收款紀錄版本歷程', 'payroll-statements': '人工薪資結算版本歷程', 'business-rules': '業務規則版本歷程', 'case-relationships': '個案關係版本歷程', 'medical-opinions': '醫事意見版本歷程', 'institution-events': '機構行事版本歷程', complaints: '申訴案件版本歷程', 'personal-calendar-events': '個人行事曆版本歷程', announcements: '內部公告版本歷程', assessments: '評鑑填答版本歷程', cases: '個案版本歷程', 'care-plans': '照顧計畫版本歷程', shifts: '班次版本歷程', 'service-records': '服務紀錄版本歷程', 'service-items': '服務項目版本歷程', employees: '員工版本歷程', 'interview-applicants': '面試者版本歷程', 'case-contacts': '聯絡人版本歷程', 'case-status-followups': '暫停與結案追蹤版本歷程', 'case-attachments': '附件版本歷程', 'certification-attachments': '證照附件版本歷程', 'employee-certifications': '證照版本歷程', 'employee-training': '訓練版本歷程', 'leave-requests': '請假版本歷程' };
 const contextIdentity = () => {
   const context = getContext();
   return `${context.user?.id || ''}:${context.organizationId || context.orgId || ''}:${context.role || ''}:${context.user?.employeeId || ''}`;
@@ -50,7 +76,7 @@ function referenceValue(reference, value, lookups) {
   if (reference === 'care-plans') {
     description = item ? `目前照顧計畫：${item.validFrom ? formatDate(item.validFrom) : '未提供生效日期'} 至 ${item.validTo ? formatDate(item.validTo) : '未設定結束日'}（${labels['plan-status'][item.status] || text(item.status)}）` : '目前照顧計畫無法取得';
   } else if (reference === 'shifts') {
-    description = item ? `目前班次：${item.date ? formatDate(item.date) : '未提供日期'} ${text(item.startTime)} 至 ${text(item.endTime)}（${labels['shift-status'][item.status] || text(item.status)}）` : '目前班次無法取得';
+    description = item ? `目前班次：${Object.hasOwn(item, 'endDate') ? spanRecordText(item) : (item.date ? formatDate(item.date) : '未提供日期') + ' ' + text(item.startTime) + ' 至 ' + text(item.endTime)}（${labels['shift-status'][item.status] || text(item.status)}）` : '目前班次無法取得';
   } else if (reference === 'assessment-templates') {
     description = name ? `目前目錄名稱：${name}` : '目前模板名稱無法取得';
   } else {
@@ -98,6 +124,36 @@ function assessmentAnswersNode(projection, caption = '保存填答（目前題�
 }
 
 function valueNode(field, value, lookups) {
+  if(['notification-recipient-ids','notification-publication','notification-person'].includes(field.type)&&Array.isArray(value))return value.length?table([{key:'label',label:'保存通知項目'},{label:'保存原文',render:row=>el('span',{class:'pre-wrap'},row.value)}],value):el('span',{},'此版本未提供此資料');
+  if(['deadline-source-snapshot','substitution-shift-snapshot'].includes(field.type)&&Array.isArray(value))return value.length?table([{key:'label',label:'保存来源項目'},{label:'保存值',render:row=>el('span',{class:'pre-wrap'},row.value)}],value):el('span',{},'尚無此來源快照');
+  if(field.type==='attendance-shift-snapshot'&&Array.isArray(value))return value.length ? table([{key:'label',label:'保存班次項目'},{key:'value',label:'保存值'}],value) : el('span',{},'未指定參照班次');
+  if(field.type==='series-weekdays'&&Array.isArray(value))return el('span',{},value.map(day=>day.label).join('、'));
+  if(field.type==='form-groups'&&Array.isArray(value))return formGroupsNode(value);
+  if(field.type==='form-fields'&&Array.isArray(value))return formFieldsNode(value);
+  if(field.type==='form-answers'&&Array.isArray(value))return table([{key:'group',label:'群組'},{key:'label',label:'題項'},{key:'type',label:'型別'},{label:'保存答案',render:row=>el('span',{class:'pre-wrap'},row.value)},{key:'key',label:'題項代碼'}],value);
+  if(field.type==='form-attachment-ids'&&Array.isArray(value))return table([{key:'id',label:'保存引用附件識別碼'}],value);
+  if(field.type==='form-snapshot'&&value&&typeof value==='object')return el('div',{},table([{key:'label',label:'保存模板項目'},{label:'保存值',render:row=>el('span',{class:'pre-wrap'},row.value)}],value.metadata),formGroupsNode(value.groups),formFieldsNode(value.fields));
+  if (field.type === 'claim-ids' && Array.isArray(value)) return table([{ key: 'id', label: '保存帳單識別碼' }], value);
+  if (field.type === 'claim-sources' && Array.isArray(value)) return table([
+    { key: 'number', label: '保存帳單編號' }, { key: 'caseName', label: '核對保存個案姓名' }, { key: 'version', label: '保存帳單版次' },
+    { label: '保存來源金額', render: row => formatTrialPriceCents(row.amountCents) }, { key: 'billingDocumentId', label: '保存帳單識別碼' }, { key: 'caseId', label: '保存個案識別碼' },
+  ], value);
+  if (field.type === 'claim-responses' && Array.isArray(value)) return value.length ? table([
+    { key: 'billingDocumentId', label: '保存帳單識別碼' }, { label: '人工記錄回應', render: row => ({ accepted: '人工記錄接受', rejected: '人工記錄退件', pending: '人工記錄待定' }[row.status] || row.status) },
+    { label: '保存回應金額', render: row => formatTrialPriceCents(row.amountCents) },
+    { label: '本筆人工回應依據', render: row => el('span', { class: 'pre-wrap' }, row.reference) }, { label: '保存原因', render: row => el('span', { class: 'pre-wrap' }, row.reason) },
+  ], value) : el('p', { class: 'muted' }, '此版本尚無保存回應。');
+  if (field.type === 'claim-summary' && Array.isArray(value)) return table([{ key: 'label', label: '核对項目' }, { label: '保存值', render: row => row.isMoney ? formatTrialPriceCents(row.value) : row.value }], value);
+  if (field.type === 'billing-line-items' && Array.isArray(value)) return table([
+    { key: 'label', label: '明細名稱' }, { key: 'quantity', label: '保存數量' }, { label: '保存單價', render: row => formatTrialPriceCents(row.unitPriceCents) },
+  ], value);
+  if (field.type === 'payroll-line-items' && Array.isArray(value)) return table([
+    { key: 'label', label: '明細名稱' }, { label: '加減類型', render: row => ({ earning: '加項', deduction: '減項' }[row.kind] || row.kind) },
+    { label: '保存金額', render: row => formatTrialPriceCents(row.amountCents) },
+  ], value);
+  if (field.type === 'financial-summary' && Array.isArray(value)) return table([{ key: 'label', label: '項目' }, { label: '保存金額', render: row => formatTrialPriceCents(row.value) }], value);
+  if (field.type === 'financial-party' && Array.isArray(value)) return table([{ key: 'label', label: '項目' }, { key: 'value', label: '保存資料' }], value);
+  if (field.type === 'business-rule-parameters' && Array.isArray(value)) return table([{ key: 'label', label: '參數' }, { key: 'value', label: '保存值' }], value);
   if (value === null) return el('span', { class: 'muted' }, field.emptyLabel || '未提供');
   if (field.type.startsWith('personal-calendar-') && typeof value !== 'string') return el('span', { class: 'muted', 'data-personal-calendar-value': 'unsupported' }, '非文字保存值；內容未展示。');
   if (field.type === 'personal-calendar-text') return el('span', { class: 'pre-wrap' }, value);
@@ -147,6 +203,9 @@ function valueNode(field, value, lookups) {
   }
   return el('span', { class: 'pre-wrap' }, labels[field.type]?.[value] || text(value));
 }
+
+function formGroupsNode(groups){return groups.length?table([{key:'id',label:'保存群組代碼'},{key:'label',label:'保存群組名稱'}],groups):el('p',{class:'muted'},'此版本未設定群組。');}
+function formFieldsNode(fields){return table([{key:'group',label:'群組'},{key:'key',label:'題項代碼'},{key:'label',label:'題項'},{key:'type',label:'型別'},{key:'required',label:'提交條件'},{label:'保存選項',render:row=>el('span',{class:'pre-wrap'},row.options)},{label:'保存顯示條件',render:row=>el('span',{class:'pre-wrap'},row.condition)}],fields);}
 
 function actorNode(actor) {
   if (!actor || (!actor.id && !actor.name)) return el('span', { class: 'muted' }, '未記錄操作者');

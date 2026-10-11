@@ -32,6 +32,8 @@ export function openSavedRecordDetails({ id, isCurrent = () => true, profile }) 
       const response = await api(`/api/${profile.entity}/${encodeURIComponent(id)}`, { signal });
       if (signal.aborted || !helpers.isCurrent()) throw new DOMException(profile.cancelMessage, 'AbortError');
       const item = profile.confirm(response, { id, orgId });
+      const lookups = profile.loadLookups ? await profile.loadLookups(item, signal) : {};
+      if (signal.aborted || !helpers.isCurrent()) throw new DOMException(profile.cancelMessage, 'AbortError');
       const metadata = el('dl', { class: 'detail-grid', 'aria-label': '保存紀錄資訊' }, [
         ['版次', String(item.version)], ['保存更新文字', item.updatedAt],
         ['保存建立文字', item.createdAt], ['識別碼', item.id],
@@ -39,7 +41,7 @@ export function openSavedRecordDetails({ id, isCurrent = () => true, profile }) 
       const fields = el('dl', { class: 'detail-grid' }, item.fields.map(field =>
         el('div', { class: profile.fullWidthKeys.includes(field.key) ? 'field-wide' : '',
           [profile.fieldAttribute]: field.key, 'data-saved-kind': field.kind },
-          el('dt', {}, field.label), el('dd', { class: 'pre-wrap' }, profile.formatField(field)))));
+          el('dt', {}, field.label), el('dd', { class: 'pre-wrap' }, profile.formatField(field, lookups)))));
       return el('section', { 'aria-label': profile.regionLabel },
         el('p', { class: 'notice' }, profile.notice),
         metadata, fields);

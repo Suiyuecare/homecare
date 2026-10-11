@@ -1,8 +1,6 @@
 # 服務紀錄唯讀版本差異與核閱操作者（0.11）
 
-> 公開版本文件：記錄此功能版本的設計與驗收條件，並非目前公開副本已執行的驗收證明。私人盤點與 QA 產物未匯出；現行行為以 API.md 與原始碼為準，正式規則及部署仍須核定。
-
-原服務紀錄完整欄位、差勤/App、原跨事件歷程及正式支付/薪資/申報仍partial/unverified或待核定。沿既有record_versions、稽核及單班服務紀錄流程，不新增寫入、還原、外部訊息或計價規則。
+本輪獨立本機合成資料切片，接續RM-03及URL-6f3a815ad462。原服務紀錄完整欄位、差勤/App、原跨事件歷程及正式支付/薪資/申報仍partial/unverified或待核定。沿既有record_versions、稽核及單班服務紀錄流程，不新增寫入、還原、外部訊息或計價規則。0.7至0.10不可覆寫封存保留。
 
 ## 授權與比較
 
@@ -24,8 +22,8 @@ GET /api/service-records/:id/history?page=&pageSize=&compare=previous。先membe
 
 沿可展開版本卡、單欄保存欄位、620px差異表內捲動、25筆分頁及loading/empty/error/retry/Escape/關閉/焦點。history current identity包含user/org/role/employeeId、hash及呼叫者renderVersion/container連線，傳給openDetails.isCurrent。共用openDetails讓非列印dialog也監看hash/session-updated/body子樹失效：只要isCurrent=false即清空body/abort/關閉；其他default isCurrent=true行為不變，既有printable單次fresh列印保護維持。已載入及載入中的歷程切機構/角色/員工範圍/頁面均撤除；晚回應不重開、錯誤不顯示舊資料。每次翻頁/重讀仍伺服器驗權，其他client未通知的變更沿下次請求驗權，不宣稱即時推播。
 
-## 驗收條件
+## 驗收與追溯
 
 Node：真caregiver草稿→提交→督導退回→改送→管理者核准，精確actor/核閱意見/保存服務數量；真draft合法換另班次的A→B→A與換case、原shift改派撤舊案scope、自己的cancelledshift恢復可見；四角色及跨機構/目前record404/逐版缺失或foreigncase/raw一致；service.review錯scope/version/action/缺user/重複同user/不同user歧義，其他entity不收service.review；baseline/前版缺口/28版25+3頁界；財務兩層遮罩；approved快照/改價/時薪/fees/payroll與CAS/RECORD_LOCKED/SHIFT_HAS_RECORD/不可變trigger維持。所有read以完整10表rawState/counts/total_changes證零寫。純差異驗十白名單、文字時間/狀態/備註/核閱/services與不修改來源。
 
-真Chromium：三入口及原編輯/核閱功能、真UI生命周期、四角色與A→B→A/歷史case可讀及不可讀缺口、25+分頁和精確前版、缺失actor/關聯名稱/空歷程、503重試/慢請求取消/Escape焦點/機構角色employee/hash/render失效（含已載入）、1440/390所有截圖逐張view_image。fixture無法由UI產生的歷史缺口/移轉baseline明列合成fixture，不降低產品validator。唯讀區段完整10表不變、核閱計價快照不變。必要整合及browser/視覺全過才本切片implemented_verified。
+真Chromium：三入口及原編輯/核閱功能、真UI生命周期、四角色與A→B→A/歷史case可讀及不可讀缺口、25+分頁和精確前版、缺失actor/關聯名稱/空歷程、503重試/慢請求取消/Escape焦點/機構角色employee/hash/render失效（含已載入）、1440/390所有截圖逐張view_image。fixture無法由UI產生的歷史缺口/移轉baseline明列合成fixture，不降低產品validator。唯讀區段完整10表不變、核閱計價快照不變。root獨立全Node及既有10browser回歸，三類報表沿同一artifact修訂PDF_OPERATION_ALREADY_MARKED=1並保留最新證據，若重生PDF須逐頁view。必要整合及browser/視覺全過才本切片implemented_verified。原84/52/28/16來源/status/parity/sourcehash/9階段/0原completed保留，僅原服務入口附獨立本機證據及localMilestone；0.11另封存。

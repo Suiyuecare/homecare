@@ -1,6 +1,6 @@
 {
   "name": "suiyue-home-care",
-  "version": "0.62.0",
+  "version": "0.78.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -77,10 +77,42 @@
     "test:e2e:interview-record-details": "node tests/interview-record-details-e2e.mjs",
     "test:e2e:announcement-page-receipts": "node tests/announcement-page-receipts-e2e.mjs",
     "test:e2e:employee-record-details": "node tests/employee-record-details-e2e.mjs",
-    "test:e2e:service-item-record-details": "node tests/service-item-record-details-e2e.mjs"
+    "test:e2e:service-item-record-details": "node tests/service-item-record-details-e2e.mjs",
+    "test:e2e:remaining-features": "node tests/remaining-features-e2e.mjs",
+    "test:e2e:financial-workflows": "node tests/financial-workflows-e2e.mjs",
+    "test:e2e:case-health": "node tests/case-health-e2e.mjs",
+    "test:e2e:shift-batches": "node tests/shift-batches-e2e.mjs",
+    "test:e2e:claim-batches": "node tests/claim-batches-e2e.mjs",
+    "test:e2e:shift-series": "node tests/shift-series-e2e.mjs",
+    "test:e2e:contracts-tasks": "node tests/contracts-tasks-e2e.mjs",
+    "test:e2e:custom-forms": "node tests/custom-forms-e2e.mjs",
+    "test:e2e:institution-holidays": "node tests/institution-holidays-e2e.mjs",
+    "test:e2e:case-contact-footprints": "node tests/case-contact-footprints-e2e.mjs",
+    "test:e2e:training-credits": "node tests/training-credits-e2e.mjs",
+    "test:e2e:case-family": "node tests/case-family-e2e.mjs",
+    "test:e2e:attendance-exceptions": "node tests/attendance-exceptions-e2e.mjs",
+    "test:e2e:interview-extension": "node tests/interview-extension-e2e.mjs",
+    "test:e2e:local-imports": "node tests/local-imports-e2e.mjs",
+    "test:e2e:shift-substitution": "node tests/shift-substitution-e2e.mjs",
+    "test:e2e:contract-deadlines": "node tests/contract-deadlines-e2e.mjs",
+    "test:e2e:internal-notifications": "node tests/internal-notifications-e2e.mjs",
+    "test:e2e:service-billing": "node tests/service-billing-e2e.mjs",
+    "test:e2e:shift-series-move": "node tests/shift-series-move-e2e.mjs",
+    "test:e2e:service-payroll": "node tests/service-payroll-e2e.mjs",
+    "test:e2e:financial-outputs": "node tests/financial-outputs-e2e.mjs",
+    "test:e2e:shift-span": "node tests/shift-span-e2e.mjs",
+    "test:e2e:group-overview": "node tests/group-overview-e2e.mjs",
+    "test:e2e:surveys": "node tests/surveys-e2e.mjs",
+    "rehearse:synthetic-encrypted-backup": "node scripts/rehearse-synthetic-encrypted-backup.mjs",
+    "test:e2e:feedback": "node tests/feedback-interaction-e2e.mjs",
+    "test:regression": "node scripts/run-regression.mjs"
   },
   "packageManager": "pnpm@11.21.0",
   "devDependencies": {
-    "playwright": "1.62.1"
+    "playwright": "1.62.1",
+    "jsqr": "1.4.0"
+  },
+  "dependencies": {
+    "qrcode": "1.5.4"
   }
 }

@@ -1,8 +1,6 @@
 # 個案／員工班表查詢與本機列印（0.8）
 
-> 公開版本文件：記錄此功能版本的設計與驗收條件，並非目前公開副本已執行的驗收證明。私人盤點與 QA 產物未匯出；現行行為以 API.md 與原始碼為準，正式規則及部署仍須核定。
-
-獨立本機合成資料契約；讀取目前實際shifts，不新建排班、版本、audit、idempotency或報表工作佇列，不改核閱計價快照。未知正式版面、欄位/分組合計、簽章、資格/額度、支付及薪資規則不推定。保留原五類reports API行為；新增同一shifts報表的進階查詢與輸出，不把本機報表種類由5假加成6。
+獨立本機合成資料契約；RM-04及原個案/員工班表仍partial/unverified。讀取目前實際shifts，不新建排班、版本、audit、idempotency或報表工作佇列，不改核閱計價快照。未知正式版面、欄位/分組合計、簽章、資格/額度、支付及薪資規則不推定。保留原五類reports API行為；新增同一shifts報表的進階查詢與輸出，不把本機報表種類由5假加成6。
 
 ## API
 
@@ -20,7 +18,7 @@ total與totals.count為全部符合班次數、非單頁筆數。列表rows只�
 
 reports中心「排班明細」使用public/modules/shift-report.js，其他四類沿原介面。個案/服務人員native select、開始/結束日期native date、狀態native select、查詢/清除條件、25筆分頁、完整筆數摘要與服務明細。選項只取當前已授權主檔，名稱含編號；所有狀態可查，停用/結案主檔的歷史班次仍保留。修改任一篩選立即使舊結果不可下載/列印，明示重新查詢；查詢前後結果核對同一filter echo與counts。清除回本月、全部可讀及第1頁後重新查詢。輸入不存導覽URL/client storage；API query只傳必要識別與條件。
 
-使用shared ui.js table/pagination/errorState/native controls/toast；列表與lookup各有loading/error/retry，先確定lookup成功才可查詢。latest request/AbortController及user/org/role/hash/isCurrent隔離；切類型/換頁/機構或舊回應不覆蓋、不下載、不列印。所有輸出動作捕捉當前已確認filters，讀取期間可取消，失敗保留條件可重試；下載以新的shared downloadCsv(path,{filename,signal,isCurrent})處理401/Content-Type/blob/15秒逾時、late guard與object URL回收，原報表downloadReport維持相容。
+使用shared ui.js table/pagination/errorState/native controls/toast；列表與lookup各有loading/error/retry，先確定lookup成功才可查詢。latest request/AbortController及user/org/role/hash/isCurrent隔離；切類型/換頁/機構或舊回應不覆蓋、不下載、不列印。所有輸出動作捕捉當前已確認filters，讀取期间可取消，失敗保留條件可重試；下載以新的shared downloadCsv(path,{filename,signal,isCurrent})處理401/Content-Type/blob/15秒逾時、late guard與object URL回收，原報表downloadReport維持相容。
 
 「列印預覽」用shared openDetails的printable variant：{title,load,wide:true,printable:true,isCurrent,loadingText}，立即開dialog、loading/error/retry、關閉/Escape取消與焦點恢復。load每次GET export並確認全數/filters回應，顯示機構、日期範圍/個案/人員/狀態、生成時間、完整班次與總數/說明。對話框「列印／另存 PDF」每次再load fresh export、更新內容並確認context後才window.print；忙碌不可重複，失敗或無結果不列印、不用舊快取。close可取消純讀。已載入的printable預覽在路徑/機構/條件失效時自動清空並關閉，瀏覽器原生列印前亦核對；一般history openDetails語意保持。
 

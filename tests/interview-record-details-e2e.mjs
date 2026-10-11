@@ -19,7 +19,7 @@ const { chromium } = createRequire(import.meta.url)('playwright');
 const app = createApp({ dbPath: ':memory:', port: 0 });
 const password = 'synthetic-interview-details-browser-password';
 const entity = 'interview-applicants';
-const fieldKeys = ['name', 'phone', 'interviewDate', 'city', 'district', 'interviewContent', 'note', 'status'];
+const fieldKeys = ['name', 'phone', 'interviewDate', 'city', 'district', 'interviewContent', 'note', 'status', 'appliedPosition', 'education', 'workExperience', 'availableFrom', 'availableHours', 'certificateNotes', 'interviewQuestions', 'interviewerEmployeeId', 'decision', 'decisionReason'];
 const badResponse = '面試紀錄回應無法確認；請重新讀取。';
 const checks = [], readSegments = [], fixtureWrites = [], stateLedger = [], screenshots = [], contextChecks = [], referenceChecks = [], outerRebuildChecks = [], malformedChecks = [], footerChecks = [], firstLiteralChecks = [], expectedFailures = [], failedResponses = [], failedRequests = [], consoleErrors = [], pageErrors = [], requestLedger = [], contexts = [];
 let browser, base, stage = 'initialization', lastPage, actors, orgId, foreignOrg, employeeA, caseA, main, inactive, foreignItem, legacy, approved, protectedBaseline, sourceHashesBefore, staleList;
@@ -75,7 +75,7 @@ const load = async (page, item = main) => {
   const received = page.waitForResponse(response => { const url = new URL(response.url()); return url.pathname === '/api/interview-applicants' && url.searchParams.get('q') === item.phone && response.request().method() === 'GET'; });
   await search.press('Enter'); const response = await received; assert.equal(response.status(), 200); staleList = await response.json(); await row(page, item).waitFor(); assert.equal(await row(page, item).count(), 1); await page.waitForLoadState('networkidle');
 };
-const waitContent = async page => { await content(page).waitFor(); assert.equal(await content(page).locator('[data-interview-field]').count(), 8); };
+const waitContent = async page => { await content(page).waitFor(); assert.equal(await content(page).locator('[data-interview-field]').count(), 18); };
 const open = async (page, item = main, { reload = true, keyboard = false } = {}) => {
   if (reload) await load(page, item); const trigger = row(page, item).getByRole('button', { name: '查看紀錄', exact: true }); assert.equal(await trigger.count(), 1);
   const received = page.waitForResponse(response => response.url() === base + endpoint(item) && response.request().method() === 'GET'); if (keyboard) { await trigger.focus(); await trigger.press('Enter'); } else await trigger.click();
@@ -88,7 +88,7 @@ const closeDialog = async (page, modal, trigger) => {
 const assertFields = async (page, item) => {
   same(await content(page).locator('[data-interview-field]').evaluateAll(nodes => nodes.map(node => node.dataset.interviewField)), fieldKeys);
   for (const key of fieldKeys) { const value = item[key], missing = !Object.hasOwn(item, key), expectedKind = missing ? 'missing' : value === null ? 'null' : typeof value === 'string' ? value === '' ? 'empty' : 'text' : 'non-text';
-    const expected = missing ? '未保存' : value === null ? '未提供（null）' : typeof value === 'string' ? value === '' ? '空白' : key === 'status' ? ['active', 'inactive'].includes(value) ? (value === 'active' ? '啟用' : '停用') + '（保存碼：' + value + '）' : '未辨識狀態（保存原文）：' + value : value : '非文字值（' + (Array.isArray(value) ? 'array' : typeof value) + '）';
+    const expected = missing ? '未保存' : value === null ? '未提供（null）' : typeof value === 'string' ? value === '' ? '空白' : key === 'status' ? ['active', 'inactive'].includes(value) ? (value === 'active' ? '啟用' : '停用') + '（保存碼：' + value + '）' : '未辨識狀態（保存原文）：' + value : key === 'decision' ? ({pending:'待人工評估',considering:'人工考慮中',selected:'人工選用意向',not_selected:'人工未選用意向'})[value] || value : value : '非文字值（' + (Array.isArray(value) ? 'array' : typeof value) + '）';
     assert.equal(await field(page, key).textContent(), expected, key + ' exact saved text/type'); assert.equal(await field(page, key).locator('..').getAttribute('data-saved-kind'), expectedKind);
   }
   const metadata = content(page).getByLabel('保存紀錄資訊'); for (const [label, key] of [['版次', 'version'], ['保存更新文字', 'updatedAt'], ['保存建立文字', 'createdAt'], ['識別碼', 'id']]) assert.equal(await metadata.locator('div').filter({ has: page.getByText(label, { exact: true }) }).locator('dd').textContent(), String(item[key]));

@@ -1,3 +1,4 @@
+import { INTERVIEW_EXTENSION_FIELDS, INTERVIEW_EXTENSION_LABELS } from './interview-extension-editor.js';
 export const INTERVIEW_RECORD_FIELDS = Object.freeze([
   { key: 'name', label: '姓名' },
   { key: 'phone', label: '電話' },
@@ -7,6 +8,7 @@ export const INTERVIEW_RECORD_FIELDS = Object.freeze([
   { key: 'interviewContent', label: '面試內容' },
   { key: 'note', label: '備註' },
   { key: 'status', label: '名單狀態' },
+  ...INTERVIEW_EXTENSION_FIELDS.map(key => ({key,label:INTERVIEW_EXTENSION_LABELS[key]})),
 ].map(Object.freeze));
 
 export const isInterviewRecordDetailsId = isSavedRecordDetailsId;

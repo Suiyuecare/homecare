@@ -1,8 +1,6 @@
 # 員工主檔版本歷程（0.17 獨立本機切片）
 
-> 公開版本文件：記錄此功能版本的設計與驗收條件，並非目前公開副本已執行的驗收證明。私人盤點與 QA 產物未匯出；現行行為以 API.md 與原始碼為準，正式規則及部署仍須核定。
-
-2026-10-08 凍結。employee-history-v0.17，既有本機十欄唯讀差異。只使用合成資料；原員工列表、基本資料及跨事件異動紀錄仍 partial/unverified，不宣稱完整原平台等價。正式薪資、資格、積分、保存及原欄位契約待核定。必要整合與瀏覽器逐張視覺驗證後才標本切片 implemented_verified。
+2026-10-08 凍結。employee-history-v0.17，RM-01 的本機十欄唯讀差異。只使用合成資料；原員工列表、基本資料及跨事件異動紀錄仍 partial/unverified，不宣稱完整原平台等價。正式薪資、資格、積分、保存及原欄位契約待核定。必要整合與瀏覽器逐張視覺驗證後才標本切片 implemented_verified。
 
 ## 目前主檔、歷史與角色
 
@@ -30,12 +28,12 @@ regions 原合法 string 長度≤1000 或 string[]≤50、每項長度<100，�
 
 loaded/pending 各 hash/org/role/employee/render 十情境清空、abort、關閉，晚回應不復活。client role/employee fixture不冒稱server撤權；四個真session另驗證。503重試/Escape/焦點沿共享owner，1440/390渲染及手機差異表自身橫捲、不整頁溢出。
 
-## 驗收條件
+## 驗收與證據
 
-Node 真API lifecycle/四角色current/raw/compare/active link/歷史inactive/不加父項/精確actor、publicRecord、baseline/empty/gap/28版頁外比較、非法query與原寫入guard。11表raw/count/total_changes零寫、六不可變trigger、雙非空BLOB byte/download保持。核閱後改目前員工時薪與名稱／狀態，billingSnapshot/fees/payroll不重算；報表可使用目前名稱，不假定改名後DTO全部舊名稱。19報表端點相容。純helper驗證10欄白名單、regions型別與順序/重複/空值/異常不洩漏、來源不可變及精確時薪。
+Node 真API lifecycle/四角色current/raw/compare/active link/歷史inactive/不加父項/精確actor、publicRecord、baseline/empty/gap/28版頁外比較、非法query與原寫入guard。11表raw/count/total_changes零寫、六不可變trigger、雙非空BLOB byte/download保持。核閱後改目前員工時薪與名稱／狀態，billingSnapshot/fees/payroll不重算；報表可使用目前名稱，不假定改名後DTO全部舊名稱。19報表端點相容。純helper驗证10欄白名單、regions型別與順序/重複/空值/異常不洩漏、來源不可變及精確時薪。
 
 新 Chromium 流程 admin新增v1→sup編輯v2→停用→恢復及合法 API string/array保存切換；CAS409保留、確認取消零寫、列表搜尋/篩選/分頁、四session、28版、空/缺版/未知actor/異常regions與時薪、503/10失效。最終PNG每張view_image，root獨立抽查至少六張。
 
-新歷程無PDF；三報表沿同artifact envskip/provenance/marker限制，不新增marker、不宣稱實體送印。
+root全Node及原16套browser回歸；最新證訓歷程18張、服務項目歷程22張、三報表42UI及14PDF逐張回歸，複本來源SHA不變。新歷程無PDF；三報表沿同artifact envskip/provenance/marker限制，不新增marker、不宣稱實體送印。DESIGN/CSS/runtime tokens保持、strict premium無finding、原design lint零error十已知warning保留並標非本轮重跑。
 
-完成前不標此切片已驗證，未核定契約仍pending。
+原84/52/28/16項目來源、順序、status/parity、四sourcehash、statusCounts、九階段及0原completed/localReportKinds5保持；只 URL-6d93f16d410f、URL-b6f805085183、URL-feab69ea11c9 追加本機局部證據，不改原欄位映射／缺口文字或薪資頁。0.7–0.16舊封存驗SHA，新0.17另保存程式／契約／證據；實際試用SQLite十一表/六trigger/匿名setup保持。完成前不標此切片已驗證，未核定契約仍pending。

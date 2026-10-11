@@ -11,11 +11,11 @@ const fieldError = (fn, name) => assert.throws(fn, error => !!error.fields && Ob
 const unconfirmed = fn => assert.throws(fn, error => error.code === 'SAVE_UNCONFIRMED');
 function freeze(value) { if (value && typeof value === 'object') { Object.values(value).forEach(freeze); Object.freeze(value); } return value; }
 
-test('create uses the six original native controls and seven-field pending payload with explicit employee selection', () => {
+test('create adds explicit-date controls while legacy payload retains the original seven fields', () => {
   const e = edit();
-  assert.deepEqual(e.initial, { employeeId: '', date: '2026-10-09', startTime: '09:00', endTime: '10:00', type: '', reason: '' });
-  assert.deepEqual(e.fields.map(f => [f.name, f.type]), [['employeeId', 'select'], ['date', 'date'], ['startTime', 'time'], ['endTime', 'time'], ['type', 'text'], ['reason', 'textarea']]);
-  assert.deepEqual(e.fields.filter(f => f.required).map(f => f.name), keys.slice(0, 5));
+  assert.deepEqual(e.initial, { employeeId: '', date: '2026-10-09', startTime: '09:00', endTime: '10:00', type: '', reason: '', spanMode: 'legacy', endDate: '' });
+  assert.deepEqual(e.fields.map(f => [f.name, f.type]), [['spanMode', 'select'], ['employeeId', 'select'], ['date', 'date'], ['endDate', 'date'], ['startTime', 'time'], ['endTime', 'time'], ['type', 'text'], ['reason', 'textarea']]);
+  assert.deepEqual(e.fields.filter(f => f.required).map(f => f.name), ['spanMode', ...keys.slice(0, 5)]);
   fieldError(() => e.buildPayload(e.initial), 'employeeId');
   assert.deepEqual(e.buildPayload({ employeeId: 'employee-b', type: ' 　', reason: '  原因\n' }), { employeeId: 'employee-b', date: '2026-10-09', startTime: '09:00', endTime: '10:00', type: ' 　', reason: '  原因\n', status: 'pending' });
   for (const defaultDate of ['', '0000-01-01', '2026-02-30', null, {}]) assert.equal(createLeaveEditor({ defaultDate }).initial.date, '');
@@ -24,10 +24,10 @@ test('create uses the six original native controls and seven-field pending paylo
 test('employee options include inactive staff use only safe text and cannot be expanded by descriptor or caller mutation', () => {
   const people = [...structuredClone(employees), { id: 'nameless', name: { secret: 'PRIVATE' }, employeeNo: ['PRIVATE'] }, { id: 'line', name: 'PRIVATE\nname', employeeNo: 'PRIVATE\rno' }, { id: {}, name: 'PRIVATE' }, { id: '', name: 'PRIVATE' }, { id: 'employee-a', name: 'duplicate' }];
   const e = createLeaveEditor({ existing: row(), employees: people });
-  assert.deepEqual(e.fields[0].options.map(x => x.value), ['employee-a', 'employee-b', 'nameless', 'line']);
-  assert.equal(e.fields[0].options[2].label, '未提供姓名'); assert.equal(e.fields[0].options[3].label, '未提供姓名');
+  assert.deepEqual(e.fields.find(f => f.name === 'employeeId').options.map(x => x.value), ['employee-a', 'employee-b', 'nameless', 'line']);
+  assert.equal(e.fields.find(f => f.name === 'employeeId').options[2].label, '未提供姓名'); assert.equal(e.fields.find(f => f.name === 'employeeId').options[3].label, '未提供姓名');
   assert.ok(!JSON.stringify(e.fields).includes('PRIVATE'));
-  people[1].id = 'injected'; people.push({ id: 'injected-two', name: 'x' }); e.fields[0].options.push({ value: 'injected', label: 'x' }); e.initial.employeeId = 'injected';
+  people[1].id = 'injected'; people.push({ id: 'injected-two', name: 'x' }); e.fields.find(f => f.name === 'employeeId').options.push({ value: 'injected', label: 'x' }); e.initial.employeeId = 'injected';
   assert.deepEqual(e.buildPayload({ employeeId: 'employee-b' }), { employeeId: 'employee-b' });
   for (const value of ['injected', 'injected-two', '', null, {}, ['employee-a']]) fieldError(() => e.buildPayload({ employeeId: value }), 'employeeId');
   assert.deepEqual(e.buildPayload({}), {});

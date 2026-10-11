@@ -1,0 +1,80 @@
+import { shiftReferenceSnapshot, entitySpan } from './shift-span.mjs';
+import { SUBSTITUTION_ENTITY as E, SUBSTITUTION_FIELDS, SUBSTITUTION_SNAPSHOT_FIELDS, SUBSTITUTION_STATUSES, SUBSTITUTION_LIMITS, substitutionPlain, substitutionClosed, substitutionId, substitutionVersion, substitutionYear, substitutionDate, assertSubstitutionSnapshot, assertSubstitutionBusiness, assertSubstitutionItem, substitutionFail } from '../../public/data/shift-substitution-core.js';
+export const substitutionEntities = { [E]: { fields: SUBSTITUTION_FIELDS.join(' '), required: ['shiftId', 'employeeId', 'requesterUserId', 'reason'], statuses: Object.keys(SUBSTITUTION_STATUSES), defaults: { note: '', status: 'submitted', reviewedOn: '', reviewReason: '', reviewerUserId: '', replacementEmployeeId: '', replacementShiftVersion: 0, replacementShiftSnapshot: null }, jsonFields: ['shiftVersion', 'shiftSnapshot', 'replacementShiftVersion', 'replacementShiftSnapshot'], maxLengths: SUBSTITUTION_LIMITS } };
+export const isSubstitutionEntity = entity => entity === E;
+const managers = ['admin', 'supervisor'];
+export function guardSubstitutionAccess(entity, ctx, readOnly, fail = substitutionFail) { if (entity !== E) return; if (!substitutionId(ctx?.orgId) || !substitutionId(ctx?.user?.id) || !(managers.includes(ctx.role) || ctx.role === 'caregiver' && substitutionId(ctx.employeeId))) fail(403, 'ROLE_FORBIDDEN', '僅管理者、督導及已連結本人員工的居服員可使用人工代班申請。'); }
+export function guardSubstitutionReview(ctx, fail = substitutionFail) { guardSubstitutionAccess(E, ctx, false, fail); if (!managers.includes(ctx.role)) fail(403, 'ROLE_FORBIDDEN', '人工審核只由管理者或督導執行；居服員不能自核。'); }
+export function substitutionOperationQuery(params, fail = substitutionFail) { if ([...params.keys()].length) fail(422, 'INVALID_QUERY', '代班申請與審核操作不接受查詢參數。'); }
+function sourceEmployee(db, ctx, employeeId, get) { try { const value = get(db, ctx.orgId, 'employees', employeeId); return substitutionPlain(value) && value.id === employeeId && value.orgId === ctx.orgId && substitutionVersion(value.version) && typeof value.name === 'string' && value.name.trim() && ['active', 'inactive'].includes(value.status) ? value : null; } catch { return null; } }
+export function substitutionVisible(db, ctx, entity, item, get) { if (entity !== E) return true; try { guardSubstitutionAccess(entity, ctx, true); assertSubstitutionItem(item, ctx.orgId); const employee = sourceEmployee(db, ctx, item.employeeId, get); return !!employee && (managers.includes(ctx.role) || item.employeeId === ctx.employeeId && item.requesterUserId === ctx.user.id && employee.status === 'active'); } catch { return false; } }
+export function substitutionHistoryVisible(db, ctx, entity, snapshot, current, get) { return substitutionVisible(db, ctx, entity, current, get) && substitutionVisible(db, ctx, entity, snapshot, get) && snapshot.id === current.id && snapshot.employeeId === current.employeeId && snapshot.requesterUserId === current.requesterUserId && snapshot.createdAt === current.createdAt && snapshot.shiftId === current.shiftId && snapshot.shiftVersion === current.shiftVersion && sameSnapshot(snapshot.shiftSnapshot, current.shiftSnapshot) && snapshot.reason === current.reason && snapshot.note === current.note; }
+const snapshotOf = value => Object.hasOwn(value,'endDate')?shiftReferenceSnapshot(value):Object.fromEntries(SUBSTITUTION_SNAPSHOT_FIELDS.map(key=>[key,value[key]]));
+const sameSnapshot = (a, b) => [...SUBSTITUTION_SNAPSHOT_FIELDS, 'endDate'].every(key => Object.hasOwn(a,key) === Object.hasOwn(b,key) && a[key] === b[key]);
+function readShift(db, ctx, shiftId, version, deps) { let shift; try { shift = deps.get(db, ctx.orgId, 'shifts', shiftId); } catch { deps.fail(409, 'SUBSTITUTION_SOURCE_INVALID', '原班次保存資料無法確認；未改派。'); } if (!shift) deps.fail(404, 'NOT_FOUND', '找不到本機構可提出申請的班次。'); if (!substitutionPlain(shift) || shift.id !== shiftId || shift.orgId !== ctx.orgId || !substitutionVersion(shift.version)) deps.fail(409, 'SUBSTITUTION_SOURCE_INVALID', '班次識別碼或保存版次無法確認。'); if (ctx.role === 'caregiver' && shift.employeeId !== ctx.employeeId) deps.fail(404, 'NOT_FOUND', '找不到本人可提出申請的班次。'); if (shift.version !== version) deps.fail(409, 'VERSION_CONFLICT', '班次目前版次已改變，請重新讀取並另提申請。'); assertSubstitutionSnapshot(snapshotOf(shift), deps.fail); if (shift.status !== 'scheduled') deps.fail(409, 'SHIFT_NOT_SCHEDULED', '只能代班尚未執行的排定班次。'); return shift; }
+/** Fail closed if any conflict source cannot be read. Nothing is repaired. */
+function dependencyRows(db, ctx, entity, deps) {
+  let items; try { items = deps.rows(db, ctx.orgId, entity); } catch { deps.fail(409, 'SUBSTITUTION_DEPENDENCY_INVALID', '有無法確認的排班、請假或服務資料；未改派。'); }
+  const count = db.prepare('SELECT COUNT(*) n FROM records WHERE org_id=? AND entity=?').get(ctx.orgId, entity).n;
+  if (!Array.isArray(items) || items.length !== count || items.some(item => !substitutionPlain(item) || !substitutionId(item.id) || item.orgId !== ctx.orgId || !substitutionVersion(item.version))) deps.fail(409, 'SUBSTITUTION_DEPENDENCY_INVALID', '本機構衝突來源識別或版次無法確認。');
+  for (const item of items) {
+    if (entity === 'service-records' && (!substitutionId(item.shiftId) || !['draft', 'submitted', 'approved', 'returned'].includes(item.status))) deps.fail(409, 'SUBSTITUTION_DEPENDENCY_INVALID', '服務紀錄來源無法確認，不能改派。');
+    if (['shifts', 'leave-requests'].includes(entity) && (!substitutionId(item.employeeId) || !substitutionDate(item.date) || typeof item.startTime !== 'string' || typeof item.endTime !== 'string' || !((entity === 'shifts' ? ['scheduled', 'completed', 'cancelled'] : ['pending', 'approved', 'rejected', 'cancelled']).includes(item.status)))) deps.fail(409, 'SUBSTITUTION_DEPENDENCY_INVALID', '排班或請假來源無法確認，不能改派。');
+  }
+  for (const item of items) if (['shifts', 'leave-requests'].includes(entity)) { try { entitySpan(entity, item, deps.fail); } catch { deps.fail(409, 'SUBSTITUTION_DEPENDENCY_INVALID', '完整班次／請假日期時段無法確認。'); } }
+  return items;
+}
+function unserved(db, ctx, shift, deps) { if (dependencyRows(db, ctx, 'service-records', deps).some(record => record.shiftId === shift.id)) deps.fail(409, 'SHIFT_HAS_RECORD', '班次已有任何服務紀錄，不能提出或核准代班。'); }
+export function substitutionCreateDefinition(payload, fail = substitutionFail) { const keys = ['shiftId', 'shiftVersion', 'reason', 'note']; if (!substitutionPlain(payload) || Object.keys(payload).some(key => !keys.includes(key)) || !['shiftId', 'shiftVersion', 'reason'].every(key => Object.hasOwn(payload, key))) fail(422, 'UNKNOWN_FIELD', '申請只接受班次、目前版次、本次原因與備註，其他欄位由伺服器保存。'); if (!substitutionId(payload.shiftId) || !substitutionVersion(payload.shiftVersion) || typeof payload.reason !== 'string' || !payload.reason.trim() || payload.reason.length > 10000 || Object.hasOwn(payload, 'note') && (typeof payload.note !== 'string' || payload.note.length > 10000)) fail(422, 'SUBSTITUTION_INPUT', '請提供合法班次版次及本次原因，長文最多10000字。'); return { shiftId: payload.shiftId, shiftVersion: payload.shiftVersion, reason: payload.reason, note: payload.note ?? '' }; }
+export function substitutionReviewDefinition(payload, fail = substitutionFail) {
+  if (!substitutionPlain(payload) || !['approve', 'reject'].includes(payload.decision)) fail(422, 'SUBSTITUTION_INPUT', '請選擇人工核准或拒絕。');
+  const keys = payload.decision === 'approve' ? ['version', 'decision', 'shiftVersion', 'replacementEmployeeId', 'reviewedOn', 'reviewReason'] : ['version', 'decision', 'reviewedOn', 'reviewReason'];
+  if (!substitutionClosed(payload, keys) || !substitutionVersion(payload.version) || !substitutionDate(payload.reviewedOn) || typeof payload.reviewReason !== 'string' || !payload.reviewReason.trim() || payload.reviewReason.length > 10000 || payload.decision === 'approve' && (!substitutionVersion(payload.shiftVersion) || !substitutionId(payload.replacementEmployeeId))) fail(422, 'SUBSTITUTION_INPUT', '本次審核須明確提供目前版次、日期與原因；核准另需原班次版次及代班員工。');
+  return { ...payload };
+}
+/** Caller MUST wrap creation in its idempotency transaction. */
+export function createSubstitutionRequest(db, ctx, payload, deps) {
+  guardSubstitutionAccess(E, ctx, false, deps.fail); if (!db.isTransaction) deps.fail(500, 'SUBSTITUTION_TRANSACTION_REQUIRED', '申請保存須在單一冪等交易內執行。');
+  const definition = substitutionCreateDefinition(payload, deps.fail), shift = readShift(db, ctx, definition.shiftId, definition.shiftVersion, deps); unserved(db, ctx, shift, deps);
+  const employee = sourceEmployee(db, ctx, shift.employeeId, deps.get); if (!employee || employee.status !== 'active') deps.fail(404, 'NOT_FOUND', '找不到本機構使用中的原班員工。');
+  const requests = dependencyRows(db, ctx, E, deps); for (const request of requests) assertSubstitutionItem(request, ctx.orgId, deps.fail); if (requests.some(item => item.shiftId === shift.id && item.status === 'submitted')) deps.fail(409, 'SUBSTITUTION_PENDING_EXISTS', '此班次已有待審核申請，請先處理；未另建重複申請。');
+  const data = { ...substitutionEntities[E].defaults, ...definition, shiftSnapshot: snapshotOf(shift), employeeId: shift.employeeId, requesterUserId: ctx.user.id }; assertSubstitutionBusiness(data, deps.fail);
+  const item = deps.insert(db, ctx.orgId, E, data); deps.audit(db, ctx, 'record.create', E, item.id, { version: item.version, status: item.status, operation: 'substitution-create', shiftId: item.shiftId, shiftVersion: item.shiftVersion, reason: item.reason }); return deps.publicRecord(ctx, item);
+}
+function prepareReview(db, ctx, recordId, payload, deps) {
+  guardSubstitutionReview(ctx, deps.fail); const definition = substitutionReviewDefinition(payload, deps.fail); let item; try { item = deps.get(db, ctx.orgId, E, recordId); } catch { item = null; }
+  if (!item || !substitutionVisible(db, ctx, E, item, deps.get)) deps.fail(404, 'NOT_FOUND', '找不到同機構可審核申請。');
+  if (item.version !== definition.version) deps.fail(409, 'VERSION_CONFLICT', '申請目前版次已更新。');
+  if (item.status !== 'submitted') deps.fail(409, 'SUBSTITUTION_LOCKED', '核准或拒絕為終態；不能再次審核或直接修改。');
+  if (item.version >= Number.MAX_SAFE_INTEGER) deps.fail(409, 'VERSION_LIMIT', '申請版次已達安全上限，不能保存下一版。');
+  const data = { ...deps.business(item), status: definition.decision === 'approve' ? 'approved' : 'rejected', reviewedOn: definition.reviewedOn, reviewReason: definition.reviewReason, reviewerUserId: ctx.user.id }; let shift = null, after = null;
+  if (definition.decision === 'approve') {
+    if (definition.shiftVersion !== item.shiftVersion) deps.fail(409, 'VERSION_CONFLICT', '審核原班次版次與申請保存版次不一致。');
+    shift = readShift(db, ctx, item.shiftId, item.shiftVersion, deps); if (!sameSnapshot(snapshotOf(shift), item.shiftSnapshot)) deps.fail(409, 'SUBSTITUTION_SOURCE_CHANGED', '班次內容與原申請不符；未改派。'); unserved(db, ctx, shift, deps);
+    if (shift.version >= Number.MAX_SAFE_INTEGER) deps.fail(409, 'VERSION_LIMIT', '原班次版次已達安全上限，不能改派。');
+    const replacement = sourceEmployee(db, ctx, definition.replacementEmployeeId, deps.get); if (!replacement || replacement.status !== 'active') deps.fail(404, 'NOT_FOUND', '找不到本機構使用中的代班員工。'); if (replacement.id === item.employeeId) deps.fail(409, 'ASSIGNMENT_UNCHANGED', '代班員工須與原班員工不同。');
+    dependencyRows(db, ctx, 'shifts', deps); dependencyRows(db, ctx, 'leave-requests', deps);
+    after = deps.validatePayload('shifts', { ...deps.business(shift), employeeId: replacement.id }); deps.writeGuard(ctx, 'shifts', after, shift); deps.validate(db, ctx, 'shifts', after, shift);
+    data.replacementEmployeeId = replacement.id; data.replacementShiftVersion = shift.version + 1; data.replacementShiftSnapshot = { ...snapshotOf(shift), version: shift.version + 1, employeeId: replacement.id };
+  }
+  assertSubstitutionBusiness(data, deps.fail); return { definition, item, data, shift, after };
+}
+/** No draft, token, audit or other database write. Commit rechecks all inputs. */
+export function previewSubstitutionReview(db, ctx, recordId, payload, deps) { const ready = prepareReview(db, ctx, recordId, payload, deps); return { item: deps.publicRecord(ctx, ready.item), decision: ready.definition.decision, canCommit: true, before: ready.shift ? structuredClone(ready.item.shiftSnapshot) : null, after: ready.shift ? structuredClone(ready.data.replacementShiftSnapshot) : null }; }
+/** Caller MUST use its existing idem()/BEGIN IMMEDIATE wrapper. */
+export function commitSubstitutionReview(db, ctx, recordId, payload, deps) {
+  guardSubstitutionReview(ctx, deps.fail); if (!db.isTransaction) deps.fail(500, 'SUBSTITUTION_TRANSACTION_REQUIRED', '審核結果與改派須在同一交易內保存。');
+  const ready = prepareReview(db, ctx, recordId, payload, deps); let savedShift = null;
+  if (ready.shift) { savedShift = deps.replace(db, ctx.orgId, 'shifts', ready.shift, ready.after); assertSubstitutionSnapshot(snapshotOf(savedShift), deps.fail); if (!sameSnapshot(snapshotOf(savedShift), ready.data.replacementShiftSnapshot)) deps.fail(409, 'SUBSTITUTION_ACK_INVALID', '改派保存結果與明確預覽不符。'); deps.audit(db, ctx, 'record.update', 'shifts', savedShift.id, { version: savedShift.version, operation: 'substitution-approval', requestId: ready.item.id, requestVersion: ready.item.version, reason: ready.data.reviewReason, fields: ['employeeId'], fromEmployeeId: ready.item.employeeId, toEmployeeId: savedShift.employeeId }); }
+  const item = deps.replace(db, ctx.orgId, E, ready.item, ready.data); assertSubstitutionItem(item, ctx.orgId, deps.fail); deps.audit(db, ctx, 'record.update', E, item.id, { version: item.version, operation: 'substitution-review', decision: ready.definition.decision, fromStatus: ready.item.status, toStatus: item.status, shiftId: item.shiftId, shiftVersion: item.shiftVersion, replacementShiftVersion: item.replacementShiftVersion, reason: item.reviewReason });
+  return { item: deps.publicRecord(ctx, item), shift: savedShift ? deps.publicRecord(ctx, savedShift) : null };
+}
+export function substitutionQuery(entity, params, fail = substitutionFail, mode = 'list') {
+  if (entity !== E) return {}; const allowed = mode === 'single' ? [] : mode === 'history' ? ['page', 'pageSize', 'compare'] : ['page', 'pageSize', 'year', 'date', 'employeeId', 'status', 'q'];
+  for (const key of params.keys()) if (!allowed.includes(key) || params.getAll(key).length !== 1) fail(422, 'INVALID_QUERY', '查詢包含未知或重複欄位。');
+  const integer = (key, fallback, max) => { const raw = params.get(key) ?? String(fallback), number = Number(raw); if (!/^[1-9]\d*$/.test(raw) || /[\r\n]/.test(raw) || !Number.isSafeInteger(number) || number > max) fail(422, 'INVALID_QUERY', '分頁格式不合法。'); return number; }; const query = { page: integer('page', 1, Math.floor(Number.MAX_SAFE_INTEGER / 100)), pageSize: integer('pageSize', 25, 100), q: params.get('q') || '' }; if (query.q.length > 200) fail(422, 'INVALID_QUERY', '搜尋文字最多200字。');
+  for (const [key, valid] of [['year', substitutionYear], ['date', substitutionDate], ['employeeId', substitutionId], ['status', value => Object.hasOwn(SUBSTITUTION_STATUSES, value)]]) if (params.has(key)) { if (!valid(params.get(key))) fail(422, 'INVALID_QUERY', '年度、日期、原員工或狀態不合法。'); query[key] = params.get(key); }
+  if (query.year && query.date && query.year !== query.date.slice(0, 4)) fail(422, 'INVALID_QUERY', '日期必須符合年度。'); if (params.has('compare') && params.get('compare') !== 'previous') fail(422, 'INVALID_QUERY', '只接受精確前版比較。'); return query;
+}
+export function assertSubstitutionQueryTarget(db, ctx, entity, query, fail = substitutionFail, get) { if (entity !== E || !query.employeeId) return; const employee = sourceEmployee(db, ctx, query.employeeId, get); if (!employee || ctx.role === 'caregiver' && (query.employeeId !== ctx.employeeId || employee.status !== 'active')) fail(404, 'NOT_FOUND', '找不到可查詢的原員工。'); }
+export function filterSubstitutionRequests(entity, items, query) { if (entity !== E) return items; const q = (query.q || '').toLocaleLowerCase('zh-TW'); return items.filter(item => (!query.year || item.shiftSnapshot.date.slice(0, 4) === query.year) && (!query.date || item.shiftSnapshot.date === query.date) && (!query.employeeId || item.employeeId === query.employeeId) && (!query.status || item.status === query.status) && (!q || [item.reason, item.note, item.reviewReason].some(value => value.toLocaleLowerCase('zh-TW').includes(q)))); }

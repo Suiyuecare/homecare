@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createApp } from '../src/server/index.mjs';
 import { business, id, now } from '../src/server/model.mjs';
+import { interviewExtensionSpec } from '../src/server/interview-extension.mjs';
 
 const entity = 'interview-applicants';
 const fields = ['name', 'phone', 'interviewDate', 'city', 'district', 'interviewContent', 'note', 'status'];
@@ -66,14 +67,14 @@ async function fixture(t) {
   return { app, base, request, create, patch, admin, clients, employee, payload, ledger, raw, unrelated, imported, foreign };
 }
 
-test('eight administrative fields trim only supplied strings, default optional fields and toggle without hiring side effects', async t => {
+test('original eight fields retain supplied trim, new POST has18 fields/defaults, and status toggles have no hiring side effects', async t => {
   const f = await fixture(t), protectedBefore = f.unrelated();
   let item = await f.create(entity, f.payload({ name: ' 合成姓名 ', phone: ' 合成不作格式審查的電話+ext ', interviewDate: ' 2026-10-10 ', city: ' 合成縣市 ', district: ' 合成鄉鎮 ', interviewContent: ' 合成面試\r\n第二行 ', note: ' 合成備註\n ', status: ' active ' }), f.clients.supervisor);
-  assert.deepEqual(Object.keys(business(item)).sort(), [...fields].sort());
+  assert.deepEqual(Object.keys(business(item)).sort(), interviewExtensionSpec.fields.split(' ').sort());
   for (const key of fields) assert.equal(item[key], item[key].trim());
   assert.equal(item.interviewContent, '合成面試\r\n第二行');
   const defaults = await f.create(entity, f.payload());
-  assert.deepEqual(business(defaults), { status: 'active', city: '', district: '', note: '', ...f.payload() });
+  assert.deepEqual(business(defaults), { ...interviewExtensionSpec.defaults, ...f.payload() });
   const duplicate = await f.create(entity, f.payload()); assert.notEqual(duplicate.id, defaults.id, 'No unapproved name/phone deduplication policy');
   item = await f.patch(item, { status: 'inactive' }); assert.equal(item.status, 'inactive');
   item = await f.patch(item, { status: 'active' }, f.clients.supervisor); assert.equal(item.status, 'active'); assert.equal(item.version, 3);
@@ -98,7 +99,7 @@ test('input validation rejects nonwhite required values, types, length, single-l
   for (const data of [null, []]) assert.equal((await f.request(f.admin, 'POST', route(), data)).status, 400);
   assert.equal((await f.request(f.admin, 'POST', route(), undefined, {}, '{')).body.error.code, 'INVALID_JSON');
   assert.equal((await f.request(f.admin, 'POST', route(), f.payload(), { 'Content-Type': 'text/plain' })).status, 415);
-  assert.equal((await f.request(f.admin, 'POST', route(), undefined, {}, '{"name":"' + 'x'.repeat(140000) + '"}')).status, 413);
+  assert.equal((await f.request(f.admin, 'POST', route(), undefined, {}, '{"name":"' + 'x'.repeat(1048576) + '"}')).status, 413);
   assert.equal((await f.request(f.admin, 'PATCH', route(item), { version: 1, phone: '合成\n無效' })).status, 422);
   assert.deepEqual(f.raw(), before);
 });

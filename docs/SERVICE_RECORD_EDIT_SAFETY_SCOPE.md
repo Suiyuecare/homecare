@@ -1,8 +1,6 @@
 # 服務紀錄安全編輯切片 0.35
 
-> 公開版本文件：記錄此功能版本的設計與驗收條件，並非目前公開副本已執行的驗收證明。私人盤點與 QA 產物未匯出；現行行為以 API.md 與原始碼為準，正式規則及部署仍須核定。
-
-狀態：契約凍結；實作與驗收狀態以 BUILD_STATE.md 及實際測試結果 為準。僅合成本機測試；原功能全量對照仍未核定。
+狀態：契約凍結；實作與驗收狀態以 BUILD_STATE.md 及本輪 verification 為準。僅合成本機測試；原功能全量對照仍未核定。
 
 ## 原規則與邊界
 
@@ -28,5 +26,6 @@ draft/returned 可編輯；submitted/approved 直接 PATCH 鎖定。returned 保
 
 1. pure 與真實 HTTP：五控制項／十保存欄、sparse own-presence、缺失/null/typed/CR、ISO/0000 保持、services 保持／取代、returned 保持／重送、create/review 冪等、身份版本／每欄偽回應拒絕。
 2. 原角色／機構／CSRF／CAS、submitted/approved 鎖、合法改派、原時間與服務數量邊界、完整交易／精確 actor、價格快照遮罩／不重算、核閱完成班次；失敗與唯讀所有 11 表及非空附件 BLOB／6 trigger 保持。
-3. 真 Chromium：兩填寫入口／兩核閱入口、桌機與390px、鍵盤／focus／dirty／busy、原生三態保存、空／loading／error／retry／長文字、未知保存結果保留輸入、create/review 同鍵重試、版本衝突、完整context失效與已提交晚回應、四角色；逐張圖檢視至少一個 sibling 流程。所有失敗原始輸出保留、不宣稱 first-pass；原生 OS popup 未驗項目明示。
-5. 最終來源 hash、實際 process exit、QA 證據及 BUILD_STATE／PRODUCT／API／UX／追溯清單同步；完成前不標已驗證。
+3. 真 Chromium：兩填寫入口／兩核阅入口、桌機與390px、鍵盤／focus／dirty／busy、原生三態保存、空／loading／error／retry／長文字、未知保存結果保留輸入、create/review 同鍵重試、版本衝突、完整context失效與已提交晚回應、四角色；逐張圖檢視至少一個 sibling 流程。
+4. 全 Node、source check/build、premium-ui.json 所有命令與必要既有瀏覽器迴歸通過。所有失敗原始輸出保留、不宣稱 first-pass；原生 OS popup 未驗項目明示。
+5. 最終來源 hash、實際 process exit、QA 證據及 BUILD_STATE／PRODUCT／API／UX／追溯清單同步；完成前不標已驗證。actual4310 不重新載入、不登入、不寫入；不部署、不使用真實個資或原平台帳密。

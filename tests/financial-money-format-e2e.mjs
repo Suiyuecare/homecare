@@ -215,15 +215,15 @@ try {
 
   await readOnly('fresh-CSV-byte-identical-endpoint-and-raw-cent-value-not-yuan', async () => {
     for (const [role, kind] of [['admin', 'fees'], ['finance', 'payroll']]) {
-      const actor = actors[role]; await selectReport(actor.page, kind); const response = await actor.client.request.get(`${base}/api/reports/${kind}.csv?month=${month}`, { headers: { 'X-Org-Id': orgId } }); assert.equal(response.status(), 200); const expected = await response.body(); assert.match(response.headers()['content-type'], /^text\/csv/); assert.deepEqual([...expected.subarray(0, 3)], [239, 187, 191]); assert(expected.toString().includes('\r\n')); assert(expected.toString().includes('未核定規則'));
-      const dto = await request('GET', `reports/${kind}?month=${month}`, undefined, 200, actor); assert(expected.toString().includes('"' + dto.rows[0].amountCents + '"')); assert(!expected.toString().includes(MAX_DISPLAY));
+      const actor = actors[role]; await selectReport(actor.page, kind); const response = await actor.client.request.get(`${base}/api/reports/${kind}.csv?month=${month}&spanMode=calendar-two-day-v1`, { headers: { 'X-Org-Id': orgId } }); assert.equal(response.status(), 200); const expected = await response.body(); assert.match(response.headers()['content-type'], /^text\/csv/); assert.deepEqual([...expected.subarray(0, 3)], [239, 187, 191]); assert(expected.toString().includes('\r\n')); assert(expected.toString().includes('未核定規則'));
+      const dto = await request('GET', `reports/${kind}?month=${month}&spanMode=calendar-two-day-v1`, undefined, 200, actor); assert(expected.toString().includes('"' + dto.rows[0].amountCents + '"')); assert(!expected.toString().includes(MAX_DISPLAY));
       const waiting = actor.page.waitForEvent('download'); await csvButton(actor.page).click(); const download = await waiting; assert.equal(download.suggestedFilename(), `歲悅-${kind}-${month}.csv`); const filename = `synthetic-${kind}-${month}.csv`; await download.saveAs(path.join(output, filename)); assert.deepEqual(await readFile(path.join(output, filename)), expected);
       csvChecks.push({ kind, filename, bytes: expected.length, sha256: sha(expected), matchesFreshEndpoint: true, rawAmountCents: dto.rows[0].amountCents, currencyYuanInserted: false, screenSnapshotConsistencyClaimed: false });
     }
   }); mark('真CSV逐位元等於fresh伺服器輸出，保留原始分值/BOM/CRLF與註記；未改成畫面元或快取資料');
 
   await readOnly('pending-JSON-month-and-kind-real-abort-exact-money-new-body-wins', async () => {
-    await selectReport(page, 'fees'); const pattern = `**/api/reports/fees?month=${month}`, slow = await delayRoute(page, pattern);
+    await selectReport(page, 'fees'); const pattern = `**/api/reports/fees?month=${month}&spanMode=calendar-two-day-v1`, slow = await delayRoute(page, pattern);
     try { await reloadButton(page).click(); await slow.arrived.promise; assert(await csvButton(page).isDisabled());
       const aborted = page.waitForEvent('requestfailed', { predicate: r => new URL(r.url()).pathname === '/api/reports/fees' && new URL(r.url()).searchParams.get('month') === month, timeout: 10000 });
       const newer = await display(page, 'fees', otherMonth, () => changeMonth(page, otherMonth)); assert.match((await aborted).failure().errorText, /ABORTED|FAILED|cancel/i); await slow.finish(); await settle(page); await assertFinancialMoney(page, 'fees', newer);
@@ -248,7 +248,7 @@ try {
     await request('GET', `reports/fees?month=${month}`, undefined, 403, actors.finance, foreignOrg.id); const fee = await request('GET', `reports/fees?month=${month}`, undefined, 200, actors.admin); assert.equal(fee.rows.length, 1);
     await actors.caregiver.page.goto(`${base}/#/reports`); lastPage = actors.caregiver.page; await actors.caregiver.page.getByRole('heading', { name: '您沒有這項操作權限', exact: true }).waitFor();
     for (const mode of ['role', 'staleRead']) {
-      await loadReport(page); await selectReport(page, 'fees'); const pattern = `**/api/reports/fees?month=${month}`, slow = await delayRoute(page, pattern), n = downloads.length;
+      await loadReport(page); await selectReport(page, 'fees'); const pattern = `**/api/reports/fees?month=${month}&spanMode=calendar-two-day-v1`, slow = await delayRoute(page, pattern), n = downloads.length;
       try { await reloadButton(page).click(); await slow.arrived.promise; await page.evaluate(async mode => { const { getContext, setContext } = await import('/ui.js'); const c = structuredClone(getContext()); if (mode === 'role') c.organizations.find(o => o.id === c.organizationId).role = 'supervisor'; setContext(c, c.organizationId); }, mode); await slow.finish(); await settle(page); assert.equal(await body(page).getByRole('heading', { name: '費用試算（未核定規則）', exact: true }).count(), 0); assert.equal(await body(page).locator('.error-state').count(), 0); assert.equal(downloads.length, n); invalidations.push({ pending: true, mode, noLateTableOrErrorOrDownload: true, clientFixture: true });
       } finally { await slow.finish(); }
       await page.reload(); await page.waitForLoadState('networkidle');

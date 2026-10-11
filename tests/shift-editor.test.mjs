@@ -16,16 +16,16 @@ const bad = (fn, field) => assert.throws(fn, error => !!error.fields && Object.h
 const unconfirmed = fn => assert.throws(fn, error => error.code === 'SAVE_UNCONFIRMED');
 const freeze = value => { if (value && typeof value === 'object') { Object.values(value).forEach(freeze); Object.freeze(value); } return value; };
 
-test('create keeps seven original controls and nine saved fields with safe first or fixed plan selection', () => {
+test('create adds explicit-date controls and keeps legacy nine-field payload and fixed plan choice', () => {
   const e = editor();
-  assert.deepEqual(e.fields.map(field => field.name), controls);
-  assert.deepEqual(e.initial, { carePlanId: 'plan-a', employeeId: '', date: '2026-10-09', startTime: '09:00', endTime: '10:00', services: [], note: '' });
+  assert.deepEqual(e.fields.map(field => field.name), ['spanMode', ...controls.slice(0, 3), 'endDate', ...controls.slice(3)]);
+  assert.deepEqual(e.initial, { carePlanId: 'plan-a', employeeId: '', date: '2026-10-09', startTime: '09:00', endTime: '10:00', services: [], note: '', spanMode: 'legacy', endDate: '' });
   assert.deepEqual(e.fields.find(field => field.name === 'carePlanId').options.map(option => option.value), ['plan-a', 'same-case', 'plan-b']);
   const p = e.buildPayload({ employeeId: 'employee-a', services: [{ serviceItemId: 's1', quantity: 10000 }] });
   assert.deepEqual(Object.keys(p).sort(), saved.slice().sort());
   assert.equal(p.caseId, 'case-a'); assert.equal(p.status, 'scheduled'); assert.equal(p.note, '');
   assert.equal(editor(undefined, { fixedPlanId: 'plan-b' }).initial.carePlanId, 'plan-b');
-  assert.deepEqual(editor(undefined, { fixedPlanId: 'plan-b' }).fields[0].options.map(option => option.value), ['plan-b']);
+  assert.deepEqual(editor(undefined, { fixedPlanId: 'plan-b' }).fields.find(f => f.name === 'carePlanId').options.map(option => option.value), ['plan-b']);
   for (const fixedPlanId of ['paused-plan', 'ended', 'unknown', null, {}, []]) assert.equal(editor(undefined, { fixedPlanId }).initial.carePlanId, '');
   for (const defaultDate of ['0000-01-01', '2026-02-30', null]) assert.equal(editor(undefined, { defaultDate }).initial.date, '');
   bad(() => e.buildPayload({ employeeId: 'inactive', services: [{ serviceItemId: 's1', quantity: 1 }] }), 'employeeId');
@@ -34,7 +34,7 @@ test('create keeps seven original controls and nine saved fields with safe first
 
 test('normal edit omits unchanged and changed-back values and keeps case and status outside controls', () => {
   const original = freeze(row()), e = editor(original);
-  assert.deepEqual(e.fields.filter(field => !field.name.endsWith('Intent')).map(field => field.name), controls);
+  assert.deepEqual(e.fields.filter(field => !field.name.endsWith('Intent')).map(field => field.name), ['spanMode', ...controls.slice(0, 3), 'endDate', ...controls.slice(3)]);
   assert(!Object.hasOwn(e.initial, 'caseId')); assert(!Object.hasOwn(e.initial, 'status'));
   assert.deepEqual(e.buildPayload({}), {}); assert.deepEqual(e.buildPayload(e.initial), {});
   assert.deepEqual(e.buildPayload({ carePlanId: original.carePlanId, employeeId: original.employeeId, note: original.note }), {});

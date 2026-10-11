@@ -1,3 +1,5 @@
+import { spanReportRows, spanReportColumns } from './span-report.mjs';
+import { entitySpan } from './shift-span.mjs';
 import { dateValid, fail, scopedRows, timeMinute } from './model.mjs';
 import { parseReportQuery, validateReportReferences, assertReportExportLimit } from './report-query.mjs';
 
@@ -14,21 +16,17 @@ const compareText = (a, b) => a < b ? -1 : a > b ? 1 : 0;
 
 /** Reads actual recorded quantities and times, independently of any billing snapshot. */
 export function readServiceReport(db, ctx, params, { full = false } = {}) {
-  const { filters, page, pageSize } = parseReportQuery(params, { full, statusLabels, statusMessage: '不支援的紀錄狀態' });
+  const { filters, page, pageSize } = parseReportQuery(params, { full, statusLabels, statusMessage: '不支援的紀錄狀態', span:true });
   const cases = new Map(scopedRows(db, ctx, 'cases').map(item => [item.id, item]));
   const employees = new Map(scopedRows(db, ctx, 'employees').map(item => [item.id, item]));
   validateReportReferences(filters, cases, employees);
-  const records = scopedRows(db, ctx, 'service-records').filter(item =>
-    item.date >= filters.startDate && item.date <= filters.endDate &&
-    (!filters.caseId || item.caseId === filters.caseId) &&
-    (!filters.employeeId || item.employeeId === filters.employeeId) &&
-    (!filters.status || item.status === filters.status));
+  const records = spanReportRows(db,ctx,'service-records',filters,{range:false});
   const services = new Map(scopedRows(db, ctx, 'service-items').map(item => [item.id, item]));
   let serviceMinutes = 0;
   const projected = records.map(record => {
     const start = timeMinute(record.actualStart, record.date), end = timeMinute(record.actualEnd, record.date);
-    const minutes = end - start;
-    if (!dateValid(record.date) || !Number.isSafeInteger(start) || !Number.isSafeInteger(end) || !Number.isSafeInteger(minutes) || minutes <= 0) {
+    const minutes = filters.spanMode ? entitySpan('service-records',record).durationMinutes : end - start;
+    if (!dateValid(record.date) || (!filters.spanMode && (!Number.isSafeInteger(start) || !Number.isSafeInteger(end))) || !Number.isSafeInteger(minutes) || minutes <= 0) {
       fail(409, 'REPORT_DATA_INVALID', '符合條件的服務紀錄包含無效起訖時間，請先核對資料；本次未輸出報表。');
     }
     serviceMinutes += minutes;
@@ -39,7 +37,7 @@ export function readServiceReport(db, ctx, params, { full = false } = {}) {
       return name + ' × ' + service.quantity;
     }).join('；');
     return {
-      recordId: record.id, version: record.version, date: text(record.date),
+      recordId: record.id, version: record.version, date: text(record.date), ...(filters.spanMode?{actualEndDate:Object.hasOwn(record,'actualEndDate')?record.actualEndDate:record.date}:{}),
       caseNo: text(caseItem?.caseNo), case: display(caseItem?.name, '未取得個案名稱'),
       employeeNo: text(employee?.employeeNo), employee: display(employee?.name, '未取得服務人員名稱'),
       actualStart: record.actualStart, actualEnd: record.actualEnd, serviceMinutes: minutes, services: serviceText,
@@ -66,7 +64,7 @@ export function readServiceReport(db, ctx, params, { full = false } = {}) {
       employee: filters.employeeId ? display(employees.get(filters.employeeId)?.name, '未取得服務人員名稱') : '全部可讀人員',
       status: filters.status ? statusLabels[filters.status] : '全部狀態',
     },
-    generatedAt: new Date().toISOString(), columns,
+    generatedAt: new Date().toISOString(), columns:spanReportColumns(columns,'actualEndDate','結束日期',filters),
     rows: full ? projected : projected.slice((page - 1) * pageSize, page * pageSize),
     totals: { count: total, serviceMinutes }, total, page: full ? 1 : page, pageSize: full ? total : pageSize,
     note: '本機測試報表；個案、人員與服務使用目前主檔名稱，數量為實際紀錄數量，分鐘包含所選草稿、待核閱、退回修改及已核准狀態；非正式申報與薪資依據。',

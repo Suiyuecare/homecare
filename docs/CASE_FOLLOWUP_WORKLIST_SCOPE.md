@@ -1,8 +1,6 @@
 # 人工追蹤查詢（0.50）
 
-> 公開版本文件：記錄此功能版本的設計與驗收條件，並非目前公開副本已執行的驗收證明。私人盤點與 QA 產物未匯出；現行行為以 API.md 與原始碼為準，正式規則及部署仍須核定。
-
-凍結日期：2026-10-10。依已接受的0.46九欄人工暫停／結案追蹤，提供同機構跨個案唯讀清單；不是原平台表單提醒、喘息提醒、臨床訪視或法定期限規則。
+凍結日期：2026-10-10。依已接受的0.46九欄人工暫停／結案追蹤，提供同機構跨個案唯讀清單；不是原平台表單提醒、喘息提醒、臨床訪視或法定期限規則。RM-02仍partial，原180列、狀態計數及九階段保持。
 
 ## 權限與保存來源
 
@@ -30,4 +28,7 @@ single回{item}，拒絕任何query；每次重驗目前機構與父項。前端
 
 必要純確認、HTTP與真Chromium含empty／25筆翻頁／全部filters／同名不同ID／停用或結案父項、missing/null/JSON/CR/LF及超長文字、非法回應／503／重試／fresh版本／精確history、角色及機構拒絕。loaded／pending各六種primitive失效、同值reference負控制、真requestfailed與晚回應、Escape焦點、1440／390px與長文字末句實際可讀。唯讀每段完整十一表／六trigger／schema／total_changes、非空BLOB與核閱計價快照一致；fixture及合成登入寫入分開對帳。
 
-沿必要相關browser包含舊followups／supervisory-visits／interviews／contacts／history／core／APM CIS／HTTPS合成Portal。只跑必要子集，不宣稱所有配置命令fresh；原失敗保存。完成整合、瀏覽器與逐張圖實看才標示本機implemented_verified。
+沿必要相關browser包含舊followups／supervisory-visits／interviews／contacts／history／core／APM CIS／HTTPS合成Portal。只跑必要子集，不宣稱所有配置命令fresh；原失敗保存。完成整合、瀏覽器與逐張圖實看才標示本機implemented_verified。所有資料合成；實際帳號DB／env／binding／私人備份／4310／DNS不存取或改動；正式主機、HTTPS、Portal發布及公司本人登入仍依部署交接待辦。
+
+
+本機接受：918程式測試、9必要browser共105關、16新圖實際檢視；詳verification。原對等、正式部署及人工UAT未驗。

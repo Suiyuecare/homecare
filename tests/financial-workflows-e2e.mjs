@@ -1,0 +1,76 @@
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+import { mkdir, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+import { createApp } from '../src/server/index.mjs';
+const { chromium } = createRequire(import.meta.url)('playwright');
+const output = path.resolve('outputs/software/financial-workflows-qa/browser-' + Date.now());
+await mkdir(output, { recursive: true });
+const app = createApp({ dbPath: ':memory:', port: 0 }), base = await app.listen();
+const browser = await chromium.launch({ headless: true }), context = await browser.newContext({ viewport: { width: 1440, height: 1000 } }), page = await context.newPage();
+const checks = [], screenshots = [], errors = []; let stage = 'setup';
+page.on('pageerror', error => errors.push({ stage, message: error.message }));
+const mark = value => { checks.push(value); console.log('PASS ' + value); };
+const dialog = () => page.locator('dialog[open]').last();
+const capture = async name => { const file = path.join(output, name + '.png'); await page.screenshot({ path: file, fullPage: true }); screenshots.push(file); };
+const settle = async () => page.waitForLoadState('networkidle');
+const load = async route => { await page.goto(base + '/#' + route); await page.getByRole('heading', { level: 1 }).waitFor(); await settle(); assert.equal(await page.locator('.error-state').count(), 0); };
+const submit = async name => { const target = dialog(), label = await target.getAttribute('aria-labelledby'); await target.getByRole('button', { name, exact: true }).click(); await page.locator('dialog[aria-labelledby="' + label + '"]').waitFor({ state: 'detached' }); await settle(); };
+const close = async () => { await page.keyboard.press('Escape'); await settle(); };
+const screen = async () => {
+  assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+  assert.deepEqual(await page.locator('input,select,textarea').evaluateAll(nodes => nodes.filter(node => node.getClientRects().length && !node.labels?.length && !node.getAttribute('aria-label') && !node.getAttribute('aria-labelledby')).map(node => node.name)), []);
+};
+const counts = () => app.db.prepare('SELECT (SELECT count(*) FROM records) records,(SELECT count(*) FROM record_versions) versions,(SELECT count(*) FROM audit) audit,total_changes() changes').get();
+try {
+  const response = await context.request.post(base + '/api/setup', { headers: { Origin: base }, data: { name: '合成財務驗收員', email: 'finance-admin@example.test', password: 'synthetic-financial-password', organizationName: '合成財務機構' } }); assert.equal(response.status(), 201);
+  const session = await response.json(), orgId = session.organizations[0].id, headers = { Origin: base, 'X-Org-Id': orgId, 'X-CSRF-Token': session.csrfToken };
+  const post = async (entity, data) => { const r = await context.request.post(base + '/api/' + entity, { headers, data }); assert.equal(r.status(), 201, await r.text()); return (await r.json()).item; };
+  const list = async entity => { const r = await context.request.get(base + '/api/' + entity, { headers }); assert.equal(r.status(), 200, await r.text()); return (await r.json()).items; };
+  const employee = await post('employees', { name: '合成結算員工', employeeNo: 'FIN-E1' }), c = await post('cases', { name: '合成收費個案', caseNo: 'FIN-C1' });
+  for (const role of ['supervisor', 'finance', 'caregiver']) await post('users', { name: '合成' + role, email: role + '@financial.example.test', password: 'synthetic-financial-password', role, ...(role === 'caregiver' ? { employeeId: employee.id } : {}) });
+  stage = 'billing draft'; await load('/billing-documents'); await page.getByRole('button', { name: '新增帳單草稿', exact: true }).click();
+  await dialog().getByRole('spinbutton', { name: '明細筆數', exact: false }).fill('2'); await submit('繼續填寫');
+  await dialog().getByLabel('個案', { exact: false }).selectOption(c.id); await dialog().getByLabel('帳單月份', { exact: false }).fill('2026-10'); await dialog().getByLabel('帳單編號', { exact: false }).fill('SYN-BILL-1');
+  await dialog().getByLabel('明細1 名稱', { exact: false }).fill('合成服務'); await dialog().getByLabel('明細1 數量', { exact: false }).fill('2'); await dialog().getByLabel('明細1 單價（元）', { exact: false }).fill('120.01');
+  await dialog().getByLabel('明細2 名稱', { exact: false }).fill('合成調整'); await dialog().getByLabel('明細2 數量', { exact: false }).fill('1'); await dialog().getByLabel('明細2 單價（元）', { exact: false }).fill('0.01'); await dialog().getByLabel('人工計價依據', { exact: false }).fill('合成核定帳單依據');
+  await submit('儲存草稿'); let bill = (await list('billing-documents'))[0]; assert.equal(bill.summary.amountCents, 24003); assert.equal(bill.status, 'draft'); mark('帳單普通欄位新增與逐分精確總額240.03元');
+  await page.getByRole('button', { name: '詳情', exact: true }).click(); await dialog().getByText('人工計價明細', { exact: true }).waitFor(); await capture('bill-draft-desktop');
+  await dialog().getByRole('button', { name: '開立帳單', exact: true }).click(); await dialog().getByRole('button', { name: '核對並開立', exact: true }).click(); await dialog().getByRole('button', { name: '確認開立', exact: true }).click(); await page.getByRole('dialog', { name: '開立帳單', exact: true }).waitFor({ state: 'detached' }); await settle();
+  bill = (await list('billing-documents'))[0]; assert.equal(bill.status, 'issued'); assert.equal(bill.version, 2); assert.equal(await dialog().getByRole('button', { name: '開立帳單', exact: true }).count(), 0); mark('明確開立與內容鎖定');
+  stage = 'receipts';
+  const addReceipt = async amount => { await dialog().getByRole('button', { name: '新增收款紀錄', exact: true }).click(); await dialog().getByLabel('已收金額（元）', { exact: false }).fill(amount); await dialog().getByLabel('人工收款核對依據', { exact: false }).fill('合成人工核對'); await dialog().getByRole('button', { name: '核對並登錄收款', exact: true }).click(); await dialog().getByRole('button', { name: '確認登錄已收款', exact: true }).click(); await page.getByRole('dialog', { name: '新增收款紀錄', exact: true }).waitFor({ state: 'detached' }); await settle(); };
+  await addReceipt('100.01'); await addReceipt('140.02'); const savedReceipts = await list('payment-receipts'); assert.deepEqual(savedReceipts.map(item => item.amountCents).sort((a,b) => a-b), [10001, 14002]); assert.equal(await dialog().getByRole('button', { name: '新增收款紀錄', exact: true }).count(), 0); mark('分次收款累計、結清餘額及不再收款入口'); await capture('bill-settled-desktop');
+  const beforeReject = counts(); const over = await context.request.post(base + '/api/payment-receipts', { headers, data: { billingDocumentId: bill.id, date: '2026-10-10', amountCents: 1, method: 'cash' } }); assert.equal(over.status(), 409); assert.deepEqual(counts(), beforeReject); mark('多收一分由伺服器原子拒絕，資料歷程稽核零部分寫入');
+  const cancelReceipt = async () => { await dialog().getByRole('button', { name: '取消收款', exact: true }).first().click(); await dialog().getByLabel('本次取消原因', { exact: false }).fill('合成更正原因'); await dialog().getByRole('button', { name: '核對並取消收款', exact: true }).click(); await dialog().getByRole('button', { name: '確認取消收款', exact: true }).click(); await page.getByRole('dialog', { name: '取消收款紀錄', exact: true }).waitFor({ state: 'detached' }); await settle(); };
+  await cancelReceipt(); assert.equal((await list('payment-receipts')).filter(item => item.status === 'active').length, 1);
+  const blockedBefore = counts(); const blocked = await context.request.patch(base + '/api/billing-documents/' + bill.id, { headers, data: { version: bill.version, status: 'voided', note: '合成原因' } }); assert.equal(blocked.status(), 409); assert.deepEqual(counts(), blockedBefore); mark('取消收款重算餘額，有效收款尚存在時禁止作廢帳單');
+  await cancelReceipt(); await dialog().getByRole('button', { name: '作廢帳單', exact: true }).click(); await dialog().getByLabel('本次作廢原因', { exact: false }).fill('合成帳單取消'); await dialog().getByRole('button', { name: '核對並作廢', exact: true }).click(); await dialog().getByRole('button', { name: '確認作廢', exact: true }).click(); await page.getByRole('dialog', { name: '作廢帳單', exact: true }).waitFor({ state: 'detached' }); await settle(); assert.equal((await list('billing-documents'))[0].status, 'voided'); mark('全部收款取消後帳單作廢與保存歷程'); await close();
+  stage = 'payroll draft'; await load('/payroll-statements'); await page.getByRole('button', { name: '新增人工薪資草稿', exact: true }).click();
+  await dialog().getByLabel('員工', { exact: false }).selectOption(employee.id); await dialog().getByLabel('薪資月份', { exact: false }).fill('2026-10'); await dialog().getByLabel('結算編號', { exact: false }).fill('SYN-PAY-1'); await dialog().getByLabel('人工核定依據', { exact: false }).fill('合成薪資核定依據');
+  await dialog().getByRole('spinbutton', { name: '明細筆數', exact: false }).fill('2'); await dialog().getByLabel('明細1 名稱', { exact: false }).fill('合成加項'); await dialog().getByLabel('明細1 金額（新臺幣元）', { exact: false }).fill('100.01'); await dialog().getByLabel('明細2 名稱', { exact: false }).fill('合成減項'); await dialog().getByLabel('明細2 加項／減項', { exact: false }).selectOption('deduction'); await dialog().getByLabel('明細2 金額（新臺幣元）', { exact: false }).fill('0.01'); await capture('payroll-form-desktop');
+  let injected = false; const malformedAck = async route => { if (route.request().method() !== 'POST' || injected) return route.continue(); injected = true; const actual = await route.fetch(); const body = await actual.json(); body.item.summary.netCents++; await route.fulfill({ response: actual, json: body }); };
+  await page.route('**/api/payroll-statements', malformedAck); await dialog().getByRole('button', { name: '儲存', exact: true }).click(); await dialog().locator('.form-summary:not([hidden])').waitFor(); assert.equal(await dialog().getByLabel('明細1 金額（新臺幣元）', { exact: false }).inputValue(), '100.01'); assert.equal((await list('payroll-statements')).length, 1);
+  await page.unroute('**/api/payroll-statements', malformedAck); await submit('儲存'); assert.equal((await list('payroll-statements')).length, 1); let payroll = (await list('payroll-statements'))[0]; assert.deepEqual(payroll.summary, { earningCents: 10001, deductionCents: 1, netCents: 10000 }); mark('薪資加減項逐分計算及已提交但非法ACK時保留輸入、冪等重试不重複');
+  stage = 'payroll shrink guard'; const beforeShrink = counts();
+  await page.getByRole('button', { name: '編輯草稿', exact: true }).click(); await dialog().getByRole('spinbutton', { name: '明細筆數', exact: false }).fill('1'); await dialog().getByRole('button', { name: '儲存', exact: true }).click(); await dialog().locator('[name="confirmRemove"]').waitFor(); assert.deepEqual(counts(), beforeShrink); assert.equal((await list('payroll-statements'))[0].lineItems.length, 2);
+  await dialog().getByRole('spinbutton', { name: '明細筆數', exact: false }).fill('2'); assert.equal(await dialog().getByLabel('明細2 名稱', { exact: false }).inputValue(), '合成減項'); await submit('儲存'); assert.deepEqual(counts(), beforeShrink); mark('縮減已填薪資明細須明確確認，重新增加恢復输入；無變更零PATCH');
+  stage = 'payroll review'; await page.getByRole('button', { name: '覆核', exact: true }).click(); await dialog().getByRole('button', { name: '確認覆核', exact: true }).click(); await dialog().waitFor({ state: 'detached' }); await settle(); assert.equal((await list('payroll-statements'))[0].status, 'reviewed'); await page.getByRole('button', { name: '關帳', exact: true }).waitFor(); assert.equal(await page.getByRole('button', { name: '編輯草稿', exact: true }).count(), 0);
+  await page.getByRole('button', { name: '關帳', exact: true }).click(); await dialog().getByRole('button', { name: '確認關帳', exact: true }).click(); await dialog().waitFor({ state: 'detached' }); await settle(); payroll = (await list('payroll-statements'))[0]; await page.getByRole('cell', { name: '已關帳', exact: true }).waitFor(); assert.equal(payroll.status, 'closed'); assert.equal(payroll.version, 3); mark('薪資覆核鎖定、關帳不可再更改');
+  await page.getByRole('button', { name: '查看明細', exact: true }).click(); await dialog().getByText('合成結算員工', { exact: false }).waitFor(); await capture('payroll-details-desktop'); await close(); const beforeHistory = counts(); await page.getByRole('button', { name: '版本歷程', exact: true }).click(); await dialog().getByText('完整保存欄位', { exact: true }).first().click(); await dialog().getByText('加項合計', { exact: true }).first().waitFor(); await capture('payroll-history-desktop'); await close(); assert.deepEqual(counts(), beforeHistory); mark('薪資快照與型別化明細歷程，唯讀零寫入');
+  stage = 'payroll cancel'; const second = await post('payroll-statements', { employeeId: employee.id, month: '2026-10', number: 'SYN-PAY-2', lineItems: [{ label: '合成待取消加項', kind: 'earning', amountCents: 1 }] }); await load('/payroll-statements'); await page.getByRole('button', { name: '重新讀取', exact: true }).click();
+  const cancelRow = page.getByRole('row').filter({ hasText: 'SYN-PAY-2' }); await cancelRow.getByRole('button', { name: '取消結算', exact: true }).click(); await dialog().getByLabel('本次取消原因', { exact: false }).fill('合成重建原因'); await submit('確認取消薪資結算'); await page.getByRole('row').filter({ hasText: 'SYN-PAY-2' }).getByText('已取消', { exact: true }).waitFor(); assert.equal((await list('payroll-statements')).find(item => item.id === second.id).status, 'voided'); mark('人工薪資取消必填本次原因，終態鎖定且明細保留');
+  stage = 'mobile'; await page.setViewportSize({ width: 390, height: 844 });
+  for (const [route, name] of [['/billing-documents', 'bill'], ['/payroll-statements', 'payroll']]) { await load(route); await screen(); await capture(name + '-mobile'); }
+  await page.getByRole('row').filter({ hasText: 'SYN-PAY-1' }).getByRole('button', { name: '查看明細', exact: true }).click(); await screen(); await capture('payroll-details-mobile'); await close(); await load('/billing-documents'); await page.getByRole('button', { name: '詳情', exact: true }).click(); await screen(); await capture('bill-details-mobile'); await close(); mark('390px帳單薪資清單與詳情無頁面溢出、所有欄位具標籤');
+  stage = 'roles';
+  for (const role of ['finance', 'supervisor', 'caregiver']) {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } }), p = await ctx.newPage(); const r = await ctx.request.post(base + '/api/login', { headers: { Origin: base }, data: { email: role + '@financial.example.test', password: 'synthetic-financial-password' } }); assert.equal(r.status(), 200);
+    let forbiddenCalls = 0; p.on('request', r => { if (role !== 'finance' && /\/api\/(billing-documents|payroll-statements|payment-receipts)/.test(r.url())) forbiddenCalls++; });
+    for (const [route, title] of [['/billing-documents', '人工帳單與收款'], ['/payroll-statements', '人工薪資結算']]) { await p.goto(base + '/#' + route); await p.getByRole('heading').first().waitFor(); await p.waitForLoadState('networkidle'); await p.getByRole('heading', { name: role === 'finance' ? title : '您沒有這項操作權限', exact: true }).waitFor(); }
+    assert.equal(forbiddenCalls, 0); await ctx.close();
+  }
+  mark('管理者財務可操作；督導居服員無入口、無讀取请求'); assert.deepEqual(errors, []);
+  await writeFile(path.join(output, 'verification.json'), JSON.stringify({ status: 'passed', syntheticOnly: true, checks, screenshots, errors }, null, 2)); console.log('Evidence: ' + output);
+} catch (error) { await capture('failure').catch(() => {}); await writeFile(path.join(output, 'verification.json'), JSON.stringify({ status: 'failed', stage, error: error.message, checks, screenshots, errors }, null, 2)); throw error; }
+finally { await browser.close(); await app.close(); }

@@ -22,6 +22,11 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: ${{ matrix.node }}
+      - uses: pnpm/action-setup@f40ffcd9367d9f12939873eb1018b921a783ffaa # v4
+        with:
+          version: 11.21.0
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
       - name: Check JavaScript
         run: node scripts/check-source.mjs
       - name: Test with synthetic data
@@ -29,7 +34,11 @@ jobs:
 
   browser:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6]
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
@@ -42,23 +51,13 @@ jobs:
         run: pnpm install --frozen-lockfile --ignore-scripts
       - name: Install Chromium
         run: pnpm exec playwright install --with-deps chromium
-      - name: Core workflow
-        run: pnpm test:e2e
-      - name: APM brand and navigation
-        run: pnpm test:e2e:apm-cis
-      - name: Synthetic HTTPS Portal handoff
-        run: pnpm test:e2e:portal-sso
-      - name: Case saved record index
-        run: pnpm test:e2e:case-record-index
-      - name: Visual refresh, four roles and mobile
-        run: pnpm test:e2e:visual-refresh
-      - name: Employee saved record index
-        run: pnpm test:e2e:employee-record-index
-      - name: Interview complete saved record details
-        run: pnpm test:e2e:interview-record-details
-      - name: Announcement current page own read receipts
-        run: pnpm test:e2e:announcement-page-receipts
-      - name: Employee complete current saved details
-        run: pnpm test:e2e:employee-record-details
-      - name: Service item complete current saved details
-        run: pnpm test:e2e:service-item-record-details
+      - name: Install PDF test tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes poppler-utils fonts-noto-cjk
+          python3 -m venv /tmp/homecare-qa-python
+          /tmp/homecare-qa-python/bin/pip install pdfplumber==0.11.9
+      - name: All configured synthetic browser and restore regressions
+        env:
+          HOME_CARE_QA_PYTHON: /tmp/homecare-qa-python/bin/python3
+        run: pnpm test:regression --shard=${{ matrix.shard }}/6

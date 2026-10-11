@@ -10,8 +10,10 @@ export function safeVersionReader(db) {
     const statement = db.prepare(sql);
     if (sql !== 'SELECT * FROM records WHERE org_id=? AND entity=? ORDER BY created_at DESC,id') return statement;
     statement.setReadBigInts(true);
-    return { all(...bindings) {
-      return statement.all(...bindings).map(row => ({ ...row, version:
+    let rawBigInts=false;
+    return { setReadBigInts(value){rawBigInts=value===true;}, all(...bindings) {
+      const raw=statement.all(...bindings);if(rawBigInts)return raw;
+      return raw.map(row => ({ ...row, version:
         typeof row.version === 'bigint' && row.version >= BigInt(Number.MIN_SAFE_INTEGER) && row.version <= BigInt(Number.MAX_SAFE_INTEGER)
           ? Number(row.version) : row.version,
       }));
@@ -20,13 +22,15 @@ export function safeVersionReader(db) {
 }
 
 /** Common strict query contract; the caller supplies its existing status vocabulary. */
-export function parseReportQuery(params, { full = false, statusLabels, statusMessage = '不支援的狀態', personKey = 'employeeId', date = true, caseFilter = true, search = false, asOf = false, expiryLabels = null }) {
-  const allowed = new Set([...(date ? ['startDate', 'endDate'] : []), ...(caseFilter ? ['caseId'] : []), ...(search ? ['q'] : []), personKey, 'status', ...(asOf ? ['asOf'] : []), ...(expiryLabels ? ['expiry'] : []), ...(full ? [] : ['page', 'pageSize'])]);
+export function parseReportQuery(params, { full = false, statusLabels, statusMessage = '不支援的狀態', personKey = 'employeeId', date = true, caseFilter = true, search = false, asOf = false, expiryLabels = null, span = false, range = false }) {
+  const allowed = new Set([...(span ? ['spanMode'] : []), ...(range ? ['rangeMode'] : []),...(date ? ['startDate', 'endDate'] : []), ...(caseFilter ? ['caseId'] : []), ...(search ? ['q'] : []), personKey, 'status', ...(asOf ? ['asOf'] : []), ...(expiryLabels ? ['expiry'] : []), ...(full ? [] : ['page', 'pageSize'])]);
   for (const key of params.keys()) {
     if (!allowed.has(key) || params.getAll(key).length !== 1) {
       fail(422, 'INVALID_QUERY', '不允許未知或重複的查詢參數', { [key]: '查詢參數不合法' });
     }
   }
+  if (params.has('spanMode') && params.get('spanMode') !== 'calendar-two-day-v1') fail(422,'INVALID_QUERY','完整日期模式不合法');
+  if (params.has('rangeMode') && (!params.has('spanMode') || !['starts','intersects'].includes(params.get('rangeMode')))) fail(422,'INVALID_QUERY','完整日期範圍模式不合法');
   const startDate = params.get('startDate'), endDate = params.get('endDate');
   if (date) {
     for (const [key, value] of [['startDate', startDate], ['endDate', endDate]]) {
@@ -42,13 +46,13 @@ export function parseReportQuery(params, { full = false, statusLabels, statusMes
   const asOfDate = params.get('asOf'), expiry = params.get('expiry') || '';
   if (asOf && !dateValid(asOfDate)) fail(422, 'INVALID_DATE', '請填寫有效YYYY-MM-DD日期', { asOf: '必須為有效日期' });
   if (expiryLabels && expiry && !Object.hasOwn(expiryLabels, expiry)) fail(422, 'INVALID_EXPIRY', '不支援的效期狀態', { expiry: '效期狀態不合法' });
-  const filters = { ...(date ? { startDate, endDate } : {}), ...(caseFilter ? { caseId: params.get('caseId') || '' } : {}), ...(search ? { q } : {}), [personKey]: params.get(personKey) || '', status, ...(asOf ? { asOf: asOfDate } : {}), ...(expiryLabels ? { expiry } : {}) };
+  const filters = { ...(params.has('spanMode') ? { spanMode: 'calendar-two-day-v1', ...(range ? { rangeMode: params.get('rangeMode') || 'starts' } : {}) } : {}), ...(date ? { startDate, endDate } : {}), ...(caseFilter ? { caseId: params.get('caseId') || '' } : {}), ...(search ? { q } : {}), [personKey]: params.get(personKey) || '', status, ...(asOf ? { asOf: asOfDate } : {}), ...(expiryLabels ? { expiry } : {}) };
   let page = 1, pageSize = 25;
   if (!full) {
     const integer = (key, fallback, max) => {
       const value = params.has(key) ? params.get(key) : String(fallback);
       const number = Number(value);
-      if (!/^[1-9]\d*$/.test(value) || !Number.isSafeInteger(number) || number > max) {
+      if (!/^[1-9]\d*$/.test(value) || /[\r\n]/.test(value) || !Number.isSafeInteger(number) || number > max) {
         fail(422, 'PAGINATION', 'page須為正整數，pageSize介於1至100', { [key]: '分頁不合法' });
       }
       return number;

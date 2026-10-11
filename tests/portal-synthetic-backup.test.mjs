@@ -261,9 +261,9 @@ test('Restored Portal startup and role reads make zero logical writes while abso
     }
     const admin = clients.admin;
     for (const kind of ['fees', 'payroll']) {
-      const result = await admin.json('GET', `reports/${kind}?month=${full.month}`, undefined, { orgId: full.orgId });
+      const result = await admin.json('GET', `reports/${kind}?month=${full.month}&spanMode=calendar-two-day-v1`, undefined, { orgId: full.orgId });
       assert.equal(SHA(JSON.stringify(result)), SHA(JSON.stringify(full.expected.frozenReports[kind])), 'Stored approved prices remain unchanged after current service/rate edits');
-      const csv = await admin.response('GET', `reports/${kind}.csv?month=${full.month}`, undefined, { orgId: full.orgId }); assert.equal(csv.status, 200);
+      const csv = await admin.response('GET', `reports/${kind}.csv?month=${full.month}&spanMode=calendar-two-day-v1`, undefined, { orgId: full.orgId }); assert.equal(csv.status, 200);
       assert.equal(SHA(Buffer.from(await csv.arrayBuffer())), SHA(full.expected.csvBytes[kind]));
     }
     for (const [entity, item] of [['cases', full.items.case], ['service-records', full.items.ownRecord], ['employee-certifications', full.items.certification], ['case-attachments', full.items.caseAttachment], ['certification-attachments', full.items.certAttachment]]) {

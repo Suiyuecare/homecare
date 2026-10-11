@@ -77,3 +77,12 @@ pnpm test:e2e:visual-refresh
 員工目前完整保存資料以 `pnpm test:e2e:employee-record-details` 驗證人工單筆 fresh GET、十欄原文、服務區域保存型別與試算分值、三種既有讀取角色、情境撤除、鍵盤與390px長文末端；沿共用 `openDetails` 與純保存資料確認 helper。財務僅查看，居服員沒有新入口；機構與本人讀取範圍由原伺服器授權。合成fixture與記憶體資料庫不含正式帳號綁定，視覺PNG另行視檢；只宣稱本輪實際執行的必要子集。
 
 Service item current saved details (0.62): `pnpm test:e2e:service-item-record-details` exercises the existing three-role service list, fresh exact-ID reads, eight complete saved fields, trial cents and raw default minutes, read-only database checks, malformed responses, cancellation and desktop/mobile reading. Synthetic fixtures only; local checks and CI do not establish formal hosting, HTTPS, Portal publishing or real-company UAT.
+
+
+## 全系統回歸（0.78）
+
+`pnpm test:regression` 執行 premium-ui.json 除 check／unit 外全部配置，包含合成加密還原；一次性口令由程序生成後經 stdin 送給工廠自有演練，無 argv／環境秘密。check／unit 仍分别用 pnpm check／pnpm test。
+
+CI 使用 Node22.13與24各跑完整程式測試，以六組覆蓋全部瀏覽器／還原配置，包含 PDF 所需 Python／Poppler 與中文字型。單一 shard 失敗不略過同組其餘測試。結果及 raw log 不公開為 workflow artifacts。
+
+新回歸 `test:e2e:feedback` 包含三種按鈕、桌機與390px、一般／減少動態、通知下方真點擊及鍵盤、紙本白底及螢幕色保持。權限窗口以真 HTTP 在 body await 撤權／退籍／登出，驗證拒絕與十一表、六trigger、total_changes零後續寫入。

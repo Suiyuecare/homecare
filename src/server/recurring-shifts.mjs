@@ -1,9 +1,11 @@
+import { recurringShiftSpan } from '../../public/data/shift-span.js';
+import { spanIntervalsOverlap } from './shift-span.mjs';
 import { HttpError, fail, dateValid, interval, validatePayload, validate, insert, audit, id, publicRecord } from './model.mjs';
 
 export const MAX_RECURRING_DAYS = 93;
 const DAY_MS = 24 * 60 * 60 * 1000;
-const definitionFields = ['caseId', 'employeeId', 'carePlanId', 'startDate', 'endDate', 'intervalWeeks', 'weekdays', 'startTime', 'endTime', 'services', 'note'];
-const plainObject = value => value && typeof value === 'object' && !Array.isArray(value) && Object.getPrototypeOf(value) === Object.prototype;
+const definitionFields = ['caseId', 'employeeId', 'carePlanId', 'startDate', 'endDate', 'intervalWeeks', 'weekdays', 'startTime', 'endTime', 'services', 'note', 'endDay'];
+const plainObject = value => value && typeof value === 'object' && !Array.isArray(value) && Object.getPrototypeOf(value) === Object.prototype && Reflect.ownKeys(value).every(key=>typeof key==='string'&&Object.getOwnPropertyDescriptor(value,key)?.enumerable&&Object.hasOwn(Object.getOwnPropertyDescriptor(value,key),'value'));
 
 export function guardRecurringShiftAccess(ctx) {
   if (!['admin', 'supervisor'].includes(ctx.role)) fail(403, 'ROLE_FORBIDDEN', '只有管理者或督導可預覽及建立週期排班');
@@ -42,7 +44,8 @@ export function recurringDefinition(payload) {
       fail(422, 'INVALID_TIME', '時間須為同日有效HH:mm', { [key]: '時間格式錯誤' });
     }
   }
-  interval(payload.startTime, payload.endTime, payload.startDate);
+  if(Object.hasOwn(payload,'endDay')&&!['same','next'].includes(payload.endDay))fail(422,'SPAN_RECURRENCE_INVALID','每班結束日只接受same或next');
+  try { recurringShiftSpan(payload.startDate,{startTime:payload.startTime,endTime:payload.endTime,...(Object.hasOwn(payload,'endDay')?{endDay:payload.endDay}:{})}); } catch(error) { fail(422,error.code||'TIME_RANGE',error.message); }
   if (!Array.isArray(payload.services) || !payload.services.length || payload.services.length > 100) {
     fail(422, 'INVALID_SERVICES', '請設定1至100個服務項目', { services: '須設定服務項目與數量' });
   }
@@ -62,7 +65,7 @@ export function recurringDefinition(payload) {
     caseId: payload.caseId, employeeId: payload.employeeId, carePlanId: payload.carePlanId,
     startDate: payload.startDate, endDate: payload.endDate, intervalWeeks,
     weekdays: [...payload.weekdays].sort((a, b) => a - b),
-    startTime: payload.startTime, endTime: payload.endTime,
+    startTime: payload.startTime, endTime: payload.endTime, ...(Object.hasOwn(payload,'endDay')?{endDay:payload.endDay}:{}),
     services: payload.services.map(service => ({ serviceItemId: service.serviceItemId, quantity: service.quantity })),
     note: payload.note?.trim() || '',
   };
@@ -85,7 +88,7 @@ export function recurringDates(definition) {
 function candidate(definition, date) {
   return validatePayload('shifts', {
     caseId: definition.caseId, employeeId: definition.employeeId, carePlanId: definition.carePlanId,
-    date, startTime: definition.startTime, endTime: definition.endTime,
+    ...recurringSpan(definition,date),
     services: definition.services.map(service => ({ ...service })), note: definition.note, status: 'scheduled',
   });
 }
@@ -100,8 +103,9 @@ export function previewRecurringShifts(db, ctx, payload) {
       if (!(error instanceof HttpError)) throw error;
       conflicts.push({ code: error.code, message: error.message, ...(error.fields ? { fields: error.fields } : {}) });
     }
-    return { date, startTime: definition.startTime, endTime: definition.endTime, status: conflicts.length ? 'conflict' : 'ready', conflicts };
+    return { ...recurringSpan(definition,date), status: conflicts.length ? 'conflict' : 'ready', conflicts };
   });
+  for(let a=0;a<items.length;a++)for(let b=a+1;b<items.length;b++){const left=candidate(definition,items[a].date),right=candidate(definition,items[b].date);if(spanIntervalsOverlap('shifts',left,'shifts',right))for(const row of[items[a],items[b]]){row.status='conflict';row.conflicts.push({code:'BATCH_SHIFT_CONFLICT',message:'整組產班完整時段互相重疊'});}}
   const conflictCount = items.filter(item => item.status === 'conflict').length;
   return { definition, items, total: items.length, readyCount: items.length - conflictCount, conflictCount, canCommit: items.length > 0 && conflictCount === 0 };
 }
@@ -124,3 +128,5 @@ export function commitRecurringShifts(db, ctx, payload) {
   }
   return { batchId, items, total: items.length };
 }
+
+function recurringSpan(definition,date){try{return recurringShiftSpan(date,{startTime:definition.startTime,endTime:definition.endTime,...(Object.hasOwn(definition,'endDay')?{endDay:definition.endDay}:{})});}catch(error){fail(422,error.code||'TIME_RANGE',error.message);}}

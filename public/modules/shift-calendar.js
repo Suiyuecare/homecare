@@ -1,8 +1,8 @@
 import { api, el, button, getContext, openDetails, createForm, table, errorState, today } from '../ui.js';
-import { parseCalendarDate, calendarPeriod, calendarFilters, confirmCalendarReport, groupCalendarRows } from '../data/shift-calendar.js';
+import { parseCalendarDate, calendarPeriod, spanCalendarFilters as calendarFilters, confirmSpanCalendarReport as confirmCalendarReport, groupSpanCalendarRows as groupCalendarRows } from '../data/shift-calendar.js';
 import { calendarPersonFilters, confirmCalendarLookupPage, confirmCalendarLookups, calendarPersonSelection, confirmCalendarPersonSelection } from '../data/shift-calendar-person-filters.js';
 import { openReportPreview } from './report-view.js';
-import { shiftReportConfig } from './shift-report.js';
+import { shiftCalendarReportConfig as shiftReportConfig } from './shift-report.js';
 
 const weekdays = ['週一', '週二', '週三', '週四', '週五', '週六', '週日'];
 const statuses = [
@@ -16,7 +16,7 @@ const cancelled = () => new DOMException('班表查詢已取消', 'AbortError');
 const weekday = date => weekdays[(parseCalendarDate(date).ordinal + 5) % 7];
 
 function dailyTable(result, group) {
-  const node = table(result.columns.map(column => ({ ...column,
+  const node = table([{ key: 'displaySegment', label: '本日顯示區段' }, ...result.columns].map(column => ({ ...column,
     render: row => el('span', { class: 'pre-wrap' }, String(row[column.key])),
   })), group.rows, { caption: `${group.date} 完整班表` });
   node.classList.add('shift-calendar-daily-table');
@@ -58,8 +58,8 @@ function confirmedContent(result, period, groups, isCurrent, personEnabled) {
     el('dl', { class: 'detail-grid' },
       [['機構', result.organization.name], ...(personEnabled ? [['個案', result.selection.case], ['服務人員', result.selection.employee]] : []), ['班次狀態', result.selection.status], ['資料讀取時間（UTC）', result.generatedAt]].map(([label, value]) =>
         el('div', {}, el('dt', {}, label), el('dd', { class: 'pre-wrap' }, value)))),
-    el('p', { role: 'status' }, `本期共 ${result.total} 班次，以下為完整每日資料。`),
-    el('p', { class: 'notice' }, result.note), index, agenda);
+    el('p', { role: 'status' }, `本期共 ${result.total} 個班次；跨日班次依實際占用日期分段，同一識別碼只計一次。`),
+    el('p', { class: 'notice' }, result.note + ' 每日區段只供閱讀；完整保存開始日與結束日仍列於表格，00:00結束不另列零分鐘翌日。'), index, agenda);
 }
 
 function calendarContent({ values, period, result, groups, error, helpers, setDraft, personEnabled, lookups, caregiver, enablePeople }) {

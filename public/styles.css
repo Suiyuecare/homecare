@@ -36,7 +36,7 @@ input:hover,select:hover,textarea:hover{border-color:var(--brand-strong)}input::
 .btn:hover{text-decoration:none}.btn-primary{background:var(--primary);color:var(--text);border-color:var(--primary)}.btn-primary:hover{background:var(--brand-soft);border-color:var(--brand-strong)}
 .btn-outline,.btn-secondary{background:var(--surface);color:var(--brand-strong);border-color:var(--border)}.btn-outline:hover,.btn-secondary:hover{background:var(--brand-soft);border-color:var(--brand-strong)}
 .btn-ghost{background:transparent;color:var(--muted)}.btn-ghost:hover{background:var(--surface-mist);color:var(--text)}.btn-danger{background:var(--danger);color:var(--surface)}.btn-danger:hover{filter:brightness(.9)}
-.btn[aria-busy=true]{color:transparent}.btn[aria-busy=true]:after{content:'處理中';position:absolute;inset:0;display:grid;place-items:center;color:var(--text)}.btn-outline[aria-busy=true]:after{color:var(--brand-strong)}.btn-danger[aria-busy=true]:after{color:var(--surface)}.btn:active{transform:translateY(1px)}
+.btn[aria-busy=true]{color:transparent;transition:background-color 140ms,border-color 140ms}.btn[aria-busy=true]:after{content:'處理中';position:absolute;inset:0;display:grid;place-items:center;color:var(--text)}.btn-outline[aria-busy=true]:after{color:var(--brand-strong)}.btn-danger[aria-busy=true]:after{color:var(--surface)}.btn:active{transform:translateY(1px)}
 .panel{background:var(--surface);border:1px solid var(--line-subtle);border-radius:var(--radius-lg);padding:24px;margin-bottom:22px;min-width:0;box-shadow:var(--shadow-surface)}
 .panel-heading,.section-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}.panel-heading h2,.section-heading h2{margin:0}.muted{color:var(--muted)}.small{font-size:13px}
 .toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px;padding:14px;background:var(--surface);border:1px solid var(--line-subtle);border-radius:var(--radius-lg)}
@@ -67,7 +67,7 @@ table{width:100%;border-collapse:collapse;text-align:left;font-size:14px;line-he
 .app-dialog{border:1px solid var(--line-subtle);border-radius:var(--radius-lg);padding:0;color:var(--text);background:var(--surface);width:min(680px,calc(100% - 24px));max-height:calc(100svh - 32px);overflow-y:auto;box-shadow:var(--shadow-dialog)}.app-dialog::backdrop{background:var(--backdrop)}
 .dialog-header{padding:23px 25px 19px;border-bottom:1px solid var(--line-subtle);background:var(--surface-mist)}.dialog-header h2{margin:0;font-size:20px;font-weight:700}.dialog-body{padding:24px 25px}.app-form{padding:24px 25px 0}.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 20px}.field{min-width:0}.field-wide{grid-column:1/-1}.field label{display:block;font-size:14px;font-weight:600;margin-bottom:8px}.field input,.field select,.field textarea{scroll-margin:20px}.field-help{font-size:12px;line-height:1.75;color:var(--muted);margin:7px 0 0}.required{color:var(--danger)}.field-error{font-size:13px;color:var(--danger);margin:6px 0 0}.form-summary{background:var(--danger-soft);border-left:3px solid var(--danger);padding:14px;margin:0 0 20px;font-size:14px;color:var(--danger)}
 .dialog-footer{display:flex;justify-content:flex-end;gap:10px;padding:20px 0;border-top:1px solid var(--line-subtle);margin-top:24px;position:sticky;bottom:0;background:var(--surface);z-index:1}.app-dialog>.dialog-footer{padding:16px 25px;margin-top:0}.password-toggle{min-height:44px;margin-top:4px;font-size:12px}.services-picker{border:1px solid var(--line-subtle);border-radius:var(--radius);padding:4px 14px}.service-option{display:flex;gap:15px;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--line-subtle)}.service-option:last-child{border-bottom:0}.service-option label{font-weight:400;margin:0;font-size:14px}.service-option input{width:90px;flex:0 0 90px}
-.toast-region{position:fixed;right:22px;bottom:22px;display:grid;gap:10px;max-width:min(400px,calc(100% - 44px));z-index:var(--z-toast)}.toast{padding:16px 18px;border:1px solid var(--line-subtle);border-left:4px solid var(--primary);background:var(--surface);border-radius:var(--radius);font-size:14px;box-shadow:var(--shadow-dialog)}.toast-error{border-left-color:var(--danger)}
+.toast-region{position:fixed;right:22px;bottom:22px;pointer-events:none;display:grid;gap:10px;max-width:min(400px,calc(100% - 44px));z-index:var(--z-toast)}.toast{padding:16px 18px;border:1px solid var(--line-subtle);border-left:4px solid var(--primary);background:var(--surface);border-radius:var(--radius);font-size:14px;box-shadow:var(--shadow-dialog)}.toast-error{border-left-color:var(--danger)}
 .notice{padding:14px 16px;border:1px solid var(--line-subtle);border-left:3px solid var(--primary);border-radius:var(--radius);background:var(--brand-soft);font-size:13px;line-height:1.75;margin:18px 0}.notice p{margin:6px 0 0}.help-list{display:grid;gap:22px}.help-list p{margin-bottom:0}.inline-label{display:flex;align-items:center;gap:8px;font-size:13px}.inline-label input,.inline-label select{width:auto}
 /* All authorized roles keep the original APM shell and one modal navigation owner. */
 .layout{display:grid;grid-template-columns:300px minmax(0,1fr);min-height:100dvh}.workspace{grid-column:2;min-width:0;padding-top:82px}
@@ -92,7 +92,7 @@ main{width:100%;min-width:0;padding:28px;margin:0;max-width:none}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms;transition-duration:.01ms;scroll-behavior:auto}.spinner{animation:none}.auth-loading-bar b{animation:none;transform:translateX(64%)}}
 @media(forced-colors:active){*{scrollbar-color:auto}.btn,.badge,.panel{border:1px solid CanvasText}:focus-visible{outline:3px solid Highlight}}
-@media print{.navigation-drawer{display:none!important}.sidebar,.topbar,.workspace-scope,.mobile-navigation,.test-banner,.actions,.toast-region,.case-section-navigation{display:none}.workspace{padding-top:0;grid-column:auto}main{padding:0}body{background:white}.panel{break-inside:avoid;box-shadow:none}.table-scroll{overflow:visible}th,td{font-size:11px}}
+@media print{html{background:white}.navigation-drawer{display:none!important}.sidebar,.topbar,.workspace-scope,.mobile-navigation,.test-banner,.actions,.toast-region,.case-section-navigation{display:none}.workspace{padding-top:0;grid-column:auto}main{padding:0}body{background:white}.panel{break-inside:avoid;box-shadow:none}.table-scroll{overflow:visible}th,td{font-size:11px}}
 
 .row-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.filter-field{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}.filter-field input,.filter-field select{width:auto;max-width:100%}.pre-wrap{white-space:pre-wrap;overflow-wrap:anywhere}.template-section{border-top:1px solid var(--border);padding-top:15px;margin-top:10px}.template-section:first-child{border-top:0}.list-content{min-height:160px}.loading{padding:24px;color:var(--muted)}
 /* Explicit display rules on buttons must never override the semantic hidden attribute. */
@@ -217,6 +217,41 @@ input[type=file]::file-selector-button{font:inherit;min-height:30px;margin-right
   .app-dialog-printable .service-report-table :is(th:nth-child(9),th:nth-child(12)){width:13%}
   .app-dialog-printable .service-report-table th:nth-child(11){width:4%}
   .app-dialog-printable .service-report-table th:nth-child(13){width:12%}
+  .app-dialog-printable .shift-report-table.calendar-span-report-table th:nth-child(1){width:8%}
+  .app-dialog-printable .shift-report-table.calendar-span-report-table th:nth-child(2){width:8%}
+  .app-dialog-printable .shift-report-table.calendar-span-report-table th:nth-child(3){width:6%}
+  .app-dialog-printable .shift-report-table.calendar-span-report-table th:nth-child(4){width:8%}
+  .app-dialog-printable .shift-report-table.calendar-span-report-table th:nth-child(5){width:6%}
+  .app-dialog-printable .shift-report-table.calendar-span-report-table th:nth-child(6){width:8%}
+  .app-dialog-printable .shift-report-table.calendar-span-report-table th:nth-child(7){width:5%}
+  .app-dialog-printable .shift-report-table.calendar-span-report-table th:nth-child(8){width:5%}
+  .app-dialog-printable .shift-report-table.calendar-span-report-table th:nth-child(9){width:16%}
+  .app-dialog-printable .shift-report-table.calendar-span-report-table th:nth-child(10){width:6%}
+  .app-dialog-printable .shift-report-table.calendar-span-report-table th:nth-child(11){width:4%}
+  .app-dialog-printable .shift-report-table.calendar-span-report-table th:nth-child(12){width:20%}
+  .app-dialog-printable .service-report-table.calendar-span-report-table th:nth-child(1){width:7%}
+  .app-dialog-printable .service-report-table.calendar-span-report-table th:nth-child(2){width:7%}
+  .app-dialog-printable .service-report-table.calendar-span-report-table th:nth-child(3){width:5%}
+  .app-dialog-printable .service-report-table.calendar-span-report-table th:nth-child(4){width:7%}
+  .app-dialog-printable .service-report-table.calendar-span-report-table th:nth-child(5){width:5%}
+  .app-dialog-printable .service-report-table.calendar-span-report-table th:nth-child(6){width:7%}
+  .app-dialog-printable .service-report-table.calendar-span-report-table th:nth-child(7){width:5%}
+  .app-dialog-printable .service-report-table.calendar-span-report-table th:nth-child(8){width:5%}
+  .app-dialog-printable .service-report-table.calendar-span-report-table th:nth-child(9){width:5%}
+  .app-dialog-printable .service-report-table.calendar-span-report-table th:nth-child(10){width:13%}
+  .app-dialog-printable .service-report-table.calendar-span-report-table th:nth-child(11){width:6%}
+  .app-dialog-printable .service-report-table.calendar-span-report-table th:nth-child(12){width:4%}
+  .app-dialog-printable .service-report-table.calendar-span-report-table th:nth-child(13){width:12%}
+  .app-dialog-printable .service-report-table.calendar-span-report-table th:nth-child(14){width:12%}
+  .app-dialog-printable .leave-report-table.calendar-span-report-table th:nth-child(1){width:9%}
+  .app-dialog-printable .leave-report-table.calendar-span-report-table th:nth-child(2){width:9%}
+  .app-dialog-printable .leave-report-table.calendar-span-report-table th:nth-child(3){width:9%}
+  .app-dialog-printable .leave-report-table.calendar-span-report-table th:nth-child(4){width:11%}
+  .app-dialog-printable .leave-report-table.calendar-span-report-table th:nth-child(5){width:10%}
+  .app-dialog-printable .leave-report-table.calendar-span-report-table th:nth-child(6){width:10%}
+  .app-dialog-printable .leave-report-table.calendar-span-report-table th:nth-child(7){width:10%}
+  .app-dialog-printable .leave-report-table.calendar-span-report-table th:nth-child(8){width:8%}
+  .app-dialog-printable .leave-report-table.calendar-span-report-table th:nth-child(9){width:24%}
   .app-dialog-printable .case-report-table th:nth-child(1){width:10%}
   .app-dialog-printable .case-report-table th:nth-child(2){width:6%}
   .app-dialog-printable .case-report-table :is(th:nth-child(3),th:nth-child(9)){width:9%}

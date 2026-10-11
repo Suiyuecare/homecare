@@ -1,3 +1,4 @@
+import { spanReportConfig } from '../data/span-report.js';
 import { mountReportView } from './report-view.js';
 
 export const shiftReportConfig = Object.freeze({
@@ -27,6 +28,9 @@ export const shiftReportConfig = Object.freeze({
   summary: (result, { complete }) => `符合條件共 ${result.total} 班次${complete ? '；以下為完整資料。' : `；本頁 ${result.rows.length} 筆。`}`,
 });
 
+export const shiftSpanReportConfig = spanReportConfig(shiftReportConfig, 'shifts');
+export const shiftCalendarReportConfig = spanReportConfig(shiftReportConfig, 'shifts', { rangeMode: 'intersects' });
+
 export function mountShiftReport(container, { isCurrent = () => true } = {}) {
-  return mountReportView(container, { config: shiftReportConfig, isCurrent });
+  return mountReportView(container, { config: shiftSpanReportConfig, isCurrent });
 }

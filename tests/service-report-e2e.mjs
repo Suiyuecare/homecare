@@ -157,15 +157,34 @@ try {
   // Historical-import fixtures are explicit exceptions, outside the 40-row main report range.
   const legacyShift = await post('shifts', { caseId: caseA.id, carePlanId: planA.id, employeeId: employeeA.id, date: '2026-12-10', startTime: '09:00', endTime: '10:00', services: [{ serviceItemId: serviceA.id, quantity: 1 }], note: '合成歷史匯入基礎班次' });
   const legacy = insert(app.db, orgId, 'service-records', { shiftId: legacyShift.id, caseId: caseA.id, employeeId: employeeA.id, date: legacyShift.date, actualStart: '09:05', actualEnd: '09:50', services: [{ serviceItemId: serviceA.id, quantity: 1 }], status: 'approved', note: '合成歷史匯入未保留計價快照，非正常核閱流程' });
-  const invalidLegacy = insert(app.db, orgId, 'service-records', { shiftId: legacyShift.id, caseId: caseA.id, employeeId: employeeA.id, date: '2026-12-11', actualStart: 'invalid', actualEnd: '09:50', services: [{ serviceItemId: serviceA.id, quantity: 1 }], status: 'draft', note: '合成錯誤歷史時間匯入，非正常寫入流程' });
+  // Explicit invalid import is isolated under its own real membership/parents.
+  // New complete-date readers must close this entire organization, even when the
+  // bad row's December date is outside the requested October interval.
+  const invalidOrg = (await request('POST', 'organizations', { name: '合成錯誤歷史匯入隔離機構' }, 201)).item;
+  const invalidPost = async (entity, data) => (await request('POST', entity, data, 201, context, admin, invalidOrg.id)).item;
+  const invalidCase = await invalidPost('cases', { name: '合成錯誤匯入個案', caseNo: 'SR-INVALID-C' });
+  const invalidEmployee = await invalidPost('employees', { name: '合成錯誤匯入員工', employeeNo: 'SR-INVALID-E', role: 'caregiver' });
+  const invalidService = await invalidPost('service-items', { code: 'SR-INVALID-S', name: '合成錯誤匯入服務', minutes: 30, unitPriceCents: 12000 });
+  const invalidPlan = await invalidPost('care-plans', { caseId: invalidCase.id, validFrom: '2026-01-01', validTo: '2026-12-31', status: 'active', services: [{ serviceItemId: invalidService.id, quantity: 100 }] });
+  const invalidShift = await invalidPost('shifts', { caseId: invalidCase.id, carePlanId: invalidPlan.id, employeeId: invalidEmployee.id, date: '2026-12-10', startTime: '09:00', endTime: '10:00', services: [{ serviceItemId: invalidService.id, quantity: 1 }], note: '合成錯誤歷史匯入基礎班次' });
+  const invalidLegacy = insert(app.db, invalidOrg.id, 'service-records', { shiftId: invalidShift.id, caseId: invalidCase.id, employeeId: invalidEmployee.id, date: '2026-12-11', actualStart: 'invalid', actualEnd: '09:50', services: [{ serviceItemId: invalidService.id, quantity: 1 }], status: 'draft', note: '合成錯誤歷史時間匯入，非正常寫入流程' });
   const allQuery = 'startDate=2026-10-01&endDate=2026-11-09';
   const full = () => request('GET', `service-report/export?${allQuery}`);
+  // Keep full()/allQuery as the original legacy API oracle. Only UI transport opts in.
+  const uiQuery = allQuery + '&spanMode=calendar-two-day-v1';
+  const fullUi = () => request('GET', `service-report/export?${uiQuery}`);
   const masterState = app.db.prepare("SELECT * FROM records WHERE entity NOT IN ('shifts','service-records') ORDER BY id").all();
   startReads(); const initialCounts = counts();
   const legacyRead = await request('GET', 'service-report/export?startDate=2026-12-10&endDate=2026-12-10'); assert.equal(legacyRead.total, 1); assert.equal(legacyRead.rows[0].recordId, legacy.id); assert.equal(legacyRead.totals.serviceMinutes, 45);
   await request('GET', 'reports/fees?month=2026-12', undefined, 409); await request('GET', 'reports/payroll?month=2026-12', undefined, 409);
-  for (const suffix of ['', '/export', '.csv']) { const response = await request('GET', `service-report${suffix}?startDate=2026-12-11&endDate=2026-12-11`, undefined, 409); assert.equal(response.error.code, 'REPORT_DATA_INVALID'); assert.ok(!JSON.stringify(response).includes(invalidLegacy.id)); }
-  verifyReads('legacy-valid-without-pricing-and-invalid-time'); mark('獨立歷史匯入fixture：缺計價快照仍可讀45分鐘的非財務報表，舊fees/payroll409；非法時間三端409無部分資料或寫入');
+  for (const suffix of ['', '/export', '.csv']) { const response = await request('GET', `service-report${suffix}?startDate=2026-12-11&endDate=2026-12-11`, undefined, 409, context, admin, invalidOrg.id); assert.equal(response.error.code, 'REPORT_DATA_INVALID'); assert.ok(!JSON.stringify(response).includes(invalidLegacy.id)); }
+  const invalidOutsideLegacy = await request('GET', `service-report/export?${allQuery}`, undefined, 200, context, admin, invalidOrg.id); assert.equal(invalidOutsideLegacy.total, 0, 'Original legacy date selection still excludes the bad outside-date row');
+  for (const suffix of ['', '/export', '.csv']) {
+    const rejected = await request('GET', `service-report${suffix}?${uiQuery}`, undefined, 409, context, admin, invalidOrg.id);
+    assert.equal(rejected.error.code, 'SPAN_DATA_INVALID'); assert.ok(!JSON.stringify(rejected).includes(invalidLegacy.id), 'Closed opt-in error does not reveal the corrupt row');
+    for (const actor of [supervisor, finance, caregiver]) await request('GET', `service-report${suffix}?${uiQuery}`, undefined, 403, actor.client, actor.auth, invalidOrg.id);
+  }
+  verifyReads('legacy-valid-without-pricing-and-invalid-time-and-opt-in-whole-org-closed'); mark('獨立歷史匯入fixture：缺計價快照仍可讀45分鐘的非財務報表，舊fees/payroll409；非法時間三端409無部分資料或寫入');
 
   let dialog, trigger;
   if (!process.env.SERVICE_REPORT_PDF_ONLY) {
@@ -193,7 +212,9 @@ try {
   await resultRegion(page).locator('.table-scroll').evaluate(node => { node.scrollIntoView({ block: 'start' }); node.scrollLeft = node.scrollWidth; }); await shot(page, 'report-table-mobile-after.png'); await page.setViewportSize({ width: 1440, height: 1050 });
   mark('日期倒置保留輸入且語意錯誤/焦點正確；1440/390所有控制有label、整頁不溢出且寬表自身捲動');
 
-  const csvResponse = await fetchApi('GET', `service-report.csv?${allQuery}`); assert.equal(csvResponse.status(), 200); const expectedCsv = await csvResponse.body();
+  const legacyCsvResponse = await fetchApi('GET', `service-report.csv?${allQuery}`); assert.equal(legacyCsvResponse.status(), 200);
+  const legacyCsv = await legacyCsvResponse.body(); assert.deepEqual([...legacyCsv.subarray(0, 3)], [239, 187, 191]); assert.ok(legacyCsv.toString().includes('\r\n')); assert.ok(legacyCsv.toString().includes("'=SUM(1,2)")); assert.ok(legacyCsv.toString().includes('""引號""'));
+  const csvResponse = await fetchApi('GET', `service-report.csv?${uiQuery}`); assert.equal(csvResponse.status(), 200); const expectedCsv = await csvResponse.body();
   assert.match(csvResponse.headers()['content-type'], /^text\/csv/); assert.match(csvResponse.headers()['content-disposition'], /service-report\.csv/); assert.equal(csvResponse.headers()['x-content-type-options'], 'nosniff'); assert.match(csvResponse.headers()['cache-control'], /no-store/);
   assert.deepEqual([...expectedCsv.subarray(0, 3)], [239, 187, 191]); assert.ok(expectedCsv.toString().includes('\r\n')); assert.ok(expectedCsv.toString().includes("'=SUM(1,2)")); assert.ok(expectedCsv.toString().includes('""引號""'));
   const downloadPromise = page.waitForEvent('download'); await region(page).getByRole('button', { name: '下載 CSV', exact: true }).click(); const download = await downloadPromise; const csvFile = path.join(output, 'synthetic-service-report.csv'); await download.saveAs(csvFile); assert.deepEqual(await readFile(csvFile), expectedCsv);
@@ -240,8 +261,8 @@ try {
 
   ({ dialog, trigger } = await openPreview(page)); tries = 0; const printsBeforeRetry = await printCount(page); await page.route(fullPattern, route => ++tries === 1 ? fail503(route) : route.continue());
   await dialog.getByRole('button', { name: '列印／另存 PDF', exact: true }).click(); await dialog.getByRole('button', { name: '重新讀取', exact: true }).waitFor(); assert.equal(await printCount(page), printsBeforeRetry); await shot(page, 'report-print-retry.png'); await dialog.getByRole('button', { name: '重新讀取', exact: true }).click(); await dialog.locator('tbody tr').first().waitFor(); assert.equal(await printCount(page), printsBeforeRetry); await dialog.getByRole('button', { name: '列印／另存 PDF', exact: true }).click(); await page.waitForFunction(n => window.__printCalls.length === n, printsBeforeRetry + 1); assert.equal(tries, 3); await page.unroute(fullPattern); await closeDialog(page, trigger);
-  ({ dialog, trigger } = await openPreview(page)); const empty = await full(); empty.rows = []; empty.total = 0; empty.totals.count = 0; empty.totals.serviceMinutes = 0; empty.pageSize = 0; await page.route(fullPattern, route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(empty) })); const printBeforeEmpty = await printCount(page); await dialog.getByRole('button', { name: '列印／另存 PDF', exact: true }).click(); await dialog.getByText('目前已無符合條件的紀錄，請重新查詢。', { exact: true }).waitFor(); assert.equal(await printCount(page), printBeforeEmpty); await closeDialog(page, trigger); await page.unroute(fullPattern);
-  const malformed = await full(); malformed.totals.serviceMinutes += 1; const beforeMalformed = await printCount(page);
+  ({ dialog, trigger } = await openPreview(page)); const empty = await fullUi(); empty.rows = []; empty.total = 0; empty.totals.count = 0; empty.totals.serviceMinutes = 0; empty.pageSize = 0; await page.route(fullPattern, route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(empty) })); const printBeforeEmpty = await printCount(page); await dialog.getByRole('button', { name: '列印／另存 PDF', exact: true }).click(); await dialog.getByText('目前已無符合條件的紀錄，請重新查詢。', { exact: true }).waitFor(); assert.equal(await printCount(page), printBeforeEmpty); await closeDialog(page, trigger); await page.unroute(fullPattern);
+  const malformed = await fullUi(); malformed.totals.serviceMinutes += 1; const beforeMalformed = await printCount(page);
   await page.route(fullPattern, route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(malformed) })); await region(page).getByRole('button', { name: '列印預覽', exact: true }).click(); dialog = page.getByRole('dialog', { name: previewTitle, exact: true }); await dialog.getByRole('alert').waitFor(); assert.ok(await dialog.getByRole('button', { name: '列印／另存 PDF', exact: true }).isDisabled()); assert.equal(await dialog.locator('tbody tr').count(), 0); assert.equal(await printCount(page), beforeMalformed); await closeDialog(page); await page.unroute(fullPattern);
   mark('列印fresh GET503不印舊快取；重讀只恢復預覽、再按列印再fresh；空結果與全數分鐘不符的DTO皆不列印');
 
@@ -317,7 +338,7 @@ try {
   }
   // One QA-only PDF from DOM captured synchronously inside a fresh authorized print.
   await loadReport(page); await setAllRange(page); await queryReport(page, 40); ({ dialog, trigger } = await openPreview(page)); await dialog.getByText(records[11].note, { exact: true }).waitFor();
-  const expectedPdf = await full(); await writeFile(path.join(output, 'pdf-expected.json'), JSON.stringify(expectedPdf, null, 2));
+  const expectedPdf = await fullUi(); await writeFile(path.join(output, 'pdf-expected.json'), JSON.stringify(expectedPdf, null, 2));
   const marker = process.env.HOME_CARE_QA_PDF_MARKER;
   if (marker && !process.env.PDF_OPERATION_ALREADY_MARKED) {
     const markerResult = spawnSync(process.execPath, [marker, '--operation-kind', 'create', '--expected-output-count', '1', '--output-format', 'pdf'], { encoding: 'utf8' }); assert.equal(markerResult.status, 0, markerResult.stderr);
@@ -337,13 +358,15 @@ with pdfplumber.open(p/'synthetic-service-report.pdf') as pdf:
  for row in expected['rows']:
   for key in ['note','reviewNote','actualStart','actualEnd','services']:
    if row[key]: assert re.sub(r'\\s+','',unicodedata.normalize('NFKC',row[key])) in compact, ('Missing full saved value',row['recordId'],key)
+ for row in expected['rows']:
+  assert row['actualEndDate'].replace('-','/') in compact, ('Missing explicit ending date',row['actualEndDate'])
  for index in range(1,41):
   marker=f'REC-{index:03d}'; assert compact.count(marker)==1, (marker,compact.count(marker))
  assert f'實際分鐘合計{expected["totals"]["serviceMinutes"]}分鐘' in compact, 'Missing whole-result minutes'
  for i,page in enumerate(pdf.pages):
   text=re.sub(r'\\s+','',texts[i]); assert text and len(text)>80, ('Blank page',i+1)
   assert page.width>page.height and abs(page.width-841.89)<3 and abs(page.height-595.28)<3, ('Not landscape A4',i,page.width,page.height)
-  for header in ['日期','案號','員工編號','實際分鐘','核閱意見']: assert header in text, ('Missing repeated table header',i+1,header)
+  for header in ['日期','案號','員工編號','實際分鐘','核閱意見','結束日期']: assert header in text, ('Missing repeated table header',i+1,header)
   for forbidden in ['報表中心','列印／另存PDF','查詢紀錄','清除條件','測試工作空間']: assert forbidden not in text, ('Background UI',i+1,forbidden)
   assert '\\ufffd' not in text and '\\u25a1' not in text, ('Missing glyph',i+1)
   chars=page.chars

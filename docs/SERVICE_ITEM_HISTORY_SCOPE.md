@@ -1,8 +1,6 @@
 # 服務項目主檔版本歷程（0.16 獨立本機切片）
 
-> 公開版本文件：記錄此功能版本的設計與驗收條件，並非目前公開副本已執行的驗收證明。私人盤點與 QA 產物未匯出；現行行為以 API.md 與原始碼為準，正式規則及部署仍須核定。
-
-2026-10-08 凍結。接續 service-item-history-v0.16，補既有本機服務項目的唯讀版本差異；合成資料，不使用原平台或正式支付價。必要整合、瀏覽器及逐張視覺驗證後才標局部 implemented_verified。
+2026-10-08 凍結。接續 service-item-history-v0.16，補既有本機服務項目的唯讀版本差異；合成資料，不使用原平台或正式支付價。RM-05、原自費服務頁 URL-d2e425aaa0ac 維持 needs_contract/unverified/related_only，不以本機歷程宣稱原正式價格、核銷或政策版本相等。必要整合、瀏覽器及逐張視覺驗證後才標局部 implemented_verified。
 
 ## 目前資料及全部歷史的授權
 
@@ -36,12 +34,12 @@ admin/sup 原可 POST/PATCH，finance/caregiver 寫入403。沿原 CAS/CSRF/POST
 
 loaded/pending 各 hash/org/role/employee/render 10情境清空、abort、關閉，晚回應不復活；重試/Escape/焦點沿共享 owner。手機差異表自身橫捲，正文與價錢完整可讀，不整頁溢出。
 
-## 驗收條件
+## 驗收與證據
 
 Node 真 API lifecycle/精確 actor、四角色 current/raw/compare、own shifts 引用與真改派/移除/恢復讀權、inactive/expired/缺case-plan不加join、active employee auth、baseline/empty/gap/28版頁外比較、actor缺失/歧義/錯action/目前名、雙snapshot publicRecord、原CAS/CSRF/idem/唯一/日期數字邊界、11表raw/count/total_changes零寫及6不可變trigger。真核閱後改價/時薪，billingSnapshot與fees/payroll不變，原五報表及三新報表相容；報表原本可顯示最新名稱，不假定主檔改名後整份DTO仍舊名稱。
 
-純差異測試：8欄白名單/內部欄排除；一分差與0/1/12345/safe integer精確顯示／異常不猜；frozen來源不改、空值等價與有效期/停用差異。
+純差異測試：8欄白名單/內部欄排除；一分差與0/1/12345/safe integer精確顯示／异常不猜；frozen來源不改、空值等價與有效期/停用差異。
 
 Chromium 真 admin新增v1→sup編輯v2→admin停用v3→sup啟用v4、精確actor/8欄/價格、取消確認零寫、CAS409保留輸入、列表搜尋/狀態/分頁、四session API/無額外role入口、28版、空/缺版/未知actor/非法保存值、503 retry/Escape/10失效；逐段完整11表及快照不變，必要真API/UI寫入另列。client role/employee fixture明示不等於server撤權；1440/390最終PNG每張 view_image。
 
-新歷程不產PDF；三報表沿既有同artifact envskip及 provenance/marker 限制，不假造新marker/實體送印。
+root 全 Node 及原15套 browser 回歸；共用 history 格式擴充後，最新證訓／請假歷程及三報表UI/PDF逐張回歸。新歷程不產PDF；三報表沿既有同artifact envskip及 provenance/marker 限制，不假造新marker/實體送印。原84/52/28/16來源／順序／status/parity／sourcehash／statusCounts／9階段／0原completed及localReportKinds5保持，只在原相關自費服務頁追加獨立局部證據，原 needs_contract 不改。0.7–0.15不可覆寫舊封存核 hash，新0.16另保存程式/契約/證據。

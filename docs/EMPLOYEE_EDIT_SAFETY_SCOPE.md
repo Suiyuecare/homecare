@@ -1,8 +1,6 @@
 # 員工主檔安全編輯（0.27 獨立本機切片）
 
-> 公開版本文件：記錄此功能版本的設計與驗收條件，並非目前公開副本已執行的驗收證明。私人盤點與 QA 產物未匯出；現行行為以 API.md 與原始碼為準，正式規則及部署仍須核定。
-
-2026-10-09 凍結；employee-edit-safety-v0.27 / 。沿既有 employees CRUD、機構隔離、角色、CAS、POST 冪等、版本歷程及核閱薪資快照，只用合成資料，不新增正式薪資、資格或支付規則。
+2026-10-09 凍結；employee-edit-safety-v0.27 / RM-01。沿既有 employees CRUD、機構隔離、角色、CAS、POST 冪等、版本歷程及核閱薪資快照，只用合成資料，不新增正式薪資、資格或支付規則。
 
 十個業務欄：name、employeeNo、role、phone、email、status、qualification、regions、note、hourlyRateCents。純 createEmployeeEditor 私下捕捉十欄 JSON own-presence 及 id/orgId/version；不展開 row 到 controls。正常未改／改回原值省略；全部未改沿 version-only PATCH。缺失、null、異型及無法無損預填的值提供保持／取代，選填文字可明確清空為 ''。保持不補預設、不 trim、不猜零；不能保證原 merged 必填／狀態／唯一檢查通過。
 
@@ -16,6 +14,6 @@ hourlyRateCents 表單別名 hourlyRate，text/inputMode decimal；原 safeinteg
 
 新增／編輯沿 openForm 完整 isCurrent/AbortSignal/busy/dirty/native 焦點；啟停沿既有 confirmAction opt-in 同 guard，不新增控制器／CSS／路由／表／後端規則。停用提示說明有效員工限制及舊紀錄保留，異型姓名用固定安全名稱。捕捉原 id/version，409 不覆蓋，不自動重試 PATCH；成功須 plain item、同 id/org、安全版本（新增1／編輯old+1）及全部十欄 own-presence／精確 JSON 投影吻合後才 toast/refresh。錯誤或未知2xx保留輸入、intent、POST 同鍵；晚回應不可復活。Abort 不宣稱已提交伺服器資料回滾。
 
-驗收須包含純 helper／真 HTTP、十欄往返、省略／regions清單與特殊型別保持／明確轉文字或清空、非法金額、原 merged422/CAS409/POST同key、十欄保存確認、四角色及停用本人403／恢復、loaded/pending完整context與真先提交晚回應、桌機及390px原生dirty/鍵盤/焦點、版本歷程／證照訓練入口、11表唯讀段及必要寫入對帳、雙BLOB／六不可變trigger／核閱快照、相關既有流程回歸。最終圖逐張 view_image 才完成；不宣稱 headless OS native popup 幾何或人工UAT。
+驗收須包含純 helper／真 HTTP、十欄往返、省略／regions清單與特殊型別保持／明確轉文字或清空、非法金額、原 merged422/CAS409/POST同key、十欄保存確認、四角色及停用本人403／恢復、loaded/pending完整context與真先提交晚回應、桌機及390px原生dirty/鍵盤/焦點、版本歷程／證照訓練入口、11表唯讀段及必要寫入對帳、雙BLOB／六不可变trigger／核閱快照、相關既有流程回歸。最終圖逐張 view_image 才完成；不宣稱 headless OS native popup 幾何或人工UAT。原RM-01完整功能／證書原檔／正式資格與薪資仍 partial/unverified；完成只記獨立 localMilestone。
 
 必要舊測試契約修訂：employee-history-e2e 第231行原要求清單合併字串預填，改驗 regionsIntent=keep 與空白 disabled 控制項；取消後原清單 exact 保留及原12 gates不變。其他25套既有script byte保持。此修訂不削弱區域歷程比較或授權驗證。

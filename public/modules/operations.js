@@ -1,3 +1,8 @@
+import { spanRecordText } from '../data/shift-span-editor.js';
+import { createCaseHealthPanel } from './case-health.js';
+import { createCaseContactFootprintPanel } from './case-contact-footprints.js';
+import { createCaseFamilyPanel } from './case-family.js';
+import { createCaseRelationshipsPanel, createMedicalOpinionsPanel } from './case-support.js';
 import {
   api, el, pageHeader, table, badge, button, openForm, confirmAction,
   toast, formatDate, today, getContext, navigate, fetchAll,
@@ -9,6 +14,7 @@ import { createContactsPanel } from './contacts.js';
 import { createAttachmentsPanel } from './attachments.js';
 import { createCaseStatusFollowupsPanel } from './case-status-followups.js';
 import { openRecurringShifts } from './recurring-shifts.js';
+import { openShiftBatch } from './shift-batches.js';
 import { openShiftCalendar } from './shift-calendar.js';
 import { createCaseEditor, formatCaseText, formatCaseCms, formatCaseBirthDate, formatCaseStatus } from '../data/case-editor.js';
 import { createCarePlanEditor, formatCarePlanText, formatCarePlanDate, formatCarePlanStatus, formatCarePlanServices } from '../data/care-plan-editor.js';
@@ -38,8 +44,8 @@ const canEditRecord = item => ['draft', 'returned'].includes(item.status) && (ca
 const mapById = items => new Map(items.map(item => [item.id, item]));
 const option = (value, label) => ({ value, label });
 const nameOf = (map, id, fallback = '未提供') => map.get(id)?.name || fallback;
-const timeRange = item => `${item.startTime || '—'}–${item.endTime || '—'}`;
-const actualTimeRange = item => `${formatShiftTime(item.actualStart)}–${formatShiftTime(item.actualEnd)}`;
+const timeRange = item => Object.hasOwn(item, 'endDate') ? spanRecordText(item) : `${item.startTime || '—'}–${item.endTime || '—'}`;
+const actualTimeRange = item => Object.hasOwn(item, 'actualEndDate') ? spanRecordText(item, 'service-records') : `${formatShiftTime(item.actualStart)}–${formatShiftTime(item.actualEnd)}`;
 const recordText = value => typeof value === 'string' ? value || '未提供' : value === undefined ? '未提供' : '內容未取得';
 const recordBadge = value => { const node = badge(recordStatuses.some(status => status.value === value) ? value : ''); node.textContent = recordStatuses.find(status => status.value === value)?.label || '狀態未取得'; return node; };
 const field = (name, label, type = 'text', extra = {}) => ({ name, label, type, ...extra });
@@ -391,7 +397,7 @@ function shiftOnlyCurrent(container, version) {
   return () => version === renderVersion && originalIdentity === identity() && hash === window.location.hash
     && container.isConnected && container.dataset.renderVersion === stamp;
 }
-const shiftOnlyTimeRange = item => formatShiftTime(item.startTime) + '–' + formatShiftTime(item.endTime);
+const shiftOnlyTimeRange = item => Object.hasOwn(item, 'endDate') ? spanRecordText(item) : formatShiftTime(item.startTime) + '–' + formatShiftTime(item.endTime);
 const shiftOnlyName = (items, id, fallback) => typeof id === 'string' && typeof items.get(id)?.name === 'string' && items.get(id).name
   ? items.get(id).name : fallback;
 const shiftOnlyBadge = value => { const node = badge(shiftStatuses.some(status => status.value === value) ? value : ''); node.textContent = formatShiftStatus(value); return node; };
@@ -457,6 +463,8 @@ async function renderShifts(route, container, version) {
   await renderList({ route, container, version, title: '班表', subtitle: '依日或月份核對班次，安排服務人員與代班。', entity: 'shifts', statuses: shiftStatuses, dateMode: true, isCurrent: alive,
     createAction: canManage() ? { label: '新增排班', open: refresh => shiftForm(null, data, refresh, alive) } : null,
     extraActions: canManage() ? refresh => [button('週期排班', () => openRecurringShifts({ data, refresh, isCurrent: () => version === renderVersion && container.isConnected }), { variant: 'secondary' }),
+      button('批次改派／取消', () => openShiftBatch({ data, refresh, isCurrent: alive }), { variant: 'secondary' }),
+      button('永久週期排班', () => navigate('/shift-series'), { variant: 'secondary' }),
       button('週／月班表', () => openShiftCalendar({ isCurrent: alive }), { variant: 'secondary' })] : undefined,
     enrichItems: recordsForShifts,
     columns: (refresh, records) => [
@@ -641,7 +649,16 @@ async function renderCaseDetail(id, route, container, version) {
   const contacts = createContactsPanel({ caseRecord: item, isCurrent: alive });
   const attachments = createAttachmentsPanel({ caseRecord: item, isCurrent: alive });
   const followups = createCaseStatusFollowupsPanel({ caseRecord: item, isCurrent: alive });
+  const relationships = canManage() ? createCaseRelationshipsPanel({ caseRecord: item, isCurrent: alive }) : null;
+  const opinions = canManage() ? createMedicalOpinionsPanel({ caseRecord: item, isCurrent: alive }) : null;
+  const health = canManage() ? ['case-vaccinations', 'case-infection-records', 'case-vitals'].map(entity => createCaseHealthPanel({ entity, caseRecord: item, isCurrent: alive })) : [];
+  const footprints = canManage() ? createCaseContactFootprintPanel({ caseRecord: item, isCurrent: alive }) : null;
+  const family = canManage() ? createCaseFamilyPanel({ caseRecord: item, isCurrent: alive }) : null;
   const sections = [
+    ...(family ? [['人工家庭關係', null, family.element]] : []),
+    ...(footprints ? [['接觸足跡', null, footprints.element]] : []),
+    ...health.map((panel, index) => [['疫苗紀錄', '感染觀察', '生理量測'][index], null, panel.element]),
+    ...(relationships ? [['關係紀錄', null, relationships.element], ['醫事意見', null, opinions.element]] : []),
     ['基本資料', '個案與聯絡資料'], ['聯絡人', null, contacts.element],
     ['附件', null, attachments.element], ['追蹤紀錄', null, followups.element],
     ['照顧計畫', '生效中的照顧計畫'], ['班次', '班次'], ['服務紀錄', '服務紀錄'],
@@ -663,6 +680,7 @@ async function renderCaseDetail(id, route, container, version) {
     contacts.element,
     attachments.element,
     followups.element,
+    family?.element, relationships?.element, opinions?.element, ...health.map(panel => panel.element), footprints?.element,
     el('section', { class: 'panel' }, sectionTitle('生效中的照顧計畫', planActions), message(`共 ${plans.total} 份，顯示前 ${plans.items.length} 份。`), table([
       { label: '有效期間', render: row => `${formatCarePlanDate(row.validFrom)} 至 ${formatCarePlanDate(row.validTo)}` },
       { label: '服務內容', render: row => formatCarePlanServices(row.services, services) }, { key: 'goals', label: '照顧目標', render: row => formatCarePlanText(row.goals) },
@@ -687,6 +705,11 @@ async function renderCaseDetail(id, route, container, version) {
   void contacts.load();
   void attachments.load();
   void followups.load();
+  void relationships?.load();
+  void opinions?.load();
+  for (const panel of health) void panel.load();
+  void footprints?.load();
+  void family?.load();
 }
 
 export async function renderOperations(route, container) {

@@ -1,8 +1,6 @@
 # 訓練紀錄安全編輯（0.30 獨立本機切片）
 
-> 公開版本文件：記錄此功能版本的設計與驗收條件，並非目前公開副本已執行的驗收證明。私人盤點與 QA 產物未匯出；現行行為以 API.md 與原始碼為準，正式規則及部署仍須核定。
-
-2026-10-09 凍結；training-edit-safety-v0.30 / 。沿既有 employee-training、機構隔離、角色、CAS、POST 冪等、版本歷程及訓練報表；只使用合成資料，不新增法定積分、資格、排班資格、費薪或外部介接。
+2026-10-09 凍結；training-edit-safety-v0.30 / RM-01。沿既有 employee-training、機構隔離、角色、CAS、POST 冪等、版本歷程及訓練報表；只使用合成資料，不新增法定積分、資格、排班資格、費薪或外部介接。
 
 八保存欄：employeeId、name、category、provider、date、trainingMinutes、status、note。七個原控制項：employeeId、name、category、provider、date、trainingHours、note。trainingHours 仍為原生 number，min=1/60、max=1000、step=0.25；沿共用 noValidate 與應用驗證，不增加15分鐘倍數限制。status 不進表單，新增固定 completed，取消／恢復完成沿原獨立確認動作。
 
@@ -22,6 +20,6 @@ name 明確新寫沿原 normalizePersonnelPayload.trim()，正規化後非空且
 
 驗收含純 helper／原算術全範圍、真 HTTP 省略／取代／可空／原 merged422／0000／固定歸屬409／CAS／POST鍵／四角色及完整回應矩陣；真 UI 新增→督導修改→取消→恢復、1/7/61/75/150/60000分鐘與容差／清空／缺父項／typed private keep、28版25+3、目前名稱與原分鐘、原訓練報表及證照 sibling。loaded/pending edit/status六context共24與兩真先提交晚回應分列；dirty/native鍵盤／busy／1440及390px長備註真正末段逐圖檢視。
 
-十一表唯讀／必要寫入分段完整對帳，既有雙非空合成 BLOB 精確下載、六不可變 trigger、核閱費薪快照及31報表出口保持；訓練沒有附件面板，不新建附件。0新PDF／marker，七既有 artifact72指定參照檔可沿舊script程式檢查／同artifact修訂，不宣稱新增人工舊PDF頁驗收。
+十一表唯讀／必要寫入分段完整對帳，既有雙非空合成 BLOB 精確下載、六不可變 trigger、核閱費薪快照及31報表出口保持；訓練沒有附件面板，不新建附件。0新PDF／marker，七既有 artifact72指定參照檔可沿舊script程式檢查／同artifact修訂，不宣稱新增人工舊PDF頁驗收。29既有browser414個聚合gates沿0.29封存版本，collector須正確辨識兩舊安全切片的new-browser-work，禁止自動重跑或偽造run；證照附件已知偶發失敗原因仍未確認，若再發生保留真失敗、分別診斷及必要正式重跑。
 
-原生 OS popup 幾何與headless鍵盤選值、人工UAT及正式規則不因本輪驗證而宣稱完成。
+本輪基準為0.29的176來源、23 prior proof及9244已存copy計數，不覆寫舊封存、不重掃全部舊內容；新來源與證據逐份封存核 SHA。實際4310／PID83631／DB保持不重啟、seed或寫入；原180目錄列／16模板359題／四來源／九階段／12待核契約／0原completed／localReportKinds9保持，只完成獨立 localMilestone。原生 OS popup 幾何與headless鍵盤選值、人工UAT及正式規則不因本輪驗證而宣稱完成。

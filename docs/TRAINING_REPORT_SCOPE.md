@@ -1,7 +1,5 @@
 # 教育訓練紀錄總表：0.22 獨立本機切片
 
-> 公開版本文件：記錄此功能版本的設計與驗收條件，並非目前公開副本已執行的驗收證明。私人盤點與 QA 產物未匯出；現行行為以 API.md 與原始碼為準，正式規則及部署仍須核定。
-
 2026-10-08 凍結。沿現有保存資料與權限，不是原52報表或法定積分規則的核定。完成整合、瀏覽器及逐頁列印驗證前不得標示實作完成。
 
 ## 授權與查詢
@@ -32,8 +30,8 @@
 
 真admin新增→sup改課程/日期/類別/分鐘→取消→恢復，immutable employee/CAS/CSRF/冪等沿原；四真session、finance早403、caregiver本人/他人/active停用/恢復及缺父scope。40筆25+15、AND/q原文/clear/empty/lookup-only、14keys/9columns/count-only、合法1/60000與異常分鐘/版次/status/category/日期（含頁外及filter/scope排除）、exact1000/JSON2097152/+1、BOM/quotes/newline/公式防護、freshCSV及預覽後真PATCH再fresh列印。
 
-10種loaded/pending完整context失效與真角色session分開；503/MIME/空body/AbortError/錯DTO/取消/晚回應/native-beforeprint抑制沿既有owner。全部QA合成memory/random port，actual DB不複製；實際試用重啟前後11表/六trigger SQL/health/setup/session只讀核對。
+10種loaded/pending完整context失效與真角色session分開；503/MIME/空body/AbortError/錯DTO/取消/晚回應/native-beforeprint抑制沿既有owner。所有原272 Node與21套browser按原script SHA回歸，28報表出口（原25＋新3），11表raw/count/total_changes唯讀段与必要真寫分開，六immutable trigger、兩種非空合成BLOB原bytes/SHA、核閱計價快照及原fees/payroll保持。全部QA合成memory/random port，actual DB不複製；實際試用重啟前後11表/六trigger SQL/health/setup/session只讀核對。
 
 一份新合成QA PDF，首次成功marker一次；取actual fresh授權print DOM/CSS至JS-disabled snapshot產生，同artifact修訂skip marker。40 TRAINING標記各一次、每頁九欄頭/A4/安全邊界/全部長文/末頁文字，PDF全部頁及新UI逐張view_image；相關訓練/人員歷程與既有請假總表最新回歸複本亦逐圖，原五報表PDF按原腳本相容檢查，不冒稱新人工PDF審查。
 
-未核定支付/薪資/評分/外部介接繼續待核定。
+同步API/UX/PRODUCT/BUILD_STATE/backlog及唯一0.22.0不可覆寫封存；135基準source及15舊verification SHA（4012歷史copy不寫）與當輪新copy逐份核對。原84/52/28/16/359題/順序/四來源SHA/status/parity/9階段/0原completed保持。沒有精確原報表映射，僅新增獨立localMilestone及RM-04局部證據，不變更任何原row；localReportKinds7→8不等同原52完成。未核定支付/薪資/評分/外部介接繼續待核定。

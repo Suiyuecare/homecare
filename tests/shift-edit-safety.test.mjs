@@ -90,9 +90,9 @@ async function fixture(t) {
 
 test('seven original controls derive nine create fields; selective edit omits case and status and preserves text and actors', async t => {
   const f = await fixture(t), e = f.editor();
-  assert.deepEqual(e.fields.filter(field => !field.name.endsWith('Intent')).map(field => field.name), controls);
+  assert.deepEqual(e.fields.filter(field => !field.name.endsWith('Intent')).map(field => field.name), ['spanMode', ...controls.slice(0, 3), 'endDate', ...controls.slice(3)]);
   const payload = e.buildPayload({ carePlanId: f.planA.id, employeeId: f.employeeA.id, date: '2026-10-10', startTime: '09:00', endTime: '10:00', services: f.services, note: ' 原文\n末行 ' });
-  assert.deepEqual(Object.keys(payload).sort(), keys.slice().sort()); assert.equal(payload.caseId, f.caseA.id); assert.equal(payload.status, 'scheduled');
+  assert.deepEqual(Object.keys(payload).sort(), keys.slice().sort()); assert(!Object.hasOwn(payload, 'spanMode')); assert(!Object.hasOwn(payload, 'endDate')); assert.equal(payload.caseId, f.caseA.id); assert.equal(payload.status, 'scheduled');
   const first = await f.create('shifts', payload); e.confirm(first, f.admin.org, payload);
   const ed = f.editor(first), change = ed.buildPayload({ note: ' 新文\n末行 ' }); assert.deepEqual(change, { note: ' 新文\n末行 ' });
   const second = await f.patch('shifts', first, change, f.clients.supervisor); ed.confirm(second, f.admin.org, change);

@@ -1,10 +1,13 @@
+import { createEndDateControl, spanRecordText } from './shift-span-editor.js';
 // Pure service-record adapter; saved JSON stays private, outside native controls.
-const names = ['shiftId', 'caseId', 'employeeId', 'date', 'actualStart', 'actualEnd', 'services', 'status', 'note', 'reviewNote'];
+const names = ['shiftId', 'caseId', 'employeeId', 'date', 'actualStart', 'actualEnd', 'services', 'status', 'note', 'reviewNote', 'actualEndDate'];
 const controls = ['actualStart', 'actualEnd', 'services', 'note', 'status'];
 const labels = { actualStart: '實際開始時間', actualEnd: '實際結束時間', services: '實際服務與數量', note: '服務紀錄與觀察', status: '儲存方式' };
 const own = (value, key) => Object.hasOwn(value, key);
 const plain = value => value !== null && typeof value === 'object' && !Array.isArray(value)
-  && [Object.prototype, null].includes(Object.getPrototypeOf(value));
+  && [Object.prototype, null].includes(Object.getPrototypeOf(value))
+  && Reflect.ownKeys(value).every(key => typeof key === 'string' && Object.getOwnPropertyDescriptor(value, key)?.enumerable
+    && Object.hasOwn(Object.getOwnPropertyDescriptor(value, key), 'value'));
 const safeId = value => typeof value === 'string' && value.trim() !== '' && value.length <= 500 && !/[\r\n]/.test(value);
 const put = (object, key, value) => Object.defineProperty(object, key, { value, enumerable: true, configurable: true, writable: true });
 function invalid(name, message) { const error = new Error(message); error.fields = { [name]: message }; throw error; }
@@ -29,7 +32,7 @@ function savedKind(present, value) {
   return { string: '文字', number: '數字', boolean: '布林值', object: '物件' }[typeof value] || '其他類型';
 }
 function capture(existing) {
-  if (!plain(existing)) invalid('actualStart', '原服務紀錄格式無法取得，請重新讀取。');
+  if (!plain(existing) || Reflect.ownKeys(existing).some(key => typeof key !== 'string' || !Object.getOwnPropertyDescriptor(existing, key)?.enumerable || !Object.hasOwn(Object.getOwnPropertyDescriptor(existing, key), 'value'))) invalid('actualStart', '原服務紀錄格式無法取得，請重新讀取。');
   const original = {}, identity = {};
   for (const name of names) if (own(existing, name)) put(original, name, copyJson(existing[name]));
   for (const name of ['id', 'orgId', 'version']) if (own(existing, name)) put(identity, name, copyJson(existing[name]));
@@ -53,6 +56,7 @@ function confirmProjection(item, orgId, identity, original, expected, creating =
 
 export function createServiceRecordEditor({ existing, shift, serviceItems = [] } = {}) {
   const editing = existing !== undefined && existing !== null;
+  const spanControl = createEndDateControl({ existing, entity: 'service-records', date: Object.getOwnPropertyDescriptor(shift || {}, 'date')?.value || '' });
   const { original, identity } = editing ? capture(existing) : { original: {}, identity: null };
   const parents = {};
   if (!editing) {
@@ -95,12 +99,18 @@ export function createServiceRecordEditor({ existing, shift, serviceItems = [] }
       ...(name === 'note' ? { wide: true, help: editing && own(original, 'reviewNote') && typeof original.reviewNote === 'string' && original.reviewNote
         ? `督導退回說明：${original.reviewNote}` : '請記錄本次服務情形與需交班事項。' } : {}),
       ...(name === 'status' ? { options: statusOptions.map(option => ({ ...option })), help: '送出後不能直接修改；退回可先修正保持原狀態，明確選擇送核閱才重送。' } : {}),
-      ...(['actualStart', 'actualEnd'].includes(name) ? { help: '取代時填同日時間；保持原 ISO 時段不裁切秒數或換算時區。' } : {}),
+      ...(['actualStart', 'actualEnd'].includes(name) ? { help: '舊同日格式保持 ISO 秒數與時差；完整日期模式須明確取代為 HH:mm 並人工填寫實際結束日。' } : {}),
     });
   }
+  baseline.plannedSpan = spanRecordText(shift);
+  fields.unshift({ name: 'plannedSpan', label: '原排班完整日期時段（參考）', type: 'text', disabled: true, wide: true, help: '實際開始日固定為原班開始日，實際結束日須另行人工填寫；此模式不能表示完全在翌日才開始的服務，不推定與原排班相同。' });
+  Object.assign(baseline, spanControl.initial);
+  fields.unshift(spanControl.fields[0]);
+  const dateIndex = fields.findIndex(field => field.name === 'actualEnd');
+  fields.splice(dateIndex + 1, 0, ...spanControl.fields.slice(1));
   const allowed = new Set(Object.keys(baseline)), valueOf = (values, key) => own(values, key) ? values[key] : baseline[key];
-  const needsIntent = name => requiredIntents.has(name);
-  const enabled = (name, values = {}) => allowed.has(name) && plain(values) && (!needsIntent(name) || valueOf(values, name + 'Intent') === 'replace');
+  const needsIntent = name => requiredIntents.has(name) || ['spanMode', 'actualEndDate', 'actualEndDateIntent'].includes(name);
+  const enabled = (name, values = {}) => spanControl.enabled(name, values) ?? (allowed.has(name) && plain(values) && (!requiredIntents.has(name) || valueOf(values, name + 'Intent') === 'replace'));
   function replacement(name, value) {
     if (name === 'services') {
       if (!Array.isArray(value) || value.length < 1 || value.length > 100 || Object.keys(value).length !== value.length
@@ -119,11 +129,14 @@ export function createServiceRecordEditor({ existing, shift, serviceItems = [] }
   }
   function buildPayload(values) {
     if (!plain(values)) invalid('actualStart', '表單資料格式不正確，請保留輸入並重試。');
-    for (const key of Object.keys(values)) if (!allowed.has(key)) invalid(key, '表單包含未知欄位，請重新讀取。');
+    for (const key of Reflect.ownKeys(values)) {
+      const descriptor = Object.getOwnPropertyDescriptor(values, key);
+      if (typeof key !== 'string' || !allowed.has(key) || !descriptor?.enumerable || !Object.hasOwn(descriptor, 'value')) invalid(typeof key === 'string' ? key : 'spanMode', '表單包含未知欄位或存取器，請重新讀取。');
+    }
     const payload = {};
     for (const name of controls) {
       let value = valueOf(values, name);
-      if (needsIntent(name)) {
+      if (requiredIntents.has(name)) {
         const intent = valueOf(values, name + 'Intent');
         if (!['keep', 'replace', ...(name === 'note' ? ['clear'] : [])].includes(intent)) invalid(name + 'Intent', '請選擇有效的保存處理方式。');
         if (intent === 'keep') continue;
@@ -133,12 +146,12 @@ export function createServiceRecordEditor({ existing, shift, serviceItems = [] }
       if (!editing || !own(original, name) || JSON.stringify(original[name]) !== JSON.stringify(value)) put(payload, name, value);
     }
     if (!editing) for (const name of Object.keys(parents)) put(payload, name, parents[name]);
-    return payload;
+    return spanControl.apply(payload, values, editing ? original : parents);
   }
   function confirm(item, orgId, payload) {
     try {
       if (!plain(payload)) unconfirmed();
-      for (const name of Object.keys(payload)) if (!(editing ? controls.includes(name) || (name === 'version' && payload.version === identity.version) : names.includes(name) && name !== 'reviewNote')) unconfirmed();
+      for (const name of Object.keys(payload)) if (!(editing ? controls.includes(name) || name === 'actualEndDate' || (name === 'version' && payload.version === identity.version) : names.includes(name) && name !== 'reviewNote')) unconfirmed();
       if (!editing && names.slice(0, 9).some(name => !own(payload, name))) unconfirmed();
       return confirmProjection(item, orgId, identity, original, payload, !editing);
     } catch { unconfirmed(); }
@@ -148,13 +161,14 @@ export function createServiceRecordEditor({ existing, shift, serviceItems = [] }
 
 export function createServiceRecordReview({ existing } = {}) {
   const { original, identity } = capture(existing);
-  const initial = { decision: 'approved', reviewNote: '' };
+  const initial = { decision: 'approved', reviewNote: '', savedActualSpan: spanRecordText(existing, 'service-records') };
   const fields = [
+    { name: 'savedActualSpan', label: '保存實際完整日期時段', type: 'text', disabled: true, wide: true },
     { name: 'decision', label: '核閱結果', type: 'select', required: true, options: [{ value: 'approved', label: '通過核閱' }, { value: 'returned', label: '退回修正' }] },
     { name: 'reviewNote', label: '核閱說明', type: 'textarea', wide: true, help: '退回時請說明需要修正的內容。' },
   ];
   function buildPayload(values) {
-    if (!plain(values) || Object.keys(values).some(name => !['decision', 'reviewNote'].includes(name))) invalid('decision', '核閱資料格式不正確。');
+    if (!plain(values) || Object.keys(values).some(name => !['decision', 'reviewNote', 'savedActualSpan'].includes(name))) invalid('decision', '核閱資料格式不正確。');
     const decision = own(values, 'decision') ? values.decision : initial.decision;
     const reviewNote = own(values, 'reviewNote') ? values.reviewNote : initial.reviewNote;
     if (!['approved', 'returned'].includes(decision)) invalid('decision', '請選擇有效的核閱結果。');

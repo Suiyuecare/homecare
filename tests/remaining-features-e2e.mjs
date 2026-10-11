@@ -1,0 +1,94 @@
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import path from 'node:path';
+import { createApp } from '../src/server/index.mjs';
+const { chromium } = createRequire(import.meta.url)('playwright');
+const output = path.resolve('outputs/software/remaining-features-qa/browser-' + Date.now());
+await mkdir(output, { recursive: true });
+const app = createApp({ dbPath: ':memory:', port: 0 }), base = await app.listen();
+const preferred = chromium.executablePath(), executablePath = existsSync(preferred) ? preferred : '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
+const browser = await chromium.launch({ headless: true, executablePath }), context = await browser.newContext({ viewport: { width: 1440, height: 1050 } }), page = await context.newPage();
+const checks = [], screenshots = [], errors = []; let stage = 'setup';
+page.on('pageerror', e => errors.push({ stage, message: e.message }));
+const mark = label => { checks.push(label); console.log('PASS ' + label); };
+const dialog = () => page.locator('dialog[open]').last();
+const save = async () => { const d = dialog(); const labelId = await d.getAttribute('aria-labelledby'); const savedDialog = page.locator('dialog[aria-labelledby="' + labelId + '"]'); await d.getByRole('button', { name: '儲存', exact: true }).click(); await savedDialog.waitFor({ state: 'detached' }); await page.waitForLoadState('networkidle'); };
+const load = async route => { await page.goto(base + '/#' + route); await page.getByRole('heading', { level: 1 }).waitFor(); await page.waitForLoadState('networkidle'); assert.equal(await page.locator('.error-state').count(), 0, route); };
+const capture = async name => { const p = path.join(output, name + '.png'); await page.screenshot({ path: p, fullPage: true }); screenshots.push(p); };
+const screen = async () => {
+  assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), 'page overflow');
+  assert.deepEqual(await page.locator('input,select,textarea').evaluateAll(nodes => nodes.filter(n => n.getClientRects().length && !n.labels?.length && !n.getAttribute('aria-label') && !n.getAttribute('aria-labelledby')).map(n => n.name)), [], 'labels');
+};
+const dbCounts = () => app.db.prepare('SELECT (SELECT count(*) FROM records) records,(SELECT count(*) FROM record_versions) versions,(SELECT count(*) FROM audit) audit,total_changes() changes').get();
+try {
+  const setup = await context.request.post(base + '/api/setup', { headers: { Origin: base }, data: { name: '合成功能驗收員', email: 'remaining-admin@example.test', password: 'synthetic-remaining-password', organizationName: '合成功能機構' } }); assert.equal(setup.status(), 201);
+  const session = await setup.json(), orgId = session.organizations[0].id, headers = { Origin: base, 'X-Org-Id': orgId, 'X-CSRF-Token': session.csrfToken };
+  const post = async (entity, data) => { const r = await context.request.post(base + '/api/' + entity, { headers, data }); assert.equal(r.status(), 201, await r.text()); return (await r.json()).item; };
+  const patch = async (entity, item, data) => { const r = await context.request.patch(base + '/api/' + entity + '/' + item.id, { headers, data: { version: item.version, ...data } }); assert.equal(r.status(), 200, await r.text()); return (await r.json()).item; };
+  const list = async entity => { const r = await context.request.get(base + '/api/' + entity, { headers }); assert.equal(r.status(), 200); return (await r.json()).items; };
+  const employee = await post('employees', { name: '合成受理員', employeeNo: 'REST-E1' });
+  const c = await post('cases', { name: '合成測試個案', caseNo: 'REST-C1' });
+  for (const role of ['supervisor', 'finance', 'caregiver']) await post('users', { name: '合成' + role, email: role + '@remaining.example.test', password: 'synthetic-remaining-password', role, ...(role === 'caregiver' ? { employeeId: employee.id } : {}) });
+  stage = 'case create'; await load('/cases/' + c.id);
+  await page.getByRole('button', { name: '新增關係紀錄', exact: true }).click();
+  await dialog().getByLabel('家人、人士或單位名稱', { exact: false }).fill('合成家屬'); await dialog().getByLabel('與個案的關係', { exact: false }).fill('女兒'); await dialog().getByLabel('關係說明與完整備註', { exact: false }).fill('合成支持紀錄\n完整末句'); await save();
+  assert.equal((await list('case-relationships')).length, 1); await page.getByText('合成家屬', { exact: true }).first().waitFor(); mark('個案家系關係新增與伺服器保存');
+  await page.getByRole('button', { name: '新增醫事意見', exact: true }).click();
+  await dialog().getByLabel('提供意見者', { exact: false }).fill('合成醫事人員'); await dialog().getByLabel('意見摘要', { exact: false }).fill('合成照顧建議\n摘要最後一行'); await dialog().getByLabel('照顧建議摘要', { exact: false }).fill('合成建議\n建議最後一行'); await dialog().getByLabel('完整意見與追蹤備註', { exact: false }).fill('合成原文\n意見最後一行'); await save();
+  assert.equal((await list('medical-opinions')).length, 1); assert.equal((await list('medical-opinions'))[0].summary, '合成照顧建議\n摘要最後一行'); assert.equal((await list('medical-opinions'))[0].recommendation, '合成建議\n建議最後一行'); mark('醫事意見多行摘要與建議新增及精確保存');
+  await screen(); await capture('case-desktop');
+  stage = 'institution calendar'; await load('/institution-calendar'); await page.getByRole('button', { name: '新增機構行事', exact: true }).click();
+  await dialog().getByLabel('標題', { exact: false }).fill('合成督導會議'); await dialog().getByLabel('開始時間', { exact: false }).fill('09:00'); await dialog().getByLabel('結束時間', { exact: false }).fill('10:00'); await save();
+  assert.equal((await list('institution-events'))[0].title, '合成督導會議'); mark('共同行事曆新增與保存');
+  await page.getByRole('button', { name: '查看資料', exact: true }).click(); await dialog().getByText('合成督導會議', { exact: true }).waitFor(); await page.keyboard.press('Escape'); mark('共同行事完整詳情與Escape');
+  const eventRawNote = '合成第一行\r\n第二行\r最後一行';
+  await patch('institution-events', (await list('institution-events'))[0], { note: eventRawNote }); await load('/institution-calendar');
+  const eventPatches = []; const eventListener = r => { if (r.method() === 'PATCH' && r.url().includes('/api/institution-events/')) eventPatches.push(r.postDataJSON()); }; page.on('request', eventListener);
+  await page.getByRole('button', { name: '編輯', exact: true }).click(); await dialog().getByLabel('地點', { exact: false }).fill('合成會議室'); await save(); page.off('request', eventListener);
+  assert.equal(eventPatches.length, 1); assert.deepEqual(Object.keys(eventPatches[0]).sort(), ['location', 'version']); assert.equal((await list('institution-events'))[0].note, eventRawNote); mark('行事曆只修改地點時完整保留未動CRLF長文');
+  await screen(); await capture('calendar-desktop');
+  stage = 'complaint'; await load('/complaints'); await page.getByRole('button', { name: '受理申訴', exact: true }).click();
+  await dialog().getByLabel('標題', { exact: false }).fill('合成服務反映'); await dialog().getByLabel('申訴內容', { exact: false }).fill('合成內容\n只用合成資料'); await dialog().getByLabel('受理員工', { exact: false }).selectOption(employee.id); await dialog().getByLabel('負責員工', { exact: false }).selectOption(employee.id); await save();
+  assert.equal((await list('complaints'))[0].status, 'received');
+  await page.getByRole('button', { name: '編輯', exact: true }).click(); await dialog().getByLabel('狀態', { exact: false }).selectOption('in_progress'); await dialog().getByLabel('處理紀錄', { exact: false }).fill('合成人工處理'); await dialog().getByRole('button', { name: '儲存', exact: true }).click();
+  await dialog().getByRole('button', { name: '改為處理中', exact: true }).click(); await page.waitForFunction(() => document.querySelectorAll('dialog[open]').length === 0); assert.equal((await list('complaints'))[0].status, 'in_progress'); mark('申訴受理與處理狀態確認');
+  const complaintRaw = '合成原始內容\r\n第二行\r最後一行';
+  await patch('complaints', (await list('complaints'))[0], { content: complaintRaw }); await load('/complaints');
+  const complaintPatches = []; const complaintListener = r => { if (r.method() === 'PATCH' && r.url().includes('/api/complaints/')) complaintPatches.push(r.postDataJSON()); }; page.on('request', complaintListener);
+  await page.getByRole('button', { name: '編輯', exact: true }).click(); await dialog().getByLabel('處理紀錄', { exact: false }).fill('合成人工處理第二次'); await save(); page.off('request', complaintListener);
+  assert.equal(complaintPatches.length, 1); assert.deepEqual(Object.keys(complaintPatches[0]).sort(), ['handlingLog', 'version']); assert.equal((await list('complaints'))[0].content, complaintRaw); mark('申訴只修改處理紀錄時完整保留未動CRLF內容');
+  await page.getByRole('button', { name: '查看資料', exact: true }).click(); await dialog().getByText('合成受理員（目前保存名稱）', { exact: true }).first().waitFor(); assert.equal(await dialog().getByText(employee.id, { exact: true }).count(), 0); await page.keyboard.press('Escape'); mark('申訴受理與負責員工以確認姓名顯示，不暴露操作用識別碼');
+  await screen(); await capture('complaints-desktop');
+  stage = 'rule create'; await load('/business-rules'); await page.getByRole('button', { name: '新增規則', exact: true }).click(); await dialog().getByLabel('規則類型', { exact: false }).selectOption('pricing'); await save();
+  await page.getByRole('dialog', { name: '新增計價與自付規則', exact: true }).waitFor();
+  await dialog().getByLabel('規則代碼', { exact: false }).fill('SYN-PRICE'); await dialog().getByLabel('規則名稱', { exact: false }).fill('合成機構計價規則'); await dialog().getByLabel('生效日期', { exact: false }).fill('2026-10-01'); await dialog().getByLabel('截止日期', { exact: false }).fill('2026-12-31'); await dialog().getByLabel('核定依據', { exact: false }).fill('合成核定文件v1');
+  await dialog().getByLabel('每單位金額（分）', { exact: false }).fill('12001'); await dialog().getByLabel('自付比例（萬分比）', { exact: false }).fill('1600'); await dialog().getByLabel('月額度（分）', { exact: false }).fill('500000');
+  let injectedAck = false; const brokenAck = async route => { if (route.request().method() !== 'POST' || injectedAck) return route.continue(); injectedAck = true; const actual = await route.fetch(); const body = await actual.json(); body.item.orgId = 'synthetic-unconfirmed-org'; await route.fulfill({ response: actual, json: body }); };
+  await page.route('**/api/business-rules', brokenAck);
+  await dialog().getByRole('button', { name: '儲存', exact: true }).click(); await dialog().getByText('無法確認規則保存結果，請重新讀取。', { exact: true }).waitFor();
+  assert.equal(await dialog().getByLabel('每單位金額（分）', { exact: false }).inputValue(), '12001'); assert.equal((await list('business-rules')).length, 1);
+  await page.unroute('**/api/business-rules', brokenAck); await save(); assert.equal((await list('business-rules')).length, 1); mark('實際已提交但保存回應未確認時保留輸入，冪等重試不新增重複規則');
+  let rule = (await list('business-rules'))[0]; assert.equal(rule.parameters.unitPriceCents, 12001); assert.equal(rule.status, 'draft'); mark('計價規則精確參數保存');
+  await page.getByRole('button', { name: '查看規則', exact: true }).click(); await dialog().getByText('12001', { exact: true }).waitFor(); await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: '核定', exact: true }).click(); await dialog().getByRole('button', { name: '確認機構核定', exact: true }).click(); await dialog().waitFor({ state: 'detached' });
+  rule = (await list('business-rules'))[0]; assert.equal(rule.status, 'approved'); assert.equal(rule.version, 2); assert.equal(await page.getByRole('button', { name: '編輯', exact: true }).count(), 0); mark('機構核定與版本鎖定');
+  const before = dbCounts(); await page.getByRole('button', { name: '歷程', exact: true }).click(); await dialog().getByText('完整保存欄位', { exact: true }).first().click(); await dialog().getByText('核定參數', { exact: true }).first().waitFor(); await page.keyboard.press('Escape'); assert.deepEqual(dbCounts(), before); mark('規則差異歷程唯讀零寫入');
+  await screen(); await capture('rules-desktop');
+  stage = 'mobile'; await page.setViewportSize({ width: 390, height: 844 });
+  for (const [route, name] of [['/cases/' + c.id, 'case'], ['/institution-calendar', 'calendar'], ['/complaints', 'complaints'], ['/business-rules', 'rules']]) { await load(route); await screen(); await capture(name + '-mobile'); }
+  await page.getByRole('button', { name: '查看規則', exact: true }).click(); await screen(); await dialog().getByText('合成核定文件v1', { exact: true }).waitFor(); await capture('rules-details-mobile'); await page.keyboard.press('Escape'); mark('四功能390px無頁面溢出、標籤與手機詳情');
+  stage = 'roles';
+  for (const role of ['finance', 'caregiver', 'supervisor']) {
+    const ctx = await browser.newContext({ viewport: { width: 390, height: 844 } }); const p = await ctx.newPage(); p.on('pageerror', e => errors.push({ stage: role, message: e.message }));
+    const r = await ctx.request.post(base + '/api/login', { headers: { Origin: base }, data: { email: role + '@remaining.example.test', password: 'synthetic-remaining-password' } }); assert.equal(r.status(), 200);
+    await p.goto(base + '/#/institution-calendar'); await p.getByRole('heading', { name: '機構行事曆', level: 1, exact: true }).waitFor(); await p.getByText('合成督導會議', { exact: true }).waitFor(); assert.equal(await p.getByRole('button', { name: '新增機構行事', exact: true }).count(), role === 'supervisor' ? 1 : 0);
+    await p.goto(base + '/#/complaints'); await p.getByRole('heading').first().waitFor(); await p.waitForLoadState('networkidle'); if (role !== 'supervisor') { assert.equal(await p.getByRole('heading', { name: '您沒有這項操作權限', exact: true }).count(), 1); assert.equal(await p.getByRole('button', { name: '受理申訴', exact: true }).count(), 0); }
+    await p.goto(base + '/#/business-rules'); await p.getByRole('heading').first().waitFor(); await p.waitForLoadState('networkidle'); assert.equal(await p.getByRole('button', { name: '新增規則', exact: true }).count(), 0); if (role === 'caregiver') assert.equal(await p.getByRole('heading', { name: '您沒有這項操作權限', exact: true }).count(), 1);
+    await ctx.close();
+  }
+  mark('四角色伺服器授權與手機入口'); assert.deepEqual(errors, []);
+  await writeFile(path.join(output, 'verification.json'), JSON.stringify({ status: 'passed', syntheticOnly: true, checks, screenshots, errors }, null, 2)); console.log('Evidence: ' + output);
+} catch (e) { await capture('failure').catch(() => {}); await writeFile(path.join(output, 'verification.json'), JSON.stringify({ status: 'failed', stage, error: e.message, checks, screenshots, errors }, null, 2)); throw e; }
+finally { await browser.close(); await app.close(); }

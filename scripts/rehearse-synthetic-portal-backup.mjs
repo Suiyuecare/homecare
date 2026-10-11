@@ -29,7 +29,7 @@ if(process.argv.length!==2){
     const base=await liveApp.listen();
     const actor=fixture.actors.admin;
     const client=syntheticClient(base,'restored-synthetic-portal-admin',{cookie:actor.cookie,auth:actor.auth});
-    for(const kind of ['fees','payroll'])same(await client.json('GET',`reports/${kind}?month=${fixture.month}`,undefined,{orgId:fixture.orgId}),fixture.expected.frozenReports[kind],'Saved approved pricing survives Portal restore');
+    for(const kind of ['fees','payroll'])same(await client.json('GET',`reports/${kind}?month=${fixture.month}&spanMode=calendar-two-day-v1`,undefined,{orgId:fixture.orgId}),fixture.expected.frozenReports[kind],'Saved approved pricing survives Portal restore');
     const afterReads=readPortalSyntheticRawState(liveApp.db);
     same(afterReads,rawA,'Report reads preserve all thirteen saved tables, including sessions');
     const readCleanupChanges=liveApp.db.prepare('SELECT total_changes() AS n').get().n;

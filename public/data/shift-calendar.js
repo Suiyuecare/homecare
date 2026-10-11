@@ -1,5 +1,7 @@
+import { visibleSpanSegments } from './shift-span.js';
+import { reportRowSpan } from './span-report.js';
 import { confirmReport } from '../modules/report-view.js';
-import { shiftReportConfig } from '../modules/shift-report.js';
+import { shiftReportConfig, shiftCalendarReportConfig } from '../modules/shift-report.js';
 import { calendarPersonFilters } from './shift-calendar-person-filters.js';
 
 const LAST_ORDINAL = 3652424;
@@ -129,5 +131,35 @@ export function groupCalendarRows(result, period, status = '', person) {
   const groups = derived.dates.map(date => ({ date, rows: [] }));
   const byDate = new Map(groups.map(group => [group.date, group]));
   for (const row of result.rows) byDate.get(row.date).rows.push(row);
+  return Object.freeze(groups.map(group => Object.freeze({ date: group.date, rows: Object.freeze(group.rows) })));
+}
+
+/** Opt-in complete dates; original calendar exports keep their legacy DTO contract. */
+export function spanCalendarFilters(period, status = '', person) {
+  return Object.freeze({ ...calendarFilters(period, status, person), ...shiftCalendarReportConfig.fixedFilters });
+}
+export function confirmSpanCalendarReport(result, period, status = '', person) {
+  try {
+    const filters = spanCalendarFilters(period, status, person);
+    if (!shiftCalendarReportConfig.confirmEnvelope(result) || !Number.isSafeInteger(result.total) || result.total < 0 || result.total > MAX_ROWS) throw unconfirmed();
+    confirmReport(shiftCalendarReportConfig, result, filters, { complete: true });
+    for (let i = 1; i < result.rows.length; i++) {
+      const previous = result.rows[i - 1], next = result.rows[i];
+      for (const key of sortKeys) { if (previous[key] < next[key]) break; if (previous[key] > next[key]) throw unconfirmed(); }
+    }
+    if (new TextEncoder().encode(JSON.stringify(result)).byteLength > MAX_JSON_BYTES) throw unconfirmed();
+    return result;
+  } catch { throw unconfirmed(); }
+}
+export function groupSpanCalendarRows(result, period, status = '', person) {
+  confirmSpanCalendarReport(result, period, status, person);
+  const derived = checkedPeriod(period), groups = derived.dates.map(date => ({ date, rows: [] })), byDate = new Map(groups.map(group => [group.date, group]));
+  for (const row of result.rows) {
+    const span = reportRowSpan(row, 'shifts');
+    for (const segment of visibleSpanSegments(span, { startDate: derived.startDate, endDate: derived.endDate })) {
+      const clock = value => `${String(Math.floor(value / 60)).padStart(2, '0')}:${String(value % 60).padStart(2, '0')}`;
+      byDate.get(segment.date).rows.push(Object.freeze({ ...row, displaySegment: `${segment.date} ${clock(segment.startMinute)}–${clock(segment.endMinute)}${segment.date !== row.date ? '（前日開始，本日延續）' : span.hasEndDate && row.endDate !== row.date ? '（本日開始，翌日結束）' : ''}` }));
+    }
+  }
   return Object.freeze(groups.map(group => Object.freeze({ date: group.date, rows: Object.freeze(group.rows) })));
 }

@@ -161,8 +161,29 @@ export async function createSyntheticPortalBackupFixture({ workspace }) {
     assert(rawState.tables.portal_identity_bindings.some(row => row.active === 0));
     assert(rawState.tables.portal_handoff_nonces.some(row => row.expires_at < Date.now()));
     assert.equal(app.db.prepare('SELECT count(*) AS n FROM records r WHERE NOT EXISTS (SELECT 1 FROM record_versions v WHERE v.record_id=r.id AND v.version=r.version)').get().n, 0);
-    const expected = hide({ rawState, frozenReports: seed.expected.frozenReports, histories: seed.expected.histories,
-      csvBytes: seed.expected.csvBytes, caseBytes: seed.expected.caseBytes, certBytes: seed.expected.certBytes });
+    // The report UI now explicitly requests complete dates. Freeze that exact
+    // source DTO/CSV before restore, while the legacy fixture independently
+    // retains its original saved-price and integer-cent assertions.
+    const reportSpanMode = 'calendar-two-day-v1', frozenReports = {}, csvBytes = {};
+    const reportCaptureBefore = readPortalSyntheticRawState(app.db), reportCaptureCounters = countersFor(app.db);
+    for (const kind of ['fees', 'payroll']) {
+      const legacyReport = seed.expected.frozenReports[kind];
+      const expectedFullReport = { ...legacyReport, spanMode: reportSpanMode };
+      if (kind === 'fees') {
+        expectedFullReport.columns = [...legacyReport.columns];
+        expectedFullReport.columns.splice(1, 0, { key: 'actualEndDate', label: '來源實際結束日期' });
+        expectedFullReport.rows = legacyReport.rows.map(row => ({ ...row, actualEndDate: row.date }));
+      }
+      frozenReports[kind] = await actors.admin.client.json('GET', `reports/${kind}?month=${seed.month}&spanMode=${reportSpanMode}`, undefined, { orgId: seed.orgId });
+      assert.deepEqual(frozenReports[kind], expectedFullReport, 'Exact complete-date source DTO retains the independent legacy saved prices, quantities, minutes, totals and note');
+      const response = await actors.admin.client.response('GET', `reports/${kind}.csv?month=${seed.month}&spanMode=${reportSpanMode}`, undefined, { orgId: seed.orgId });
+      assert.equal(response.status, 200);
+      csvBytes[kind] = Buffer.from(await response.arrayBuffer());
+    }
+    assert.deepEqual(countersFor(app.db), reportCaptureCounters, 'Freezing full-mode source reports and CSV has zero logical writes');
+    assert.deepEqual(readPortalSyntheticRawState(app.db), reportCaptureBefore, 'Freezing source reports preserves all thirteen typed tables and schema');
+    const expected = hide({ rawState, frozenReports, histories: seed.expected.histories,
+      csvBytes, caseBytes: seed.expected.caseBytes, certBytes: seed.expected.certBytes });
     const sourceCookies = hide(Object.fromEntries(Object.entries(actors).map(([role, actor]) => [role, actor.cookie])));
     const fixture = hide({ workspace, app, base, orgId: seed.orgId, foreignOrgId: seed.foreignOrgId, month: seed.month,
       items: seed.items, users: seed.users, identities, actors: hide(actors), sourceCookies, portalConfig, expected,

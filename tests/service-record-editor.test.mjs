@@ -30,10 +30,10 @@ const unconfirmed = fn => assert.throws(fn, error => error.code === 'SAVE_UNCONF
 const freeze = value => { if (value && typeof value === 'object') { Object.values(value).forEach(freeze); Object.freeze(value); } return value; };
 const privateJson = () => JSON.parse('{"__proto__":{"secret":"NEVER_RENDER"},"constructor":[0,false],"prototype":null}');
 
-test('create retains five controls and nine saved fields while deriving only captured shift metadata', () => {
+test('create adds explicit-date and planned-span controls with unchanged legacy nine-field payload', () => {
   const source = structuredClone(shift), e = editor(undefined, { shift: source });
-  assert.deepEqual(e.fields.map(field => field.name), controls);
-  assert.deepEqual(e.initial, { actualStart: '', actualEnd: '', services: [], note: '', status: 'draft' });
+  assert.deepEqual(e.fields.map(field => field.name), ['spanMode', 'plannedSpan', ...controls.slice(0, 2), 'actualEndDate', ...controls.slice(2)]);
+  assert.deepEqual(e.initial, { actualStart: '', actualEnd: '', services: [], note: '', status: 'draft', spanMode: 'legacy', actualEndDate: '', plannedSpan: '2026-10-09 09:00 至 10:00（舊同日格式）' });
   assert.deepEqual(e.fields.find(field => field.name === 'status').options.map(option => option.value), ['draft', 'submitted']);
   source.id = 'changed'; source.caseId = 'changed'; source.employeeId = 'changed'; source.date = '2027-01-01';
   const payload = e.buildPayload(createValues());
@@ -55,7 +55,7 @@ test('create retains five controls and nine saved fields while deriving only cap
 
 test('normal edits and reversions omit unchanged values and preserve captured parent date and review fields', () => {
   const original = freeze(row()), e = editor(original);
-  assert.deepEqual(e.fields.filter(field => !field.name.endsWith('Intent')).map(field => field.name), controls);
+  assert.deepEqual(e.fields.filter(field => !field.name.endsWith('Intent')).map(field => field.name), ['spanMode', 'plannedSpan', ...controls.slice(0, 2), 'actualEndDate', ...controls.slice(2)]);
   assert.deepEqual(e.buildPayload({}), {}); assert.deepEqual(e.buildPayload(e.initial), {});
   assert.deepEqual(e.buildPayload({ actualStart: original.actualStart, actualEnd: original.actualEnd, note: original.note, status: original.status }), {});
   assert.deepEqual(e.buildPayload({ note: ' 新觀察\n' }), { note: ' 新觀察\n' });
@@ -239,10 +239,10 @@ test('edit acknowledgements check all ten own fields exact JSON order and captur
   }
 });
 
-test('review retains two controls with explicit exact untrimmed decisions and bounded review text', () => {
+test('review shows immutable actual-span context and keeps the exact original two-field request', () => {
   const e = review(row({ status: 'submitted' }));
-  assert.deepEqual(e.fields.map(field => field.name), ['decision', 'reviewNote']);
-  assert.deepEqual(e.initial, { decision: 'approved', reviewNote: '' });
+  assert.deepEqual(e.fields.map(field => field.name), ['savedActualSpan', 'decision', 'reviewNote']);
+  assert.deepEqual(e.initial, { decision: 'approved', reviewNote: '', savedActualSpan: '2026-10-09 09:05 至 09:50（舊同日格式）' });
   e.initial.decision = 'returned'; e.initial.reviewNote = 'caller mutation';
   assert.deepEqual(e.buildPayload({}), { decision: 'approved', reviewNote: '' });
   const reviewNote = '  合成退回\n補記🙂  ';

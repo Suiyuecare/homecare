@@ -1,3 +1,24 @@
+import { mountSurveys } from './surveys.js';
+import { mountGroupOverview } from './group-overview.js';
+import { spanRecordText } from '../data/shift-span-editor.js';
+import { mountBusinessRules } from './business-rules.js';
+import { mountServicePayroll } from './service-payroll.js';
+import { mountServiceBilling } from './service-billing.js';
+import { mountBillingDocuments } from './billing-documents.js';
+import { mountPayrollStatements } from './payroll-statements.js';
+import { mountClaimBatches } from './claim-batches.js';
+import { mountShiftSeries } from './shift-series.js';
+import { mountCaseContracts, mountInternalTasks } from './contracts-tasks.js';
+import { mountInstitutionHolidays } from './institution-holidays.js';
+import { mountShiftSubstitution } from './shift-substitution.js';
+import { mountContractDeadlines } from './contract-deadlines.js';
+import { mountInternalNotifications } from './internal-notifications.js';
+import { mountAttendanceExceptions } from './attendance-exceptions.js';
+import { mountLocalImports } from './local-imports.js';
+import { createExtendedInterviewEditor, INTERVIEW_DECISIONS } from '../data/interview-extension-editor.js';
+import { mountTrainingCredits } from './training-credits.js';
+import { mountCustomForms } from './custom-forms.js';
+import { mountInstitutionEvents, mountComplaints } from './institution-admin.js';
 import { openInterviewRecordDetails } from './interview-record-details.js';
 import { openEmployeeRecordDetails } from './employee-record-details.js';
 import { openServiceItemRecordDetails } from './service-item-record-details.js';
@@ -32,7 +53,7 @@ import { createInterviewApplicantEditor, INTERVIEW_STATUSES, confirmInterviewApp
 import { createPersonalCalendarEditor, PERSONAL_CALENDAR_STATUSES, confirmPersonalCalendarList,
   personalCalendarIdentity, formatPersonalCalendarText, formatPersonalCalendarStatus, isPersonalCalendarDate } from '../data/personal-calendar-editor.js';
 import { formatTrialPriceCents } from '../data/history-fields.js';
-import { confirmFinancialReport } from '../data/financial-report-confirmation.js';
+import { confirmSpanFinancialReport } from '../data/financial-report-confirmation.js';
 import { SUPERVISORY_VISIT_QUESTIONS, SUPERVISORY_VISIT_STATUSES, isSupervisoryVisitDate,
   confirmSupervisoryVisitList, confirmSupervisoryVisitItem, supervisoryVisitAnswerText,
   supervisoryVisitAnswerSummary, formatSupervisoryVisitStatus } from '../data/supervisory-visit-view.js';
@@ -593,9 +614,12 @@ async function interviews(container, alive) {
     method: row ? 'PATCH' : 'POST', body: row ? { ...payload, version: row.version } : payload, signal,
     ...(!row ? { headers: { 'Idempotency-Key': key } } : {}),
   });
-  const edit = (refresh, row) => {
+  const edit = async (refresh, row) => {
     if (!current()) return;
-    const editor = createInterviewApplicantEditor({ existing: row, defaultDate: today() });
+    const employees = await fetchAll('employees');
+    if (!current()) return;
+    const interviewers = employees.filter(item => item.orgId === orgId && typeof item.name === 'string' && ['active','inactive'].includes(item.status)).map(item => ({value:item.id,label:item.name,active:item.status==='active'}));
+    const editor = createExtendedInterviewEditor({ existing: row, defaultDate: today(), interviewers });
     const keys = new Map();
     return openForm({
       title: row ? '編輯面試者' : '新增面試者', fields: editor.fields, initial: editor.initial, isCurrent: current,
@@ -616,7 +640,7 @@ async function interviews(container, alive) {
   };
   const setStatus = (refresh, row) => {
     if (!current()) return;
-    const editor = createInterviewApplicantEditor({ existing: row });
+    const editor = createExtendedInterviewEditor({ existing: row });
     const status = row.status === 'active' ? 'inactive' : 'active';
     const payload = editor.buildStatusChange(status), verb = formatInterviewStatus(status);
     return confirmAction({
@@ -650,7 +674,7 @@ async function interviews(container, alive) {
         button('查看紀錄', () => { if (current()) return openInterviewRecordDetails({ id: row.id, isCurrent: current }); }, { variant: 'outline' }),
         button('編輯', () => edit(refresh, row), { variant: 'outline' }),
         INTERVIEW_STATUSES.some(item => item.value === row.status) && button(row.status === 'active' ? '停用' : '啟用', () => setStatus(refresh, row), { variant: 'ghost' }),
-        button('版本歷程', () => openRecordHistory({ entity: 'interview-applicants', id: row.id, isCurrent: current }), { variant: 'ghost' }),
+        button('版本歷程', async () => { const employees = await fetchAll('employees'); if(current())return openRecordHistory({ entity: 'interview-applicants', id: row.id, isCurrent: current, lookups:{employees:new Map(employees.map(item=>[item.id,item]))} }); }, { variant: 'ghost' }),
       ) },
     ],
   }, current);
@@ -839,7 +863,7 @@ async function leave(container, alive) {
     return confirmAction({
       title: `${verb}這筆資料`, confirmLabel: `確認${verb}`,
       danger: ['rejected', 'cancelled'].includes(status), isCurrent: alive,
-      message: `將${verb}「${name}」的請假。請假日期：${savedText('date', '未能確認日期')}；時段：${savedText('startTime', '未能確認開始時間')}–${savedText('endTime', '未能確認結束時間')}。${message}`,
+      message: `將${verb}「${name}」的請假。保存完整時段：${Object.hasOwn(row, 'endDate') ? spanRecordText(row, 'leave-requests') : savedText('date', '未能確認日期') + ' ' + savedText('startTime', '未能確認開始時間') + '–' + savedText('endTime', '未能確認結束時間')}。${message}`,
       onConfirm: async ({ signal, isCurrent }) => {
         const payload = { status };
         const result = await save('leave-requests', payload, row, { signal });
@@ -856,7 +880,7 @@ async function leave(container, alive) {
     statuses: { pending: '待審核', approved: '已核准', rejected: '已駁回', cancelled: '已取消' },
     columns: refresh => [
       { label: '員工', render: row => byId.get(row.employeeId)?.name || '未找到員工' },
-      { key: 'date', label: '日期' }, { label: '時段', render: row => `${row.startTime}–${row.endTime}` },
+      { key: 'date', label: '開始日期' }, { label: '完整時段', render: row => Object.hasOwn(row, 'endDate') ? spanRecordText(row, 'leave-requests') : `${row.startTime}–${row.endTime}` },
       { key: 'type', label: '假別' }, { key: 'reason', label: '原因' }, { label: '狀態', render: row => statusCell(row.status) },
       ...(writable() ? [{ label: '操作', render: row => actions(
         row.status === 'pending' && button('編輯', () => edit(refresh, row), { variant: 'outline' }),
@@ -1047,7 +1071,7 @@ async function reports(container, alive) {
     const outputCurrent = () => current() && request === sequence && kind === capturedKind && month === capturedMonth;
     download.disabled = true;
     try {
-      await downloadCsv(`/api/reports/${encodeURIComponent(capturedKind)}.csv?month=${encodeURIComponent(capturedMonth)}`, {
+      await downloadCsv(`/api/reports/${encodeURIComponent(capturedKind)}.csv?month=${encodeURIComponent(capturedMonth)}&spanMode=calendar-two-day-v1`, {
         filename: `歲悅-${capturedKind}-${capturedMonth}.csv`, signal: active.signal, isCurrent: outputCurrent,
       });
       if (outputCurrent() && !active.signal.aborted) toast('報表下載已開始', 'success');
@@ -1077,9 +1101,9 @@ async function reports(container, alive) {
     }
     body.replaceChildren(el('p', { role: 'status', class: 'loading' }, '正在整理報表…'));
     try {
-      const result = await api(`/api/reports/${capturedKind}?month=${encodeURIComponent(capturedMonth)}`, { signal: controller.signal });
+      const result = await api(`/api/reports/${capturedKind}?month=${encodeURIComponent(capturedMonth)}&spanMode=calendar-two-day-v1`, { signal: controller.signal });
       if (!current() || request !== sequence) return;
-      confirmFinancialReport(capturedKind, result, capturedMonth);
+      confirmSpanFinancialReport(capturedKind, result, capturedMonth);
       const columns = result.columns.map(column => ({ ...column, label: /cents$/i.test(column.key) ? column.label.replace('（分）', '（元）') : column.label, render: row => /cents$/i.test(column.key)
         ? formatMoney(row[column.key] || 0) : textValue(row[column.key]) }));
       const totalColumns = Object.keys(result.totals || {}).map(key => ({ key, label: result.columns.find(column => column.key === key)?.label.replace('（分）', '（元）') || ({ count: '筆數', hours: '工時', total: '合計', quantity: '數量', minutes: '分鐘' })[key] || key,
@@ -1177,6 +1201,25 @@ async function audit(container, alive) {
 }
 
 const routes = {
+  '/surveys': (container, alive) => mountSurveys(container, { isCurrent: alive }),
+  '/group-overview': (container, alive) => mountGroupOverview(container, { isCurrent: alive }),
+  '/shift-series': (container, alive) => mountShiftSeries(container, {isCurrent: alive}),
+  '/case-contracts': (container, alive) => mountCaseContracts(container, {isCurrent: alive}),
+  '/internal-tasks': (container, alive) => mountInternalTasks(container, {isCurrent: alive}),
+  '/institution-holidays': (container, alive) => mountInstitutionHolidays(container, {isCurrent: alive}),
+  '/service-payroll': (container, alive) => mountServicePayroll(container, {isCurrent: alive}),
+  '/service-billing': (container, alive) => mountServiceBilling(container, {isCurrent: alive}),
+  '/shift-substitution': (container, alive) => mountShiftSubstitution(container, {isCurrent: alive}),
+  '/contract-deadlines': (container, alive) => mountContractDeadlines(container, {isCurrent: alive}),
+  '/internal-notifications': (container, alive) => mountInternalNotifications(container, {isCurrent: alive}),
+  '/attendance-exceptions': (container, alive) => mountAttendanceExceptions(container, {isCurrent: alive}),
+  '/local-imports': (container, alive) => mountLocalImports(container, {isCurrent: alive}),
+  '/training-credits': (container, alive) => mountTrainingCredits(container, {isCurrent: alive}),
+  '/custom-forms': (container, alive) => mountCustomForms(container, {isCurrent: alive}),
+  '/billing-documents': (container, alive) => mountBillingDocuments(container, {isCurrent: alive}),
+  '/payroll-statements': (container, alive) => mountPayrollStatements(container, {isCurrent: alive}),
+  '/claim-batches': (container, alive) => mountClaimBatches(container, {isCurrent: alive}),
+  '/business-rules': mountBusinessRules, '/institution-calendar': (container, alive) => mountInstitutionEvents(container, {isCurrent: alive}), '/complaints': (container, alive) => mountComplaints(container, {isCurrent: alive}),
   '/personal-calendar': personalCalendar,
   '/case-followup-worklist': caseFollowupWorklist,
   '/supervisory-visits': supervisoryVisits,

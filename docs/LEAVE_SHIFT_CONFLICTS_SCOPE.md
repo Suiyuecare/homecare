@@ -1,8 +1,6 @@
 # 請假衝突班次明細：0.15 本機獨立切片
 
-> 公開版本文件：記錄此功能版本的設計與驗收條件，並非目前公開副本已執行的驗收證明。私人盤點與 QA 產物未匯出；現行行為以 API.md 與原始碼為準，正式規則及部署仍須核定。
-
-2026-10-08 凍結。依 PRODUCT.md、現有 API/model 與 BUILD_BACKLOG  下一切片；只用合成資料。原完整差勤、假額、資格、跨夜、批次代班及正式規則維持待核定。
+2026-10-08 凍結。依 PRODUCT.md、現有 API/model 與 BUILD_BACKLOG RM-03 下一切片；只用合成資料。原完整差勤、假額、資格、跨夜、批次代班及正式規則維持待核定。
 
 ## 範圍與權限
 
@@ -36,8 +34,9 @@
 - 已有服務紀錄明示不能改派/取消，completed 沿原狀態限制說明；scheduled 無紀錄導引至排班管理仍驗條件。單一語義 link「前往排班管理」到 #/shifts，不聲稱已過濾或定位，不把 PII/識別碼放 URL。
 - admin caller alive（user/org/role/employeeId/hash/generation/container stamp/連線）加 adapter 完整 identity/hash guard，傳給共用 openDetails。loaded/pending 各 hash/org/role/employee/render 失效清空 abort 關閉；慢回應不復活。Escape/關閉回入口焦點，503保留清單可重試。無新 CSS/runtime token/DESIGN變更。
 
-## 驗收條件
+## 驗收與追溯
 
 - 新 tests/leave-shift-conflicts.test.mjs 真四角色/跨機構/父項/停用、全部 predicate/ISO/接壤/取消/completed/四service狀態、缺case仍阻擋、28分頁/排序/fresh、未知/重複/非法query、完整DTO白名單與零寫、短路409/422原write相容、真核准競態、已核准billing/fees/payroll保持。記錄明示合成匯入/異常 fixture，不更新或刪不可變版本/BLOB。
 - 新 tests/leave-shift-conflicts-e2e.mjs 真 admin/sup UI、fresh leave改派/改時間、真班次新增/取消/改派或新服務後重新讀取、無衝突→race→原核准409、503/無確認/非法DTO、分頁/empty/null case、loaded/pending10情境/晚回應/Escape與前往班表；每段必要11表零寫與正常寫入分別列帳。1440/390逐圖 view_image、四角色真session另驗，client role/employee fixture不冒稱server撤權。
-- root完整Node/source/strict premium及既有14套browser196類回歸；需逐圖檢視新切片、最新請假歷程及適用報表回歸。原報表沿同artifact envskip/原PDFprovenance與marker限制，不產生本切片PDF/正式送印證明。維持partial。完整驗證與瀏覽器/視覺完成後才標 implemented_verified，新增不可覆寫0.15.0快照。
+- root完整Node/source/strict premium及既有14套browser196類回歸；需逐圖檢視新切片、最新請假歷程及適用報表回歸。原報表沿同artifact envskip/原PDFprovenance與marker限制，不產生本切片PDF/正式送印證明。
+- 原84/52/28/16與9階段/status/parity/sourcehash/statusCounts/0 original completed/localReportKinds5不變，只為兩原請假頁 URL-b97f8cdb4e92/URL-89289081caa3 追加獨立本機證據。RM-03維持partial。完整驗證與瀏覽器/視覺完成後才標 implemented_verified，新增不可覆寫0.15.0快照。

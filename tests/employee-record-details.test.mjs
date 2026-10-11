@@ -293,10 +293,12 @@ test('shared domain projection gets only the declared descriptor, default tag an
     unconfirmed: reject, projectField() { return { kind: 'text', text: source }; } }), error => error.code === 'SYNTHETIC_DOMAIN');
 });
 
-test('interview wrapper retains its eight-field ordinary text projection and domain-specific failure', () => {
+test('interview wrapper retains the original eight projections and adds ten optional local fields with domain-specific failure', () => {
   const source = record({ interviewDate: '0000-99-99', city: null, district: false, interviewContent: ['nested'], note: '' });
   const result = confirmInterviewRecordDetails({ item: source }, requested());
-  assert.equal(result.fields.length, 8); assert.deepEqual(result.fields.map(value => value.key), INTERVIEW_RECORD_FIELDS.map(value => value.key));
+  assert.equal(result.fields.length, 18); assert.deepEqual(result.fields.map(value => value.key), INTERVIEW_RECORD_FIELDS.map(value => value.key));
+  assert.deepEqual(result.fields.slice(0,8).map(value => value.key), ['name','phone','interviewDate','city','district','interviewContent','note','status']);
+  assert(result.fields.slice(8).every(value => value.kind === 'missing'));
   assert.equal(field(result, 'interviewDate').text, '0000-99-99'); assert.equal(field(result, 'city').text, '未提供（null）');
   assert.equal(field(result, 'district').text, nonText('boolean')); assert.equal(field(result, 'interviewContent').text, nonText('array'));
   assert.equal(field(result, 'note').kind, 'empty');

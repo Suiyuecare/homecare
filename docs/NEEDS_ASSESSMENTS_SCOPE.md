@@ -1,8 +1,6 @@
 # 需求評估保存紀錄查詢（0.53）
 
-> 公開版本文件：記錄此功能版本的設計與驗收條件，並非目前公開副本已執行的驗收證明。私人盤點與 QA 產物未匯出；現行行為以 API.md 與原始碼為準，正式規則及部署仍須核定。
-
-2026-10-10 凍結。正式主機、HTTPS、Portal 發布及本人 UAT 依原交接待完成。
+2026-10-10 凍結。本機獨立唯讀切片，延續已驗收 APM CIS／Portal 與 assessment-03「需求評估紀錄表」九項保存答案。正式主機、HTTPS、Portal 發布及本人 UAT 依原交接待完成。本切片不使用真帳號資料、env、binding、私人備份、4310、DNS 或正式部署。
 
 ## 範圍與授權
 
@@ -26,10 +24,10 @@ answers exact own q001..q009：個案姓名、照服員姓名、訪視日期、�
 
 目前姓名和九項保存姓名各自標示，不回填主檔。版本歷程仍 openRecordHistory('assessments')，精確前版、實際操作者與合法跨模板／跨父個案舊版沿原逐版授權；不另建歷程或縮減其內容。填寫連結回原 /assessments，沒有另一套編輯／提交／取消入口。390px表內橫捲、長答案完整可讀，真Range／hit-test驗末句在真正 close footer 上方，不以 textContent 或單張上半頁圖代替完整可讀性。
 
-## 驗收條件
+## 驗收與追溯
 
-必要子集限定，不宣稱全部 configured fresh。每個原生程序記實際 exit、輸入 source／log SHA；錯誤及修稿原樣保留，不自動重試。每張新1440／390圖實際 view_image，原 raw pending flags 保留並另存外部視檢證據。
+新 HTTP／pure／browser meaningful 測試、完整 unit、最低Node22.13相關、source check、strict已接受私人parser／DESIGN lint及必要既有督導訪視／assessment 編輯／assessment history／core／APM CIS／HTTPS 合成 Portal browser。必要子集限定，不宣稱全部 configured fresh。每個原生程序記實際 exit、輸入 source／log SHA；錯誤及修稿原樣保留，不自動重試。每張新1440／390圖實際 view_image，原 raw pending flags 保留並另存外部視檢證據。
 
 只使用 factory 合成 memory fixture／隨機loopback；setup／login／刻意fixture寫入另列。讀取、條件、分頁、403／404／409／422／503、不可信2xx、重試、關閉及context測試均以十一表、六trigger、schema／total_changes／完整raw rows零寫入確認，核閱快照、雙非空BLOB及原非assessment資料保持。
 
-本機整合與瀏覽器完成後才標0.53 implemented_verified。保留306原來源及原失敗／封存證據；凍結QA後metadata另外驗收，再guarded同步。原需求評估分組、選項、必填、評分、正式報表／文件及完整等價仍待核定。
+本機整合與瀏覽器完成後才標0.53 implemented_verified。保留306原來源及原失敗／封存證據；凍結QA後metadata另外驗收，再guarded同步。本輪原180目錄全部欄、九階段、statusCounts／completed0、51舊里程碑、83舊來源前綴及22舊routes保持；只追加本機里程碑／來源／新route，RM-07仍partial。原需求評估分組、選項、必填、評分、正式報表／文件及完整等價仍待核定。

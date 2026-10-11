@@ -1,8 +1,6 @@
 # 證照附件（0.14 獨立本機切片）
 
-> 公開版本文件：記錄此功能版本的設計與驗收條件，並非目前公開副本已執行的驗收證明。私人盤點與 QA 產物未匯出；現行行為以 API.md 與原始碼為準，正式規則及部署仍須核定。
-
-2026-10-08 凍結。依  certification-attachments-v0.14，補既有證照紀錄的本機附件功能；合成資料，不使用原平台、個資、付款、正式部署或外部儲存。必要整合、持久化、瀏覽器及逐圖驗證後才 implemented_verified。原證照完整欄位、資格、年度積分、正式列印與全系統仍 partial/unverified。
+2026-10-08 凍結。依 RM-01 certification-attachments-v0.14，補既有證照紀錄的本機附件功能；合成資料，不使用原平台、個資、付款、正式部署或外部儲存。必要整合、持久化、瀏覽器及逐圖驗證後才 implemented_verified。原證照完整欄位、資格、年度積分、正式列印與全系統仍 partial/unverified。
 
 ## 資料與固定父項
 
@@ -43,8 +41,10 @@ admin/supervisor維護；caregiver有效同機構員工連結，只讀自己的�
 
 history-fields白名單依序certificationId「證照」、employeeId「員工」、title「附件標題」、status「附件狀態」、note「備註」、fileName「檔案名稱」、mimeType「檔案格式」、sizeBytes「檔案大小」、sha256「SHA-256校驗碼」。reference僅目前已授權cert/employee Map，缺名稱不跨scope查取。history「證照附件版本歷程」沿共用owner及版本動作「下載此版本」，不做檔案內文diff。無新CSS，原case卡片與dialogs保持。
 
-## 驗收條件
+## 驗收與追溯
 
 Node：真API生命周期/actor、四角色與跨org、父cert/employee缺失/污染與inactive/revoked、固定父項、fileId全面遮罩、精確版/tuple/metadata/bytes篡改404、25/28版與gap、metadata沿BLOB/replace保留舊bytes、基礎檔型/檔名/base64/精確5MiB及8MiB/一般128KiB邊界。CSRF/CAS/成功idem重送與父項失效重驗、原子rollback無孤兒、6trigger／11表GET零寫、cert/employee/case原附件與版本及核閱billing/fees/payroll不變。臨時合成DB重開與既有schema增量保存實測。
 
 Chromium：真File上傳/metadata/replace/停用恢復/版本下載bytes/hash、四真登入角色/父項scope、不明成功body保File/key重試不增BLOB、真409/503保留及焦點、列表28筆/搜尋/status/分頁、精確舊版與actor/原parent版本不變、history loaded/pending失效及晚download、手機1440/390逐張view_image。fixture只記憶體/臨時DB，全部11表read區間不寫、approved snapshots保持；角色/員工client fixture明記，不冒稱server會員變更。新測試PDF是合成上傳/下載檔，無新生成報表或marker；已有報表回歸沿原provenance/envskip限制。
+
+root全Node與舊13套browser必要回歸，原hardcoded10表assert只能明示加第11表覆核，保留全部原驗收、不降低原條件。原84/52/28/16目錄/順序/來源/status/parity/9階段與0原completed保持；僅原證書頁追加本機證據/localMilestone。0.7至0.13封存不覆寫，0.14新不可覆寫程式/證據快照，完整驗證前維持in_progress。

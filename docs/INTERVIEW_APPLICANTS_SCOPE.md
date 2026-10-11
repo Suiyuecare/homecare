@@ -1,10 +1,10 @@
 # 面試者登錄與紀錄：本機 0.47 驗收範圍
 
-> 公開版本文件：記錄此功能版本的設計與驗收條件，並非目前公開副本已執行的驗收證明。私人盤點與 QA 產物未匯出；現行行為以 API.md 與原始碼為準，正式規則及部署仍須核定。
+狀態：本機獨立八欄子集已驗收；830完整測試、最低Node22.13相關89、必要8套瀏覽器100關與新16圖實際檢視通過。證據見outputs/software/interview-applicants-qa/verification.json。原完整十八欄／流程及正式部署未驗。只在隔離來源與合成資料驗證。
 
-## 範圍與相容性
+## 來源與界線
 
-提供獨立八欄面試登錄；未核定的完整人事流程、列印與外部欄位映射不由本功能推定。本切片為獨立開發的有限子集；不表示原十八欄位、選項、列印、完整流程或 App 已對等。
+對應 RM-07、URL-e0086f013f39 `/interview`、P-18DF7BB3／P-5E7BFD82、FRM-ECBBBEEB。原平台姓名 FLD-54771992、電話 FLD-463A2655、面試內容 FLD-F49B6246 顯示必填記號；未驗證原平台送出規則。面試日期 FLD-AB0F967F、縣市 FLD-3F4E7189、鄉鎮區 FLD-468C210D 僅有觀察證據。本切片為獨立開發的有限子集；不表示原十八欄位、選項、列印、完整流程或 App 已對等。原目錄ID／名稱／URL／來源與九階段依賴保留；驗收完成時依statusLegend及updateProtocol，只將此入口由not_started記為partial／related_only，mappingStatus保持unverified，精確重算該aggregate，其他179列與completed0保持。
 
 ## 資料與 API
 
@@ -26,8 +26,8 @@ GET 閉合查詢只允許 `page pageSize q status interviewDate`，每 key 單�
 
 ## 必要驗收
 
-完整現有 unit、來源檢查與精確最低 Node 22.13.0 相關新測試；HTTP 覆蓋角色／機構／query／歷程／冪等／版本衝突／白空與型別／CRLF 未提交保留／GET 不變及不建立員工帳號。純 adapter 覆蓋 raw 保存、intent、dirty 差異與嚴格 ack。桌機與 390px 手機實際浏览器覆蓋新建、查詢、日期與狀態、分頁、編輯、cancel、確認停用啟用、歷程、操作者、malformed ack 輸入保留及在途 current context；受影響共用列表與 history／CIS／Portal 必要回歸。只對必要範圍標示完成，不宣稱全原平台等同。
+完整現有 unit、來源檢查與精確最低 Node 22.13.0 相關新測試；HTTP 覆蓋角色／機構／query／歷程／冪等／版本衝突／白空與型別／CRLF 未提交保留／GET 不變及不建立員工帳號。純 adapter 覆蓋 raw 保存、intent、dirty 差異與嚴格 ack。桌機與 390px 手機實際浏览器覆蓋新建、查詢、日期與狀態、分頁、編輯、cancel、確認停用啟用、歷程、操作者、malformed ack 輸入保留及在途 current context；受影響共用列表与 history／CIS／Portal 必要回歸。只對必要範圍標示完成，不宣稱全原平台等同。
 
-保留所有初次失敗、修復及原生程序結果與 frozen source hash，截圖須實際看過後單獨保存 visual review。完成後更新 BUILD／PRODUCT／API／追溯／DESIGN／UX，再精確來源歸檔；根目錄未提交檔、真實 DB、env、帳號綁定、私人備份保持。
+保留所有初次失敗、修復及原生程序結果與 frozen source hash，截圖須實際看過後單獨保存 visual review。原 premium auditor 0.46 停滯紀錄保留；如採 0.46 私人一行 parser 修正，保存 provenance／獨立核對，不改外掛或規則，不宣稱原程序通過。完成後更新 BUILD／PRODUCT／API／追溯／DESIGN／UX，再精確來源歸檔；根目錄未提交檔、真實 DB、env、帳號綁定、私人備份保持。
 
 正式 host／HTTPS／雙端 SSO secrets／Portal 發布與本人 UAT 依既有部署交接待辦，DNS 不重建、不購買或正式部署。未核定原其餘十二欄、流程、選項、輸出、資格及聘用規則仍待核定。

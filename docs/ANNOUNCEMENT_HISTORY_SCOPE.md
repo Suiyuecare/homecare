@@ -1,8 +1,6 @@
 # 內部公告版本歷程（0.24 獨立本機切片）
 
-> 公開版本文件：記錄此功能版本的設計與驗收條件，並非目前公開副本已執行的驗收證明。私人盤點與 QA 產物未匯出；現行行為以 API.md 與原始碼為準，正式規則及部署仍須核定。
-
-2026-10-08 凍結，announcement-history-v0.24。沿既有公告 CRUD 與共用唯讀歷程；合成資料，必要整合、瀏覽器及逐張畫面驗證後才標 implemented_verified。
+2026-10-08 凍結，announcement-history-v0.24／RM-07。沿既有公告 CRUD 與共用唯讀歷程；合成資料，必要整合、瀏覽器及逐張畫面驗證後才標 implemented_verified。原公告 URL-4c9bc8a4fa47 仍 partial/unverified，原頁面等價、正式通訊與已讀規則未完成。
 
 ## current 與每版可讀範圍
 
@@ -16,16 +14,16 @@ actor 沿精確同 org/entity/id/version 的 record.create/update 稽核 user �
 
 ## 四欄與共用介面
 
-依序 title「公告標題」、body「公告內容」、audience「閱讀對象」、status「公告狀態」。標題與內容以分開節點的「保存文字：」標記加完整原文呈現，合法字面「未提供」或「非文字保存值；內容未展示。」亦能與缺值／tag辨認；文字保留換行、空白與 literal HTML，用 textContent 安全呈現；空值沿既有 missing/null/空字串合併；公告專屬安全tag表示非文字匯入值，不序列化巢狀內容，tag畫面明示「非文字保存值；內容未展示。」，合法字面「[欄位格式無法判讀]」與tag可區別及比較；隱藏的非文字內文不在比較範圍，畫面不宣稱整份公告沒有變更。其他實體 scalar 規則保持。id/orgId/version/fileId/billingSnapshot、外部訊息與已讀 metadata 不在業務欄位。四欄差異由共用純 helper 比對，只比較已授權 exact 前版，來源不修改。
+依序 title「公告標題」、body「公告內容」、audience「閱讀對象」、status「公告狀態」。標題與內容以分開節點的「保存文字：」標記加完整原文呈現，合法字面「未提供」或「非文字保存值；內容未展示。」亦能與缺值／tag辨認；文字保留換行、空白與 literal HTML，用 textContent 安全呈現；空值沿既有 missing/null/空字串合併；公告專屬安全tag表示非文字匯入值，不序列化巢狀內容，tag畫面明示「非文字保存值；內容未展示。」，合法字面「[欄位格式無法判讀]」與tag可區別及比較；隱藏的非文字內文不在比較範圍，畫面不宣稱整份公告沒有變更。其他實體 scalar 規則保持。id/orgId/version/fileId/billingSnapshot、外部訊息與已讀 metadata 不在業務欄位。四欄差異由共用純 helper 比對，只比較已授权 exact 前版，來源不修改。
 
 audience：all全體同仁、caregiver居服員、supervisor督導、finance財務、admin管理者；status：draft草稿、published已發布至本系統。歷程已知值顯示名稱＋保存代碼，未知字串前置「保存文字：」保留原文，避免合法 all 和字面「全體同仁」混淆；own-property 查表避免 __proto__/constructor/toString 誤當標籤；公告清單相同安全查表。發布與閱讀對象只代表保存狀態／原可讀規則，不宣稱已發送、已讀或外部通知。
 
 沿四角色既有 /announcements 導覽，只在可讀列增加「版本歷程」。admin/supervisor 原新增／編輯／撤回保留；finance/caregiver 只有唯讀操作。沿唯一 admin/listPage、history/openDetails、wide dialog、semantic table、25筆分頁、loading/empty/503 retry/Escape/focus。user/org/role/employee/hash/generation/render 完整 guard；loaded/pending 切換均清空、abort、關閉，晚回應不復活。無新 controller、CSS、token、ui.js、lookup 或外部訊息。
 
-## 驗收條件
+## 驗收與追溯
 
 整合四真角色、active link、current撤回／更換對象撤權、每版 draft／其他對象排除、raw/compare同步、缺口不跳、actor、28版分頁、公用遮罩與原CAS/CSRF/POST冪等；純測四欄白名單、精確保存文字／typed scalar、差異及來源不可變。Chromium真 admin草稿→發布→sup修改→撤回／再發布，finance/caregiver可讀入口、異常字串、長文literal HTML、列表搜尋／狀態／分頁、503 retry、Escape回焦點、1440/390px表格內捲及loaded/pending六類context失效。client context fixtures明示，不冒稱 server membership 撤權；真API撤回與active link另驗。
 
-十一表 raw/count/total_changes 逐唯讀段零寫；真正必要合成寫批次另對帳，雙非空BLOB bytes/SHA、六 immutable triggers、核閱費薪 snapshots及31個報表出口保持。此切片0新PDF/0新operation marker，既有七報表 artifact僅按原腳本程式核對及同artifact修訂，不冒稱本輪人工舊PDF驗收。
+十一表 raw/count/total_changes 逐唯讀段零寫；真正必要合成寫批次另對帳，雙非空BLOB bytes/SHA、六 immutable triggers、核閱費薪 snapshots及31個報表出口保持。原23套browser按原腳本回歸；新與必要 sibling 最終圖逐張 view_image，root另抽查。此切片0新PDF/0新operation marker，既有七報表 artifact僅按原腳本程式核對及同artifact修訂，不冒稱本輪人工舊PDF驗收。
 
-原公告列不變；獨立milestone僅記 related_only，不宣稱原異動／發送／已讀等價。
+actual 4310/SQLite 只唯讀前後核對並正常重啟驗證，不seed或清除。原84URL/52報表/28機構匯出/16模板/359題、順序/status/parity/statusCounts、四來源SHA、九階段及0原completed保持，localReportKinds仍9。原公告列不變；獨立milestone僅記 related_only，不宣稱原異動／發送／已讀等價。0.7–0.23封存保留；0.24另存程式、契約與本輪證據，各新copy核SHA。

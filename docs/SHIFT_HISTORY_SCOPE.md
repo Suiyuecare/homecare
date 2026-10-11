@@ -1,8 +1,6 @@
 # 排班異動與改派歷程切片（0.7）
 
-> 公開版本文件：記錄此功能版本的設計與驗收條件，並非目前公開副本已執行的驗收證明。私人盤點與 QA 產物未匯出；現行行為以 API.md 與原始碼為準，正式規則及部署仍須核定。
-
-本輪為獨立本機、合成資料的唯讀契約。沿用既有單班調整/代班、PATCH版本衝突、不可變record_versions及稽核；不另建改派流程或版本表，不改有服務紀錄不能改派的規則。原總班表及個案班表仍partial/unverified。結構化代班原因/申請核准/通知、批次改派、永久週期、跨夜、資格/額度與正式差勤規則仍未完成。
+本輪為獨立本機、合成資料的唯讀契約。沿用既有單班調整/代班、PATCH版本衝突、不可變record_versions及稽核；不另建改派流程或版本表，不改有服務紀錄不能改派的規則。RM-03、原總班表及個案班表仍partial/unverified。結構化代班原因/申請核准/通知、批次改派、永久週期、跨夜、資格/額度與正式差勤規則仍未完成。
 
 ## 授權與版本可見範圍
 
@@ -26,4 +24,4 @@ actorsByVersion僅對shifts接受同org/entity/recordId及精確detail.version�
 
 Node：真PATCH改派/日期/時段/服務/取消、同機構與四角色、A→B→A與歷史case可讀/不可讀、raw/compare一致過濾、精確前版缺口/頁界、真核閱shift.complete actor及計價快照不變、缺失/歧義/錯scope與錯version操作者、唯讀全counts不增加、既有有服務紀錄改派409、跨機構404、非法compare422。純差異驗白名單與services、不修改來源。
 
-真Chromium：班表與我的服務入口、真實改派差異及授權版本缺口、取消/完成/核閱操作者、保存欄位與目前關聯名稱、26+版本頁界、keyboard/Escape/focus、503重試/慢回應關閉/切機構/換頁、空歷程/名稱不可取得、1440/390畫面逐張檢視，唯讀區段DB total_changes/audit/records/versions/idempotency不變。執行既有全部回歸。必要整合與browser驗證後才標此切片implemented_verified，原不能標完成。
+真Chromium：班表與我的服務入口、真實改派差異及授權版本缺口、取消/完成/核閱操作者、保存欄位與目前關聯名稱、26+版本頁界、keyboard/Escape/focus、503重試/慢回應關閉/切機構/換頁、空歷程/名稱不可取得、1440/390畫面逐張檢視，唯讀區段DB total_changes/audit/records/versions/idempotency不變。執行既有全部回歸。必要整合與browser驗證後才標此切片implemented_verified，原RM-03不能標完成。

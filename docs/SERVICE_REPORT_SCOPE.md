@@ -1,8 +1,6 @@
 # 服務紀錄明細查詢與本機輸出（0.9）
 
-> 公開版本文件：記錄此功能版本的設計與驗收條件，並非目前公開副本已執行的驗收證明。私人盤點與 QA 產物未匯出；現行行為以 API.md 與原始碼為準，正式規則及部署仍須核定。
-
-獨立合成資料本機契約。本輪只讀目前service-records、目前可讀主檔，不新增業務、audit、versions、idempotency或報表工作。不重算/變更核閱計價快照；金額/支付/薪資/評分及原介接規則待核定。保留5個舊report與0.8三個shift-report端點語意，localReportKinds仍5。
+獨立合成資料本機契約。RM-04及原REPORT-c659fa5414c4服務紀錄總表仍partial/unverified；原查詢、正式輸出/分組/計算/簽章/核銷格式未核對。本輪只讀目前service-records、目前可讀主檔，不新增業務、audit、versions、idempotency或報表工作。不重算/變更核閱計價快照；金額/支付/薪資/評分及原介接規則待核定。保留5個舊report與0.8三個shift-report端點語意，localReportKinds仍5。
 
 ## API
 
@@ -32,4 +30,4 @@ CSS仍shared styles owner，generic report-query/report-table輔助共用螢幕/
 
 Node：全部4status/組合/含兩端/366日/strictquery/pagination/排序/全數count和分鐘；>25行聯集=full，CSV同來源；精確1000+2MiB邊界和一超完整拒絕；所有角色/跨org/invalidrefs及目前權限重新核對；actual分鐘與排班/預設時間不相同、實際quantity不繼承plan/shift；409非法legacytime無部分輸出；白名單/CSV公式/引號/中文/換行；草稿→提交→退回→改送→核准真流程升版、後改主檔價格/名稱/時薪但快照不變，舊5reports及0.8三端相容，完整9+表及total_changes唯讀不變。
 
-真Chromium：合成40+紀錄25+頁、狀態/個案/員工/日期清除/零結果/全數分鐘、CSV實際下載bytes比freshAPI、preview後真退回/重送/核閱升版下次列印fresh；缺確認/503/empty/MIME錯/AbortError/slow取消/已載入失效不印/下載，四角色/機構/語意label/nativekeyboard/focus/1440/390。新增單一合成多頁QA PDF，第一次page.pdf前成功marker一次，後續同檔修訂不再marker；文字核對所有row markers/最新版本/分鐘/每頁欄頭/A4邊界、render所有頁並view_image，無背景、方框、裁切或空頁。root獨立跑全Node與所有既有8browser，尤其0.8shift全13 gate/PDF/readonly保持。全部必要通過才0.9 local implemented_verified；保留0.7/0.8immutable快照並新存0.9。
+真Chromium：合成40+紀錄25+頁、狀態/個案/員工/日期清除/零結果/全數分鐘、CSV實際下載bytes比freshAPI、preview後真退回/重送/核閱升版下次列印fresh；缺確認/503/empty/MIME錯/AbortError/slow取消/已載入失效不印/下載，四角色/機構/語意label/nativekeyboard/focus/1440/390。新增單一合成多頁QA PDF，第一次page.pdf前成功marker一次，後續同檔修訂不再marker；文字核對所有row markers/最新版本/分鐘/每頁欄頭/A4邊界、render所有頁並view_image，無背景、方框、裁切或空頁。root獨立跑全Node與所有既有8browser，尤其0.8shift全13 gate/PDF/readonly保持。全部必要通過才0.9 local implemented_verified；保留0.7/0.8immutable快照並新存0.9。原目錄84/52/28/16與來源hash/statusCounts、0completed不變。

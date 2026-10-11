@@ -187,3 +187,29 @@ test('person-aware confirmation retains original full DTO limits raw fields and 
   const whitespace = confirmCalendarLookups([page([raw(0, { name: ' \n ' })])], 'cases', org), selected = calendarPersonSelection({ caseId: 'case-0', employeeId: '' }, { cases: whitespace, employees: [] });
   reject(() => confirmCalendarReport(report({ caseId: 'case-0', employeeId: '' }, selected), week(), '', { caseId: 'case-0', employeeId: '' }), 'CALENDAR_UNCONFIRMED');
 });
+
+test('explicit seven-field person echo accepts only fixed span mode and intersects while legacy five remains identical', () => {
+  const person = { caseId: 'case-0', employeeId: 'employee-0' }, lists = lookups();
+  const legacy = report(person, calendarPersonSelection(person, lists));
+  assert.strictEqual(confirmCalendarPersonSelection(legacy, person, lists), legacy);
+  const explicit = clone(legacy); explicit.filters.spanMode = 'calendar-two-day-v1'; explicit.filters.rangeMode = 'intersects'; freeze(explicit);
+  assert.strictEqual(confirmCalendarPersonSelection(explicit, person, lists), explicit);
+  for (const mutate of [
+    value => { value.filters.spanMode = 'other-mode'; }, value => { value.filters.rangeMode = 'starts'; },
+    value => { delete value.filters.spanMode; }, value => { delete value.filters.rangeMode; },
+    value => { value.filters.unknown = true; }, value => { value.filters.caseId = 'case-1'; },
+    value => { value.selection.employee = 'wrong employee name'; }, value => { value.selection.extra = true; }
+  ]) {
+    const bad = clone(explicit); mutate(bad); reject(() => confirmCalendarPersonSelection(bad, person, lists), 'CALENDAR_PERSON_UNCONFIRMED');
+  }
+});
+
+test('explicit person filter mode accessors and symbols are rejected before getter invocation', () => {
+  const person = { caseId: 'case-0', employeeId: 'employee-0' }, lists = lookups();
+  const value = report(person, calendarPersonSelection(person, lists)); value.filters.spanMode = 'calendar-two-day-v1'; value.filters.rangeMode = 'intersects';
+  for (const key of ['spanMode', 'rangeMode']) {
+    let calls = 0; const bad = clone(value); Object.defineProperty(bad.filters, key, { enumerable: true, get() { calls++; return value.filters[key]; } });
+    reject(() => confirmCalendarPersonSelection(bad, person, lists), 'CALENDAR_PERSON_UNCONFIRMED'); assert.equal(calls, 0);
+  }
+  const symbol = clone(value); symbol.filters[Symbol('extra')] = true; reject(() => confirmCalendarPersonSelection(symbol, person, lists), 'CALENDAR_PERSON_UNCONFIRMED');
+});
