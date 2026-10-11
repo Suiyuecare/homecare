@@ -27,6 +27,10 @@ const roles = ['admin', 'supervisor', 'finance', 'caregiver'];
 const widths = [375, 390, 760, 1023, 1024, 1440];
 const desktop = { width: 1440, height: 1000 }, mobile = { width: 390, height: 844 };
 const routeDefinitions = [
+  ['/account-administration', '帳號與權限', '帳號與權限'],
+  ['/calculations', '計價與薪資試算', '計價與薪資試算'],
+  ['/ltc-codes', 'BA／AA 清冊與試算', 'BA／AA 清冊與試算'],
+  ['/financial-adjustments', '財務更正調整單', '財務更正調整單'],
   ['/surveys', '本機匿名填答與QR', '問卷與 QR 填答'],
   ['/group-overview', '群組營運總覽', '群組營運總覽'],
   ['/service-payroll','服務轉薪資','服務轉薪資'],
@@ -55,6 +59,8 @@ const routeDefinitions = [
   ['/audit', '操作紀錄', '異動紀錄'], ['/help', '使用說明', '使用說明'],
 ];
 const permitted = (role, route) => {
+  if (route === '/account-administration') return role === 'admin';
+  if (['/calculations', '/ltc-codes', '/financial-adjustments'].includes(route)) return ['admin', 'finance'].includes(role);
   if (route === '/surveys') return ['admin', 'supervisor'].includes(role);
   if (route === '/group-overview') return role === 'admin';
   if(route==='/shift-substitution')return ['admin','supervisor','caregiver'].includes(role);
@@ -208,7 +214,7 @@ try {
   assert.equal(app.db.prepare('SELECT COUNT(*) n FROM certification_attachment_files WHERE length(content)>0').get().n, 1);
   assert(app.db.prepare("SELECT data FROM records WHERE entity='service-records'").all().some(row => Object.hasOwn(JSON.parse(row.data), 'billingSnapshot')));
   routeDefinitions.push(['/cases/' + fixture.mainCase.id, fixture.mainCase.name, '個案管理']);
-  assert.equal(routeDefinitions.length, 44);
+  assert.equal(routeDefinitions.length, 48);
   mark('G1 owned memory/random loopback with reusable identical synthetic rows, four real auth roles, BLOBs and approved snapshot');
 
   await readOnly('G2 paired eight-state desktop/mobile capture', async () => {
@@ -229,7 +235,7 @@ try {
   mark('G2 sixteen before/after-comparable viewport screenshots with the same case/shift/personnel/report data and no writes');
 
   if (mode === 'after') {
-    await readOnly('G3 all 42 routes and four role permission boundaries', async () => {
+    await readOnly('G3 all 48 routes and four role permission boundaries', async () => {
       for (const role of roles) {
         const page = actors[role].page; await resize(page, mobile);
         for (const [route, heading, navigationName] of routeDefinitions) {
@@ -251,7 +257,7 @@ try {
         await resize(page, { width, height: width < 1024 ? 844 : 1000 });
         for (const [route, heading] of routeDefinitions) { await load(page, route, heading); await geometry(page, 'admin:' + width + ':' + route); }
       }
-    }); mark('G4 all 42 routes at 375/390/760/1023/1024/1440 stay within the document, retain table scrolling, 44px controls and labelled mobile 16px inputs');
+    }); mark('G4 all 48 routes at 375/390/760/1023/1024/1440 stay within the document, retain table scrolling, 44px controls and labelled mobile 16px inputs');
 
     await readOnly('G5 role-aware finance homepage CTA', async () => {
       const page = actors.finance.page; await resize(page, mobile); await load(page, '/', '今日服務工作台');

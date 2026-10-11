@@ -1,0 +1,8 @@
+# Operator-owned host config. This file does not alter DNS or publish a site.
+# Point the approved hostname at this host only during an authorized release.
+{$HOME_CARE_PUBLIC_HOST} {
+    encode gzip
+    reverse_proxy 127.0.0.1:8080 {
+        header_up Host {host}
+    }
+}

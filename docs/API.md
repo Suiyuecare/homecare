@@ -676,3 +676,16 @@ GET /api/financial-outputs/(billing|payroll)/id-:encodedId?version=N回JSON；�
 ## 0.78.1 SQLite runtime requirement
 
 The current application supports Node.js 22.16+ within 22.x and Node.js 24.x. SQLite `database.isTransaction` is required for the existing atomic write guards. Startup probes only an in-memory database and rejects unsupported runtimes before persistent directory or database creation. Historical 22.13 subset results above are retained as history and do not establish compatibility for the current full application. See [the official Node.js 22.16 SQLite API](https://nodejs.org/download/release/v22.16.0/docs/api/sqlite.html#databaseistransaction).
+
+
+## 0.79 補齊切片
+
+- 帳號管理：`GET /api/account-administration`、`GET /:id`、`GET /:id/history`、`PATCH /:id`；管理者／目前機構，closed DTO、CAS、必要重送鍵、原子撤 session 與歷程。完整欄位與限制見 ACCOUNT_ADMINISTRATION_SCOPE.md。
+- 精確試算：`GET /api/calculations/candidates`、`POST /api/calculations/preview`；管理者／財務、已核定規則及已核閱服務版本，BigInt 精確算式、明確進位、固定來源與 SHA256，零SQL寫入。見 CALCULATION_ENGINE_SCOPE.md。
+- 官方清冊：`GET /api/ltc-codes/catalog`、`POST /api/ltc-codes/preview`；固定官方39碼，人工資格依據、有限同來源條件；月額度及跨紀錄頻次仍待核對。見 LTC_CODE_CALCULATION_SCOPE.md。
+- 更正單：`GET /api/financial-adjustments`、`GET /:id`、`GET /:id/history`、`POST` 建立、`PATCH /:id` 草稿、`POST /:id/submit|review`；管理者／財務，原快照保持、CAS／必要冪等鍵／逐版歷程／來源狀態再驗。見 FINANCIAL_ADJUSTMENTS_SCOPE.md。
+- `GET|HEAD /ready`：固定公開診斷碼、零SQL寫入；合成記憶體探測通過不代表正式儲存／HTTPS／營運容量。見 OPERATIONS_READINESS_SCOPE.md。
+
+Portal十三表加密還原是零參數、合成資料、自有暫存路徑的 CLI，不提供正式還原HTTP接口；安全狀態先清 session、停 binding、換 key，再明確重核 synthetic grant。見 SYNTHETIC_ENCRYPTED_PORTAL_RECOVERY_SCOPE.md。
+
+既有設定 POST `/api/users`、`/api/organizations`、`/api/demo/seed` 在 body 讀完、交易內及快取回執接受前重新驗目前身份、機構與 CSRF；保存列與不可變建立稽核需符合回執，舊內容已變更時回傳 `409 SETTINGS_RECEIPT_STALE`。畫面三個動作都使用內容對應的冪等鍵，改值換鍵，未知 2xx 保留輸入。帳號／機構回覆提供來源機構、實際建立者與建立時間；示範資料的 `requestedBy` 僅表示本次請求人。新增機構後精確確認完整 session 才更新選單，原機構保持選取。詳見 SETTINGS_CREATE_SAFETY_SCOPE.md；舊未帶鍵呼叫與 Portal 模式禁止本機開通的規則保持。

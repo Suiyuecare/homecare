@@ -1,6 +1,6 @@
 {
   "name": "suiyue-home-care",
-  "version": "0.78.1",
+  "version": "0.79.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -8,7 +8,7 @@
   },
   "scripts": {
     "start": "node --env-file-if-exists=.env.portal src/server/index.mjs",
-    "test": "node --test tests/*.test.mjs",
+    "test": "node --test --test-concurrency=2 tests/*.test.mjs",
     "check": "node scripts/check-source.mjs",
     "build": "node scripts/check-source.mjs",
     "test:e2e": "node tests/e2e.mjs",
@@ -105,7 +105,13 @@
     "test:e2e:surveys": "node tests/surveys-e2e.mjs",
     "rehearse:synthetic-encrypted-backup": "node scripts/rehearse-synthetic-encrypted-backup.mjs",
     "test:e2e:feedback": "node tests/feedback-interaction-e2e.mjs",
-    "test:regression": "node scripts/run-regression.mjs"
+    "test:regression": "node scripts/run-regression.mjs",
+    "test:e2e:completion-foundations": "node tests/completion-foundations-e2e.mjs",
+    "test:e2e:financial-adjustments": "node tests/financial-adjustments-e2e.mjs",
+    "rehearse:runtime-probes": "node scripts/rehearse-runtime-probes.mjs",
+    "rehearse:synthetic-encrypted-portal-backup": "node scripts/rehearse-synthetic-encrypted-portal-backup.mjs",
+    "check:runtime-readiness": "node scripts/check-runtime-readiness.mjs",
+    "test:e2e:settings-create-safety": "node tests/settings-create-safety-e2e.mjs"
   },
   "packageManager": "pnpm@11.21.0",
   "devDependencies": {

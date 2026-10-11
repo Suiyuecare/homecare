@@ -1,5 +1,6 @@
 import { createHmac, randomUUID, timingSafeEqual } from 'node:crypto';
 import { audit, fail, initDb, now } from './model.mjs';
+import { accountMembershipActive } from './account-administration.mjs';
 
 export const PORTAL_ORIGIN = 'https://login.suiyuecare.com';
 export const PORTAL_ONLY_PASSWORD = '!portal-only!';
@@ -126,7 +127,7 @@ export function portalMembershipForUser(db, userId) {
     JOIN organizations o ON o.id=b.org_id
     JOIN memberships m ON m.user_id=b.user_id AND m.org_id=b.org_id
     WHERE b.user_id=? AND b.active=1`).get(userId);
-  return row && row.issuer === PORTAL_ORIGIN && row.email === row.current_email && ROLES.has(row.role) ? row : null;
+  return row && row.issuer === PORTAL_ORIGIN && row.email === row.current_email && ROLES.has(row.role) && accountMembershipActive(db, row.org_id, row.user_id) ? row : null;
 }
 
 function resolveBoundIdentity(db, claims) {
@@ -165,8 +166,9 @@ export function consumePortalHandoff(db, config, envelope, createSession, nowSec
 
 export function provisionPortalAccount(db, input, { initializeSchema = false } = {}) {
   const keys = ['organizationName', 'name', 'email', 'issuer', 'googleSubject', 'authUserId', 'role'];
+  if (input?.role === 'caregiver') keys.push('employeeId');
   const shortText = value => typeof value === 'string' && value.trim() === value && value.length >= 1 && value.length <= 200 && !/[\u0000-\u001f\u007f]/.test(value);
-  if (!exactKeys(input, keys) || !shortText(input.organizationName) || !shortText(input.name) || !validEmail(input.email) || input.issuer !== PORTAL_ORIGIN || typeof input.googleSubject !== 'string' || !SUBJECT.test(input.googleSubject) || typeof input.authUserId !== 'string' || !UUID.test(input.authUserId) || !['admin', 'supervisor', 'finance'].includes(input.role)) fail(422, 'PORTAL_PROVISION_INVALID', '帳號開通參數必須明確且有效');
+  if (!exactKeys(input, keys) || !shortText(input.organizationName) || !shortText(input.name) || !validEmail(input.email) || input.issuer !== PORTAL_ORIGIN || typeof input.googleSubject !== 'string' || !SUBJECT.test(input.googleSubject) || typeof input.authUserId !== 'string' || !UUID.test(input.authUserId) || !ROLES.has(input.role) || (input.role === 'caregiver' && (typeof input.employeeId !== 'string' || !UUID.test(input.employeeId)))) fail(422, 'PORTAL_PROVISION_INVALID', '帳號開通參數必須明確且有效');
   return transaction(db, () => {
     // CLI migration and any baseline versions share this transaction with the
     // binding decision. Journal mode is persistent and cannot be rolled back,
@@ -177,6 +179,13 @@ export function provisionPortalAccount(db, input, { initializeSchema = false } =
     const organizations = db.prepare('SELECT * FROM organizations').all();
     if (organizations.length > 1 || (organizations.length === 1 && organizations[0].name !== input.organizationName)) fail(409, 'PORTAL_PROVISION_CONFLICT', '機構或帳號綁定衝突，未變更既有權限');
     let org = organizations[0];
+    const employeeId = input.role === 'caregiver' ? input.employeeId : null;
+    if (employeeId) {
+      const employee = org && db.prepare("SELECT data FROM records WHERE org_id=? AND id=? AND entity='employees'").get(org.id, employeeId);
+      let active = false;
+      try { active = Boolean(employee && JSON.parse(employee.data).status === 'active'); } catch {}
+      if (!active) fail(422, 'PORTAL_PROVISION_INVALID', '居服員帳號須明確連結同機構有效員工');
+    }
     let user = db.prepare('SELECT * FROM users WHERE lower(email)=?').get(input.email);
     const conflicting = db.prepare('SELECT * FROM portal_identity_bindings WHERE google_subject=? OR portal_auth_user_id=? OR email=?').all(input.googleSubject, input.authUserId, input.email);
     if (conflicting.some(binding => binding.issuer !== input.issuer || binding.google_subject !== input.googleSubject || binding.portal_auth_user_id !== input.authUserId || binding.email !== input.email || binding.active !== 1 || !org || binding.org_id !== org.id || !user || binding.user_id !== user.id)) fail(409, 'PORTAL_PROVISION_CONFLICT', '機構或帳號綁定衝突，未變更既有權限');
@@ -184,17 +193,17 @@ export function provisionPortalAccount(db, input, { initializeSchema = false } =
       const existingBinding = db.prepare('SELECT * FROM portal_identity_bindings WHERE user_id=?').get(user.id);
       if (existingBinding && (existingBinding.issuer !== input.issuer || existingBinding.google_subject !== input.googleSubject || existingBinding.portal_auth_user_id !== input.authUserId || existingBinding.email !== input.email)) fail(409, 'PORTAL_PROVISION_CONFLICT', '機構或帳號綁定衝突，未變更既有權限');
       const memberships = db.prepare('SELECT * FROM memberships WHERE user_id=?').all(user.id);
-      if (!org || user.name !== input.name || user.email !== input.email || user.password_hash !== PORTAL_ONLY_PASSWORD || memberships.length !== 1 || memberships[0].org_id !== org.id || memberships[0].role !== input.role || memberships[0].employee_id !== null) fail(409, 'PORTAL_PROVISION_CONFLICT', '機構或帳號綁定衝突，未變更既有權限');
+      if (!org || user.name !== input.name || user.email !== input.email || user.password_hash !== PORTAL_ONLY_PASSWORD || memberships.length !== 1 || memberships[0].org_id !== org.id || memberships[0].role !== input.role || memberships[0].employee_id !== employeeId || !accountMembershipActive(db, org.id, user.id)) fail(409, 'PORTAL_PROVISION_CONFLICT', '機構或帳號綁定衝突，未變更既有權限');
       if (conflicting.length === 1) return { status: 'already-provisioned', organizationId: org.id, userId: user.id, role: input.role, identityBound: true };
     }
     if (!org) { org = { id: randomUUID(), name: input.organizationName }; db.prepare('INSERT INTO organizations VALUES(?,?,?)').run(org.id, org.name, now()); }
     if (!user) {
       user = { id: randomUUID(), name: input.name, email: input.email };
       db.prepare('INSERT INTO users VALUES(?,?,?,?,?)').run(user.id, user.name, user.email, PORTAL_ONLY_PASSWORD, now());
-      db.prepare('INSERT INTO memberships VALUES(?,?,?,?)').run(org.id, user.id, input.role, null);
+      db.prepare('INSERT INTO memberships VALUES(?,?,?,?)').run(org.id, user.id, input.role, employeeId);
     }
     db.prepare('INSERT INTO portal_identity_bindings VALUES(?,?,?,?,?,?,?,?)').run(input.issuer, input.googleSubject, input.authUserId, input.email, user.id, org.id, 1, now());
-    audit(db, { orgId: org.id, user }, 'portal.account.provision', 'users', user.id, { role: input.role, identityBound: true });
+    audit(db, { orgId: org.id, user }, 'portal.account.provision', 'users', user.id, { role: input.role, ...(employeeId ? { employeeId } : {}), identityBound: true });
     return { status: 'created', organizationId: org.id, userId: user.id, role: input.role, identityBound: true };
   });
 }

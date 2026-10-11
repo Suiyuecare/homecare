@@ -13,17 +13,19 @@ const fields = Object.freeze({
   '--google-subject': 'googleSubject',
   '--portal-auth-user-id': 'authUserId',
   '--role': 'role',
+  '--employee-id': 'employeeId',
 });
 
 export function parseProvisionArguments(args) {
-  if (!Array.isArray(args) || args.length !== Object.keys(fields).length * 2) throw new Error('PORTAL_PROVISION_ARGUMENTS_INVALID');
+  if (!Array.isArray(args) || ![16, 18].includes(args.length)) throw new Error('PORTAL_PROVISION_ARGUMENTS_INVALID');
   const result = {};
   for (let i = 0; i < args.length; i += 2) {
     const field = fields[args[i]], value = args[i + 1];
     if (!field || Object.hasOwn(result, field) || typeof value !== 'string' || !value || value.startsWith('--')) throw new Error('PORTAL_PROVISION_ARGUMENTS_INVALID');
     result[field] = value;
   }
-  if (Object.keys(result).length !== Object.keys(fields).length || !path.isAbsolute(result.dbPath) || result.dbPath === ':memory:') throw new Error('PORTAL_PROVISION_ARGUMENTS_INVALID');
+  const required = Object.values(fields).filter(field => field !== 'employeeId');
+  if (!required.every(field => Object.hasOwn(result, field)) || (result.role !== 'caregiver' && Object.hasOwn(result, 'employeeId')) || !path.isAbsolute(result.dbPath) || result.dbPath === ':memory:') throw new Error('PORTAL_PROVISION_ARGUMENTS_INVALID');
   return result;
 }
 

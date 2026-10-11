@@ -35,6 +35,8 @@ Portal producer 必須在 server 端先驗證目前公司登入與唯一已驗�
 
 scripts/provision-portal-account.mjs 僅使用全部明確旗標：--db-path、--organization-name、--name、--email、--issuer、--google-subject、--portal-auth-user-id、--role。資料庫路徑須指向自己控制、已存在的普通檔案且為絕對路徑；不接受 symlink、hardlink 或預設 DB。不要以文件中的假身分替正式帳號開通。
 
+居服員角色另必填 `--employee-id`，必須對應同機構有效員工；其他角色不接受此旗標。重送時完整綁定、目前會員與員工連結均須一致，不以 email 自動取得或擴大角色。帳號管理變更角色／員工／停用狀態會撤銷既有 session，Portal 換票及已送出請求仍重新確認目前生命週期。詳見 ACCOUNT_ADMINISTRATION_SCOPE.md；receiver 與本機開通工具完成不代表正式 Portal producer／grant 已發布。
+
 issuer／verified subject／Auth UUID／小寫 email／本模組機構與角色需先核定。重送同值可確認既有 binding，衝突拒絕，不覆寫另一人或擴大既有角色。binding 為單一機構明確授權，不借用其他模組 company UUID；CLI 不寄信、不登入公司帳號、不取得 Google 身分、不發布 Portal grant。真實身分不得放入測試 fixture、公開 log 或 Git。
 
 ## 部署驗收清單

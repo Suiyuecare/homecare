@@ -110,11 +110,16 @@
     "legacyReportMonthSafety",
     "syntheticBackup",
     "syntheticBackupRehearsal",
-    "portalSyntheticBackupRehearsal"
+    "portalSyntheticBackupRehearsal",
+    "completionFoundations",
+    "financialAdjustments",
+    "runtimeProbes",
+    "syntheticEncryptedPortalBackup",
+    "settingsCreateSafety"
   ],
   "commands": {
     "check": "node scripts/check-source.mjs",
-    "unit": "node --test tests/*.test.mjs",
+    "unit": "node --test --test-concurrency=2 tests/*.test.mjs",
     "e2e": "node tests/e2e.mjs",
     "personnel": "node tests/personnel-e2e.mjs",
     "history": "node tests/history-e2e.mjs",
@@ -206,7 +211,12 @@
     "legacyReportMonthSafety": "node tests/legacy-report-month-safety-e2e.mjs",
     "syntheticBackup": "node tests/synthetic-backup-e2e.mjs",
     "syntheticBackupRehearsal": "node scripts/rehearse-synthetic-backup.mjs",
-    "portalSyntheticBackupRehearsal": "node scripts/rehearse-synthetic-portal-backup.mjs"
+    "portalSyntheticBackupRehearsal": "node scripts/rehearse-synthetic-portal-backup.mjs",
+    "completionFoundations": "node tests/completion-foundations-e2e.mjs",
+    "financialAdjustments": "node tests/financial-adjustments-e2e.mjs",
+    "runtimeProbes": "node scripts/rehearse-runtime-probes.mjs",
+    "syntheticEncryptedPortalBackup": "node scripts/rehearse-synthetic-encrypted-portal-backup.mjs",
+    "settingsCreateSafety": "node tests/settings-create-safety-e2e.mjs"
   },
   "evidence": {
     "crudFullFlow": "tests/e2e.mjs",
@@ -255,6 +265,11 @@
     "legacyReportMonthSafety": "tests/legacy-report-month-safety-e2e.mjs",
     "syntheticBackup": "tests/synthetic-backup-e2e.mjs",
     "syntheticBackupRehearsal": "scripts/rehearse-synthetic-backup.mjs",
-    "portalSyntheticBackupRehearsal": "scripts/rehearse-synthetic-portal-backup.mjs"
+    "portalSyntheticBackupRehearsal": "scripts/rehearse-synthetic-portal-backup.mjs",
+    "completionFoundations": "tests/completion-foundations-e2e.mjs",
+    "financialAdjustments": "tests/financial-adjustments-e2e.mjs",
+    "runtimeProbes": "scripts/rehearse-runtime-probes.mjs",
+    "syntheticEncryptedPortalBackup": "scripts/rehearse-synthetic-encrypted-portal-backup.mjs",
+    "settingsCreateSafety": "tests/settings-create-safety-e2e.mjs"
   }
 }
