@@ -122,6 +122,9 @@ const json = async (route, options) => (await api(route, options)).json();
 const sessionExpiry = (db, cookie) => { const token = cookie.value; return db.prepare('SELECT expires_at FROM sessions WHERE token_hash=?').get(sha(token))?.expires_at; };
 const workspaceVisible = async () => {
   await page.getByRole('heading', { name: '今日服務工作台', level: 1, exact: true }).waitFor();
+  // The heading appears before dashboard and reference reads finish. Require the
+  // completed workspace before snapshots, revocation, reload or backend changes.
+  await page.getByRole('region', { name: '工作摘要', exact: true }).waitFor();
   assert.equal(await page.locator('input[type=password]').count(), 0);
   assert(!/[?&](payload|signature|token)=/.test(page.url()));
 };
@@ -340,6 +343,10 @@ try {
   if (page && !page.isClosed()) await page.screenshot({ path: path.join(output, 'failure.png'), fullPage: false }).catch(() => {});
   const errorSha256 = sha(error.stack || error.message || String(error));
   const locations = (error.stack || '').split('\n').filter(line => /^\s*at /.test(line) && /\.m?js:\d+/.test(line)).map(line => line.trim());
+  const sourcePoints = locations.map(line => line.match(/(tests\/[a-z0-9/-]+\.mjs):(\d+):(\d+)/))
+    .filter(Boolean).map(match => ({ file: match[1], line: Number(match[2]), column: Number(match[3]) }));
+  // Code locations only: never emit error values, identities, cookies or keys.
+  console.log('Synthetic Portal failure source points: ' + JSON.stringify(sourcePoints));
   await writeFile(path.join(output, 'e2e.json'), JSON.stringify({ passed: false, completedAt: new Date().toISOString(), executionRoot: root, nodeVersion: process.version,
     checks, screenshots, readSegments, sourceOracleReads, writeSegments, apiChecks, csvChecks, blobDownloads, deniedChecks, sourceHashesBefore, sourceHashesAfter: await collectSources().catch(() => null),
     failure: { stage, code: error.code || 'E2E_FAILURE', name: error.name, errorSha256, locations }, pageErrors, consoleErrors, gatewayErrors: gateway?.errors || [],
