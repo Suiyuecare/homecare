@@ -1,4 +1,9 @@
 import { mountSurveys } from './surveys.js';
+import { mountAccountAdministration } from './account-administration.js';
+import { mountCalculations } from './calculations.js';
+import { mountLtcCodes } from './ltc-codes.js';
+import { mountFinancialAdjustments } from './financial-adjustments.js';
+import { buildSettingsUser, buildSettingsOrganization, confirmSettingsUser, confirmSettingsOrganization, confirmSettingsDemo, confirmSettingsSession, settingsPayloadKey } from '../data/settings-create-core.js';
 import { mountGroupOverview } from './group-overview.js';
 import { spanRecordText } from '../data/shift-span-editor.js';
 import { mountBusinessRules } from './business-rules.js';
@@ -26,7 +31,7 @@ import { openEmployeeRecordIndex } from './employee-record-index.js';
 import {
   api, el, pageHeader, table, badge, button, openForm, confirmAction,
   toast, formatDate, formatMoney, today, getContext, fetchAll,
-  searchBox, pagination, errorState, downloadCsv, refreshSession, openDetails,
+  searchBox, pagination, errorState, downloadCsv, setContext, openDetails,
 } from '../ui.js';
 import { setPersonnelEmployeeFilter } from './personnel.js';
 import { openPersonalCalendarMonth } from './personal-calendar-month.js';
@@ -1129,6 +1134,13 @@ async function reports(container, alive) {
 
 async function settings(container, alive) {
   const context = getContext();
+  const startedHash = location.hash;
+  const identity = () => { const c = getContext(); return JSON.stringify([c.user?.id, c.organizationId || c.orgId, c.role, c.user?.employeeId, c.authMode, c.csrfToken]); };
+  const startedIdentity = identity();
+  const current = () => alive() && container.isConnected && getContext() === context && location.hash === startedHash && identity() === startedIdentity;
+  const assertCurrent = () => { if (!current()) throw new DOMException('操作已取消，請重新讀取資料。', 'AbortError'); };
+  const scope = { orgId: context.organizationId || context.orgId, userId: context.user?.id };
+  const headers = { 'X-Org-Id': scope.orgId, 'X-CSRF-Token': context.csrfToken };
   const portalManaged = context.authMode === 'portal';
   const organization = context.organizations?.find(item => item.id === context.organizationId || item.id === context.orgId);
   const info = el('section', { class: 'panel' }, el('h2', {}, '目前帳號與機構'),
@@ -1140,32 +1152,86 @@ async function settings(container, alive) {
   container.replaceChildren(pageHeader('機構與帳號設定', portalManaged ? '查看公司入口帳號與目前機構的存取角色。' : '管理本機測試版的機構、存取角色與示範資料。', []), info);
   if (context.role !== 'admin') { container.append(note('只有管理者可新增機構、帳號或示範資料。')); return; }
   const [users, employees] = await Promise.all([fetchAll('users'), fetchAll('employees')]);
-  if (!alive()) return;
-  const refresh = () => settings(container, alive);
-  const newUser = () => openForm({
+  if (!current()) return;
+  const refresh = async focusLabel => {
+    if (!current()) return;
+    const generation = Number(container.dataset.settingsRefresh || 0) + 1;
+    container.setAttribute('aria-busy', 'true');
+    try { await settings(container, alive); }
+    catch (error) { if (current() && error.name !== 'AbortError') container.append(errorState(error, () => refresh(focusLabel))); }
+    // The shared dialog restores its trigger on the queued close event. Allow
+    // that event to settle before returning focus to the replacement control.
+    await new Promise(resolve => requestAnimationFrame(resolve));
+    if (current()) {
+      container.removeAttribute('aria-busy');
+      container.dataset.settingsRefresh = String(generation);
+      [...container.querySelectorAll('button')].find(node => node.textContent === focusLabel)?.focus();
+    }
+  };
+  const newUser = async () => {
+    if (!current()) return;
+    const keyFor = settingsPayloadKey();
+    const saved = await openForm({
     title: '新增系統帳號',
-    fields: [field('name', '使用者姓名', 'text', { required: true }), field('email', '登入電子郵件', 'email', { required: true }),
-      field('password', '初始密碼', 'password', { required: true, minLength: 12, help: '至少 12 個字元。' }),
+    fields: [field('name', '使用者姓名', 'text', { required: true, maxLength: 200 }), field('email', '登入電子郵件', 'email', { required: true, maxLength: 254 }),
+      field('password', '初始密碼', 'password', { required: true, minLength: 12, maxLength: 512, help: '至少 12 個字元。' }),
       field('role', '存取角色', 'select', { required: true, options: options(ROLE) }),
       field('employeeId', '連結員工', 'select', { options: [{ value: '', label: '不連結' }, ...selectedOptions(employees.filter(person => person.status === 'active'))], help: '居服員帳號必須連結本機構員工。' })],
     initial: { role: 'caregiver', employeeId: '' },
-    onSubmit: async values => {
-      if (values.password.length < 12) throw new Error('初始密碼至少需要 12 個字元。');
-      if (values.role === 'caregiver' && !values.employeeId) throw new Error('居服員帳號必須選擇連結員工。');
-      const data = { ...values }; if (!data.employeeId) delete data.employeeId;
-      await api('/api/users', { method: 'POST', body: data });
-      toast('系統帳號已新增', 'success'); await refresh();
+    isCurrent: current, returnSubmitResult: true,
+    onSubmit: async (values, owner) => {
+      assertCurrent(); const payload = buildSettingsUser(values);
+      const result = await api('/api/users', { method: 'POST', body: payload, headers: { ...headers, 'Idempotency-Key': keyFor(payload) }, signal: owner.signal });
+      assertCurrent(); if (!owner.isCurrent()) throw new DOMException('操作已取消。', 'AbortError');
+      return confirmSettingsUser(result, scope, payload);
     },
   });
-  const newOrganization = () => openForm({
-    title: '新增機構', fields: [field('name', '機構名稱', 'text', { required: true, wide: true })], initial: {},
-    onSubmit: async values => {
-      await api('/api/organizations', { method: 'POST', body: values });
-      toast('機構已新增，正在更新機構選單', 'success');
-      await refreshSession();
-      if (alive()) await refresh();
-    },
-  });
+    if (saved && current()) { toast('系統帳號已新增', 'success'); await refresh('新增帳號'); }
+  };
+  const newOrganization = async () => {
+    if (!current()) return;
+    const keyFor = settingsPayloadKey();
+    const saved = await openForm({
+      title: '新增機構', fields: [field('name', '機構名稱', 'text', { required: true, wide: true, maxLength: 200 })], initial: {},
+      isCurrent: current, returnSubmitResult: true,
+      onSubmit: async (values, owner) => {
+        assertCurrent(); const payload = buildSettingsOrganization(values);
+        const result = await api('/api/organizations', { method: 'POST', body: payload, headers: { ...headers, 'Idempotency-Key': keyFor(payload) }, signal: owner.signal });
+        assertCurrent(); if (!owner.isCurrent()) throw new DOMException('操作已取消。', 'AbortError');
+        return confirmSettingsOrganization(result, scope, payload);
+      },
+    });
+    if (!saved || !current()) return;
+    toast('機構已新增，正在更新機構選單', 'success');
+    const controller = new AbortController();
+    const invalidate = () => { if (!current()) controller.abort(); };
+    const observer = new MutationObserver(invalidate); observer.observe(document.body, { childList: true, subtree: true });
+    window.addEventListener('hashchange', invalidate); window.addEventListener('session-updated', invalidate);
+    try {
+      const session = await api('/api/session', { headers, signal: controller.signal }); assertCurrent();
+      confirmSettingsSession(session, scope, saved, context.user, context.csrfToken);
+      setContext(session, scope.orgId); window.dispatchEvent(new Event('session-updated'));
+      if (location.hash === startedHash && getContext().user?.id === scope.userId) document.querySelector('main h1')?.focus();
+    } catch (error) {
+      if (current() && error.name !== 'AbortError') container.append(errorState(new Error('機構已保存，但機構選單尚未確認；請重新整理登入資料後核對。'), () => location.reload()));
+    } finally { observer.disconnect(); window.removeEventListener('hashchange', invalidate); window.removeEventListener('session-updated', invalidate); }
+  };
+  const seedKeyFor = settingsPayloadKey();
+  const seed = async () => {
+    if (!current()) return;
+    const confirmed = await confirmAction({
+      title: '將示範資料加入目前機構',
+      message: `將在「${organization?.name || '目前機構'}」加入合成測試資料。這些資料會保存在本機資料庫；確認此機構適合進行測試後再繼續。`,
+      confirmLabel: '確認加入示範資料', danger: false, isCurrent: current,
+      onConfirm: async owner => {
+        assertCurrent(); const payload = {};
+        const result = await api('/api/demo/seed', { method: 'POST', body: payload, headers: { ...headers, 'Idempotency-Key': seedKeyFor(payload) }, signal: owner.signal });
+        assertCurrent(); if (!owner.isCurrent()) throw new DOMException('操作已取消。', 'AbortError');
+        confirmSettingsDemo(result, scope);
+      },
+    });
+    if (confirmed && current()) { toast('示範資料已備妥', 'success'); await refresh('建立合成示範資料'); }
+  };
   const peopleById = lookup(employees);
   container.append(el('section', { class: 'panel' },
     el('div', { class: 'section-heading' }, el('h2', {}, '機構帳號'), portalManaged
@@ -1176,12 +1242,7 @@ async function settings(container, alive) {
       { label: '連結員工', render: row => peopleById.get(row.employeeId)?.name || '未連結' }], users, { emptyText: '目前沒有其他帳號。' })),
     el('section', { class: 'panel' }, el('h2', {}, '示範資料'),
       note('新增一組完全合成的個案、人員與作業資料，供測試流程。已有示範資料時不會重複建立。'),
-      button('建立合成示範資料', () => confirmAction({
-        title: '將示範資料加入目前機構',
-        message: `將在「${organization?.name || '目前機構'}」加入合成測試資料。這些資料會保存在本機資料庫；確認此機構適合進行測試後再繼續。`,
-        confirmLabel: '確認加入示範資料', danger: false,
-        onConfirm: async () => { await api('/api/demo/seed', { method: 'POST', body: {} }); toast('示範資料已備妥', 'success'); await refresh(); },
-      }), { variant: 'outline' })));
+      button('建立合成示範資料', seed, { variant: 'outline' })));
 }
 
 async function audit(container, alive) {
@@ -1201,6 +1262,10 @@ async function audit(container, alive) {
 }
 
 const routes = {
+  '/financial-adjustments': (container, alive) => mountFinancialAdjustments(container, { isCurrent: alive }),
+  '/ltc-codes': (container, alive) => mountLtcCodes(container, { isCurrent: alive }),
+  '/account-administration': (container, alive) => mountAccountAdministration(container, { isCurrent: alive }),
+  '/calculations': (container, alive) => mountCalculations(container, { isCurrent: alive }),
   '/surveys': (container, alive) => mountSurveys(container, { isCurrent: alive }),
   '/group-overview': (container, alive) => mountGroupOverview(container, { isCurrent: alive }),
   '/shift-series': (container, alive) => mountShiftSeries(container, {isCurrent: alive}),

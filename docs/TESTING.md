@@ -14,6 +14,8 @@ pnpm test
 
 `check` 檢查 JavaScript 語法；`test` 執行程式測試。這些命令使用測試自行建立的合成資料與暫存或記憶體資料庫，不需要正式帳號、私人 `.env.portal`、既有資料庫或原平台憑證。安裝開發依賴不代表發布服務。
 
+0.79 的完整程式測試在本機與 CI 明確使用 `--test-concurrency=2`，仍執行全部 `tests/*.test.mjs`，所有斷言、子程序與瀏覽器逾時限制保持原樣。此設定限制同時執行的測試檔數，避免大量 SQLite／密碼運算及子程序爭用主機；原資源壓力下的逾時紀錄保留，不改寫為通過。
+
 ## 瀏覽器測試
 
 先安裝 Playwright 的 Chromium；Linux CI 可連同系統依賴安裝：
@@ -66,7 +68,7 @@ Python 套件可安裝在自行管理的虛擬環境。Poppler 請透過作業�
 pnpm test:e2e:visual-refresh
 ```
 
-此套使用API建立合成資料與隨機記憶體服務，涵蓋四角色23頁、六種管理者寬度、44px主要動作、16px手機輸入、導覽／Escape／焦點、空資料、失敗重試與輸入保留；完整業務表／附件及核閱快照唯讀比對。預設只驗目前原始碼，不需要私人fixture或正式帳號。產生的16張畫面必須另做真實像素檢視。共用樣式大幅改動時需重驗premium-ui.json全部配置及七種PDF報表。
+此套使用API建立合成資料與隨機記憶體服務，涵蓋48個登錄頁面、四角色及六種管理者寬度、44px主要動作、16px手機輸入、導覽／Escape／焦點、空資料、失敗重試與輸入保留；完整業務表／附件及核閱快照唯讀比對。預設只驗目前原始碼，不需要私人fixture或正式帳號。產生的16張主要畫面必須另做真實像素檢視，不能稱48頁逐張截圖。共用樣式大幅改動時需重驗premium-ui.json全部配置及七種PDF報表。
 
 員工三類保存紀錄索引合成瀏覽器驗證：`pnpm test:e2e:employee-record-index`。來源契約見 `docs/EMPLOYEE_RECORD_INDEX_SCOPE.md`；僅記憶體資料庫與隨機loopback。
 
@@ -79,14 +81,26 @@ pnpm test:e2e:visual-refresh
 Service item current saved details (0.62): `pnpm test:e2e:service-item-record-details` exercises the existing three-role service list, fresh exact-ID reads, eight complete saved fields, trial cents and raw default minutes, read-only database checks, malformed responses, cancellation and desktop/mobile reading. Synthetic fixtures only; local checks and CI do not establish formal hosting, HTTPS, Portal publishing or real-company UAT.
 
 
-## 全系統回歸（0.78）
+## 全系統回歸（0.79）
 
 `pnpm test:regression` 執行 premium-ui.json 除 check／unit 外全部配置，包含合成加密還原；一次性口令由程序生成後經 stdin 送給工廠自有演練，無 argv／環境秘密。check／unit 仍分别用 pnpm check／pnpm test。
 
-CI 使用 Node22.16與24各跑完整程式測試，以六組覆蓋全部瀏覽器／還原配置，包含 PDF 所需 Python／Poppler 與中文字型。單一 shard 失敗不略過同組其餘測試。結果及 raw log 不公開為 workflow artifacts。
+CI 使用 Node22.16與24各跑完整程式測試，以六組覆蓋全部瀏覽器／還原配置，包含 PDF 所需 Python／Poppler 與中文字型。單一 shard 失敗不略過同組其餘測試。Artifacts只收錄白名單合成結果與圖片；新功能的結果只在成功時上傳，trace限stage／url／method，不含請求body、密碼或回執鍵。原始log、fixture、資料庫、秘密與私人證據不公開。
 
 新回歸 `test:e2e:feedback` 包含三種按鈕、桌機與390px、一般／減少動態、通知下方真點擊及鍵盤、紙本白底及螢幕色保持。權限窗口以真 HTTP 在 body await 撤權／退籍／登出，驗證拒絕與十一表、六trigger、total_changes零後續寫入。
 
 The manual **Report diagnostics** workflow runs the four compact report suites directly with the same Linux PDF dependencies, so a failing assertion appears in its native job log. The normal push workflow still runs all configured commands. Synthetic encrypted rehearsal logs are excluded from failure-tail diagnostics.
 
-常態配置共94命令：來源與程式測試由兩個Node作業驗證，六組互斥執行其餘92命令。舊報表月份安全、十一表合成還原瀏覽器、一般合成備份演練與Portal合成備份演練均納入；不啟動正式服務、讀取操作員資料庫或執行帳號開通命令。
+常態配置共99命令、98必要命令：來源與程式測試由兩個Node作業驗證，六組互斥執行其餘97命令，包含選用的請假歷程。舊報表月份安全、帳號生命週期、兩套唯讀試算、財務更正與設定頁安全、十一表及十三表合成還原、就緒探測均納入；不啟動正式服務、讀取操作員資料庫或執行帳號開通命令。
+
+
+## 重跑前保留舊證據
+
+部分舊測試使用固定QA目錄，為保護既有產物會在重跑時拒絕覆寫。完整重跑前，先停止本輪擁有的測試程序，逐檔記錄並核對舊 outputs 的 SHA256，再將它完整移到專案以外自己控制的私人封存目錄；重新使用乾淨 outputs 執行原命令。保存原結果、原生退出碼與新批次來源雜湊，不刪除舊證據、不關閉守衛，也不把啟動前的保護拒絕說成產品斷言通過。公開CI每個作業從新clone取得乾淨目錄。
+
+
+## 0.80 接續補齊的驗收
+
+人工部分回應及群組逐機構有效帳號守門需在整合來源執行程式、HTTP及桌機／手機browser。原部分金額accepted仍拒絕；新增partial具精確範圍與必填說明，部分不能closed、v1舊匯出不變、v2差額可核對、累計取代不重加、過時／撤權重送不寫入。選取的其他機構被停用但仍保留admin membership時，完整總覽／明細／CSV／列印拒絕，壞head閉鎖且GET零寫入；明確復職後才可重查。
+
+完整公開回歸由同提交的Homecare checks核對兩版Node及所有配置runtime；結果取實際logs與native results，不挪用0.79完整回歸數字。既有原始失敗、fixture修正、安裝缺依賴及舊輸出守衛紀錄皆保留。個案／帳單及十三表schema、原歷程、私人data／binding不由測試變更；測試只用合成隔離資料。

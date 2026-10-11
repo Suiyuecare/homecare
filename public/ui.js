@@ -421,7 +421,7 @@ export function confirmAction({ title, message, confirmLabel = '確認', danger 
     }
   });
 }
-export function createForm({ fields, initial = {}, onSubmit, onChange, submitLabel = '儲存', onCancel, cancelLabel = '取消', onPreview, previewLabel = '預覽', previewInstruction = '請先預覽，確認日期與衝突後再建立。', previewRequiredMessage = '請先重新預覽並處理衝突，再建立全部班次。', lockDuringSubmit = false }) {
+export function createForm({ fields, initial = {}, onSubmit, onChange, submitLabel = '儲存', onCancel, cancelLabel = '取消', onPreview, previewLabel = '預覽', previewInstruction = '請先預覽，確認日期與衝突後再建立。', previewRequiredMessage = '請先重新預覽並處理衝突，再建立全部班次。', lockDuringSubmit = false, readOnlySubmission = false }) {
   const form = el('form', { noValidate: true, class: 'app-form' });
   const summary = el('div', { class: 'form-summary', role: 'alert', hidden: true });
   const grid = el('div', { class: 'form-grid' }); const controls = new Map(); const errors = new Map(); const descriptors = new Map(); const groups = new Map(); const hiddenControls = new Map();
@@ -465,7 +465,7 @@ export function createForm({ fields, initial = {}, onSubmit, onChange, submitLab
     for (const item of descendants) item.disabled = true;
   };
   const setHidden = (name, hidden) => {
-    const group = groups.get(name), control = controls.get(name); if (!group || !control || busy) return;
+    const group = groups.get(name), control = controls.get(name); if (!group || !control || (busy && !(readOnlySubmission === true && !onPreview && !lockDuringSubmit))) return;
     hidden = Boolean(hidden); if (group.hidden === hidden) return;
     group.hidden = hidden;
     if (hidden) {
@@ -614,36 +614,44 @@ export function openForm(config) {
     const controller = new AbortController();
     const current = () => !controller.signal.aborted && dialog.isConnected && dialog.open && (!guarded || config.isCurrent());
     const guard = () => { if (guarded && !current()) throw new DOMException('操作已取消，請重新讀取資料確認保存狀態。', 'AbortError'); };
+    let observer, invalidate = () => {}, cleaned = false;
     const close = async () => {
       if (form.isBusy()) return;
       form.cancelPreview();
       if (form.isDirty()) { const discard = await confirmAction({ title: '放棄未儲存的內容？', message: '關閉後，這次輸入的內容不會儲存。', confirmLabel: '放棄修改', danger: true, ...(guarded ? { signal: controller.signal } : {}) }); if (!discard) return; }
       if (guarded && !current()) return;
       dialog.close();
+      cleanup();
     };
     const form = createForm({ ...config, lockDuringSubmit: guarded || config.lockDuringSubmit === true, onCancel: close, onSubmit: async data => {
       guard(); const result = await config.onSubmit(data, guarded ? { signal: controller.signal, isCurrent: current } : undefined); guard();
       if (config.keepOpenOnFalse === true && result === false) return false;
-      dialog.close('saved'); resolve(config.returnSubmitResult === true ? result : data);
+      dialog.close('saved'); cleanup(); resolve(config.returnSubmitResult === true ? result : data);
     } });
-    const guardUnload = event => { if (form.isDirty()) { event.preventDefault(); event.returnValue = ''; } };
+    const guardUnload = event => { if (current() && form.isDirty()) { event.preventDefault(); event.returnValue = ''; } };
     window.addEventListener('beforeunload', guardUnload);
     const guardBusyEscape = event => { if (current() && form.isBusy() && event.key === 'Escape' && !event.isComposing) event.preventDefault(); };
     if (guarded) document.addEventListener('keydown', guardBusyEscape, true);
-    dialog.addEventListener('close', () => { if (guarded) document.removeEventListener('keydown', guardBusyEscape, true); window.removeEventListener('beforeunload', guardUnload); form.cancelPreview(); }, { once: true });
+    const cleanup = () => {
+      if (cleaned) return; cleaned = true;
+      if (guarded) document.removeEventListener('keydown', guardBusyEscape, true);
+      window.removeEventListener('beforeunload', guardUnload); form.cancelPreview();
+      controller.abort(); observer?.disconnect();
+      window.removeEventListener('hashchange', invalidate); window.removeEventListener('session-updated', invalidate);
+    };
+    dialog.addEventListener('close', cleanup, { once: true });
     dialog.append(form); dialog.addEventListener('cancel', event => { event.preventDefault(); close(); });
     dialog.addEventListener('close', () => resolve(false), { once: true }); dialog.showModal();
     if (guarded) {
       let invalidated = false;
-      const invalidate = () => {
+      invalidate = () => {
         if (invalidated || current()) return;
         invalidated = true;
-        controller.abort(); form.cancelPreview(); dialog.replaceChildren(); dialog.close();
+        cleanup(); dialog.replaceChildren(); dialog.close();
       };
-      const observer = new MutationObserver(invalidate);
+      observer = new MutationObserver(invalidate);
       observer.observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-render-version'] });
       window.addEventListener('hashchange', invalidate); window.addEventListener('session-updated', invalidate);
-      dialog.addEventListener('close', () => { controller.abort(); observer.disconnect(); window.removeEventListener('hashchange', invalidate); window.removeEventListener('session-updated', invalidate); }, { once: true });
       invalidate();
     }
     (form.querySelector('input,select,textarea') || dialog).focus();

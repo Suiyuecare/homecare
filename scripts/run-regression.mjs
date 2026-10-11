@@ -13,7 +13,7 @@ export function regressionShard(commands, shard = '1/1') {
   const all = Object.entries(commands).filter(([name]) => !['unit', 'check'].includes(name));
   return all.filter((_, offset) => offset % total === index - 1).map(([name, command]) => {
     // No shell, environment file, provisioning command or operator database path.
-    if (!/^node (?:tests\/[a-z0-9-]+\.mjs|scripts\/rehearse-synthetic(?:-portal|-encrypted)?-backup\.mjs)$/u.test(command)) {
+    if (!/^node (?:tests\/[a-z0-9-]+\.mjs|scripts\/(?:rehearse-synthetic(?:-portal|-encrypted|-encrypted-portal)?-backup|rehearse-runtime-probes)\.mjs)$/u.test(command)) {
       throw new Error('Unsupported regression command: ' + name);
     }
     return { name, file: command.slice(5) };

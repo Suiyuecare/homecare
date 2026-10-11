@@ -3,6 +3,7 @@ import { billingDocumentVisible, billingDocumentAmount } from './billing-documen
 /** Offline company data and manually recorded replies. No official filing or dispatch. */
 export const claimBatchEntity = 'claim-batches';
 export const claimBatchFormat = 'local-homecare-claim-v1';
+export const claimBatchPartialFormat = 'local-homecare-claim-v2';
 export const claimBatchEntities = {
   [claimBatchEntity]: {
     fields: 'month number billingDocumentIds sourceReference responseSourceReference responses status note',
@@ -58,11 +59,11 @@ export function claimBatchSummary(sources, responses, fail) {
   for (const response of responses) {
     const source = response && sourceMap.get(response.billingDocumentId);
     if (!keys(response, responseKeys) || !source || responseMap.has(response.billingDocumentId)
-      || !text(response.reference, 2000, true) || !['accepted', 'rejected', 'pending'].includes(response.status)
+      || !text(response.reference, 2000, true) || !['accepted', 'partial', 'rejected', 'pending'].includes(response.status)
       || !money(response.amountCents) || !text(response.reason, 10000)
-      || (response.status === 'accepted' ? response.amountCents !== source.amountCents : response.amountCents !== 0)
-      || (response.status === 'rejected' && !response.reason.trim()))
-      fail(422, 'INVALID_RESPONSES', '請核對回應來源、依據、結果與精確金額；退件須填原因', { responses: '接受金額须等來源；退件與待定填0，退件原因必填' });
+      || (response.status === 'accepted' ? response.amountCents !== source.amountCents : response.status === 'partial' ? response.amountCents <= 0 || response.amountCents >= source.amountCents : response.amountCents !== 0)
+      || (['partial', 'rejected'].includes(response.status) && !response.reason.trim()))
+      fail(422, 'INVALID_RESPONSES', '請核對回應來源、依據、結果與精確金額；部分核付與退件須填說明', { responses: '全額接受須等來源；部分核付須大於0且小於原額、說明必填；退件與待定填0' });
     responseMap.set(response.billingDocumentId, response);
   }
   const total = { amountCents: 0n, acceptedAmountCents: 0n, rejectedAmountCents: 0n, pendingAmountCents: 0n, unansweredAmountCents: 0n };
@@ -70,7 +71,11 @@ export function claimBatchSummary(sources, responses, fail) {
     if (!money(source.amountCents)) fail(409, 'CLAIM_DATA_INVALID', '來源金額無法確認');
     const amount = BigInt(source.amountCents), response = responseMap.get(source.billingDocumentId);
     total.amountCents += amount;
-    total[!response ? 'unansweredAmountCents' : response.status === 'accepted' ? 'acceptedAmountCents' : response.status === 'rejected' ? 'rejectedAmountCents' : 'pendingAmountCents'] += amount;
+    if (response?.status === 'partial') {
+      // Each response records a cumulative fact, not another payment event.
+      total.acceptedAmountCents += BigInt(response.amountCents);
+      total.pendingAmountCents += amount - BigInt(response.amountCents);
+    } else total[!response ? 'unansweredAmountCents' : response.status === 'accepted' ? 'acceptedAmountCents' : response.status === 'rejected' ? 'rejectedAmountCents' : 'pendingAmountCents'] += amount;
     if (total.amountCents > BigInt(Number.MAX_SAFE_INTEGER)) fail(422, 'AMOUNT_OVERFLOW', '批次總額超過可精確保存範圍');
   }
   return { ...Object.fromEntries(Object.entries(total).map(([key, value]) => [key, Number(value)])), sourceCount: sources.length, responseCount: responses.length };
@@ -106,7 +111,7 @@ export function claimBatchVisible(db, ctx, entity, item, get) {
     if (item.status === 'verified' && (item.responses.length || item.responseSourceReference)) return false;
     if (['verified', 'reconciling', 'closed'].includes(item.status) && !item.sourceReference.trim()) return false;
     if (['reconciling', 'closed'].includes(item.status) && (!item.responses.length || !item.responseSourceReference.trim())) return false;
-    if (item.status === 'closed' && (item.responses.length !== item.sourceSnapshots.length || item.responses.some(row => row.status === 'pending'))) return false;
+    if (item.status === 'closed' && (item.responses.length !== item.sourceSnapshots.length || item.responses.some(row => ['pending', 'partial'].includes(row.status)))) return false;
     if (item.status === 'cancelled' && !item.note.trim()) return false;
     return true;
   } catch { return false; }
@@ -161,8 +166,14 @@ export function validateClaimBatch(db, ctx, entity, data, old, fail, _dateValid,
     if (other.billingDocumentIds.some(id => data.billingDocumentIds.includes(id))) fail(409, 'SOURCE_ALREADY_BATCHED', '來源帳單已在另一個未取消批次，請先核對或取消原批次');
   }
   data.summary = claimBatchSummary(data.sourceSnapshots, data.responses, fail);
-  if (data.status === 'closed' && (data.responses.length !== data.sourceSnapshots.length || data.responses.some(row => row.status === 'pending')))
-    fail(409, 'RECONCILIATION_INCOMPLETE', '每筆帳單須有接受或退件回應，才能完成人工對帳');
+  const previousReplies = new Map((old?.responses || []).map(row => [row.billingDocumentId, row]));
+  if ((old?.responses || []).some(row => row.status === 'partial' && !data.responses.some(response => response.billingDocumentId === row.billingDocumentId)))
+    fail(422, 'RESPONSE_CHANGE_REASON_REQUIRED', '原部分核付不可省略；請明確保留或訂正回應並填說明', { responses: '不可把原部分事實靜默改為未回應' });
+  for (const response of data.responses) if (previousReplies.get(response.billingDocumentId)?.status === 'partial'
+    && ['accepted', 'pending'].includes(response.status) && !response.reason.trim())
+    fail(422, 'RESPONSE_CHANGE_REASON_REQUIRED', '解除或訂正部分核付事實須填寫本筆回應依據與說明', { responses: '原部分核付改為全額接受或待定，說明不可空白' });
+  if (data.status === 'closed' && (data.responses.length !== data.sourceSnapshots.length || data.responses.some(row => ['pending', 'partial'].includes(row.status))))
+    fail(409, 'RECONCILIATION_INCOMPLETE', '部分核付差額、待定或未回應仍未確認；每筆須有全額接受或退件回應，才能完成人工對帳');
 }
 export function claimBatchQuery(entity, params, fail, mode = 'list') {
   if (!isClaimBatchEntity(entity)) return {};
@@ -190,12 +201,14 @@ export function renderClaimBatchExport(db, ctx, item, format, fail, get) {
   if (!claimBatchVisible(db, ctx, claimBatchEntity, item, get)) fail(404, 'NOT_FOUND', '找不到可匯出批次');
   if (!['verified', 'reconciling', 'closed'].includes(item.status)) fail(409, 'CLAIM_EXPORT_STATE', '請先核對並鎖定批次後匯出');
   if (!['json', 'csv'].includes(format)) fail(422, 'INVALID_FORMAT', '只支援本機JSON或CSV');
-  const warning = '本機人工核銷資料；非FA或政府正式格式；未送出申報。人工對帳完成不代表政府核准。';
+  const partial = item.responses.some(row => row.status === 'partial'), exportFormat = partial ? claimBatchPartialFormat : claimBatchFormat;
+  const warning = '本機人工核銷資料；非FA或政府正式格式；未送出申報。人工對帳完成不代表政府核准。' + (partial ? '部分核付金額是單筆來源的人工累計已核事實，非本次新增款項；差額尚待確認，不代表退件、退款或現金入帳。' : '');
   const replies = new Map(item.responses.map(row => [row.billingDocumentId, row]));
-  const lines = item.sourceSnapshots.map(source => ({ ...source, response: replies.has(source.billingDocumentId) ? structuredClone(replies.get(source.billingDocumentId)) : null }));
-  const document = { format: claimBatchFormat, officialSubmission: false, warning, batch: { id: item.id, version: item.version, month: item.month, number: item.number, status: item.status, sourceReference: item.sourceReference, responseSourceReference: item.responseSourceReference, note: item.note, summary: structuredClone(item.summary) }, lines };
+  const lines = item.sourceSnapshots.map(source => { const response = replies.has(source.billingDocumentId) ? structuredClone(replies.get(source.billingDocumentId)) : null;
+    return { ...source, response, ...(partial ? { unconfirmedAmountCents: !response || response.status === 'pending' ? source.amountCents : response.status === 'partial' ? source.amountCents - response.amountCents : 0 } : {}) }; });
+  const document = { format: exportFormat, officialSubmission: false, warning, batch: { id: item.id, version: item.version, month: item.month, number: item.number, status: item.status, sourceReference: item.sourceReference, responseSourceReference: item.responseSourceReference, note: item.note, summary: structuredClone(item.summary) }, lines };
   if (format === 'json') return { contentType: 'application/json; charset=utf-8', filename: `local-claim-${item.id}-v${item.version}.json`, body: JSON.stringify(document, null, 2) + '\n' };
-  const header = ['format', 'officialSubmission', 'warning', 'batchNumber', 'batchMonth', 'batchVersion', 'batchStatus', 'billingDocumentId', 'billingVersion', 'billNumber', 'caseId', 'savedCaseName', 'sourceAmountCents', 'responseStatus', 'responseAmountCents', 'responseReference', 'responseReason', 'sourceReference', 'responseSourceReference'];
-  const output = [header, ...lines.map(line => [claimBatchFormat, 'false', warning, item.number, item.month, item.version, item.status, line.billingDocumentId, line.version, line.number, line.caseId, line.caseName, line.amountCents, line.response?.status ?? 'unanswered', line.response?.amountCents ?? '', line.response?.reference ?? '', line.response?.reason ?? '', item.sourceReference, item.responseSourceReference])];
+  const header = ['format', 'officialSubmission', 'warning', 'batchNumber', 'batchMonth', 'batchVersion', 'batchStatus', 'billingDocumentId', 'billingVersion', 'billNumber', 'caseId', 'savedCaseName', 'sourceAmountCents', 'responseStatus', 'responseAmountCents', 'responseReference', 'responseReason', 'sourceReference', 'responseSourceReference', ...(partial ? ['unconfirmedAmountCents'] : [])];
+  const output = [header, ...lines.map(line => [exportFormat, 'false', warning, item.number, item.month, item.version, item.status, line.billingDocumentId, line.version, line.number, line.caseId, line.caseName, line.amountCents, line.response?.status ?? 'unanswered', line.response?.amountCents ?? '', line.response?.reference ?? '', line.response?.reason ?? '', item.sourceReference, item.responseSourceReference, ...(partial ? [line.unconfirmedAmountCents] : [])])];
   return { contentType: 'text/csv; charset=utf-8', filename: `local-claim-${item.id}-v${item.version}.csv`, body: '\uFEFF' + output.map(row => row.map(claimCsvCell).join(',')).join('\r\n') + '\r\n' };
 }

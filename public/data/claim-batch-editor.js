@@ -33,7 +33,7 @@ const safeArray = (value, minimum = 0, maximum = 100) => {
   return true;
 };
 export const claimStatuses = { draft: '草稿', verified: '已核對鎖定', reconciling: '人工對帳中', closed: '人工對帳完成', cancelled: '已取消' };
-export const claimResponseStatuses = { accepted: '人工記錄接受', rejected: '人工記錄退件', pending: '人工記錄待定' };
+export const claimResponseStatuses = { accepted: '人工記錄接受', partial: '人工記錄部分核付', rejected: '人工記錄退件', pending: '人工記錄待定' };
 
 export function claimSummary(sources, responses) {
   if (!safeArray(sources, 1) || !safeArray(responses) || responses.length > sources.length) invalid('responses', '批次來源或回應筆數無法確認。');
@@ -49,31 +49,43 @@ export function claimSummary(sources, responses) {
     const source = mapping.get(response.billingDocumentId);
     if (!source || replyMap.has(response.billingDocumentId) || typeof response.reference !== 'string' || !response.reference.trim()
       || response.reference.length > 2000 || !Object.hasOwn(claimResponseStatuses, response.status) || !money(response.amountCents)
-      || typeof response.reason !== 'string' || response.reason.length > 10000 || (response.status === 'rejected' && !response.reason.trim())
-      || response.amountCents !== (response.status === 'accepted' ? source.amountCents : 0)) invalid('responses', '保存回應或精確金額無法確認。');
+      || typeof response.reason !== 'string' || response.reason.length > 10000 || (['partial', 'rejected'].includes(response.status) && !response.reason.trim())
+      || (response.status === 'partial' ? response.amountCents <= 0 || response.amountCents >= source.amountCents : response.amountCents !== (response.status === 'accepted' ? source.amountCents : 0))) invalid('responses', '保存回應或精確金額無法確認。');
     replyMap.set(response.billingDocumentId, response);
   }
   const total = { amountCents: 0n, acceptedAmountCents: 0n, rejectedAmountCents: 0n, pendingAmountCents: 0n, unansweredAmountCents: 0n };
   for (const source of sources) {
     const amount = BigInt(source.amountCents), reply = replyMap.get(source.billingDocumentId);
     total.amountCents += amount;
-    total[!reply ? 'unansweredAmountCents' : reply.status === 'accepted' ? 'acceptedAmountCents' : reply.status === 'rejected' ? 'rejectedAmountCents' : 'pendingAmountCents'] += amount;
+    if (reply?.status === 'partial') {
+      total.acceptedAmountCents += BigInt(reply.amountCents);
+      total.pendingAmountCents += amount - BigInt(reply.amountCents);
+    } else total[!reply ? 'unansweredAmountCents' : reply.status === 'accepted' ? 'acceptedAmountCents' : reply.status === 'rejected' ? 'rejectedAmountCents' : 'pendingAmountCents'] += amount;
     if (total.amountCents > BigInt(Number.MAX_SAFE_INTEGER)) invalid('billingDocumentIds', '批次總額超出可精確保存範圍。');
   }
   return { ...Object.fromEntries(Object.entries(total).map(([key, value]) => [key, Number(value)])), sourceCount: sources.length, responseCount: responses.length };
+}
+/** Derived from a validated frozen source and its one cumulative response. Never a payment balance. */
+export function claimUnconfirmedAmountCents(source, response) {
+  claimSummary([source], response ? [response] : []);
+  return !response || response.status === 'pending' ? source.amountCents : response.status === 'partial' ? source.amountCents - response.amountCents : 0;
 }
 /** Closed known-field projections for current and history display. Never expand unknown nested data. */
 export function claimSourcesForDisplay(value) {
   try { claimSummary(value, []); return value.map(row => Object.fromEntries(sourceKeys.map(key => [key, row[key]]))); } catch { return null; }
 }
-export function claimResponsesForDisplay(value) {
+export function claimResponsesForDisplay(value, sources) {
   if (!safeArray(value)) return null;
   const ids = new Set(), result = [];
   for (const row of value) {
     if (!closed(row, responseKeys) || !id(row.billingDocumentId) || ids.has(row.billingDocumentId) || typeof row.reference !== 'string' || !row.reference.trim()
       || row.reference.length > 2000 || !Object.hasOwn(claimResponseStatuses, row.status) || !money(row.amountCents) || typeof row.reason !== 'string' || row.reason.length > 10000
-      || (row.status !== 'accepted' && row.amountCents !== 0) || (row.status === 'rejected' && !row.reason.trim())) return null;
+      || (!['accepted', 'partial'].includes(row.status) && row.amountCents !== 0) || (row.status === 'partial' && row.amountCents <= 0)
+      || (['partial', 'rejected'].includes(row.status) && !row.reason.trim())) return null;
     ids.add(row.billingDocumentId); result.push(Object.fromEntries(responseKeys.map(key => [key, row[key]])));
+  }
+  if (result.some(row => row.status === 'partial')) {
+    try { claimSummary(sources, result); } catch { return null; }
   }
   return result;
 }
@@ -97,7 +109,7 @@ export function checkClaimBatchRecord(result, { id: recordId, orgId, original, p
   if (['draft', 'verified'].includes(item.status) && (item.responses.length || item.responseSourceReference)) invalid('number', '草稿或已核對批次回應狀態無法確認。');
   if (['verified', 'reconciling', 'closed'].includes(item.status) && !item.sourceReference.trim()) invalid('sourceReference', '保存批次依據無法確認。');
   if (['reconciling', 'closed'].includes(item.status) && (!item.responses.length || !item.responseSourceReference.trim())) invalid('responseSourceReference', '保存回應依據無法確認。');
-  if (item.status === 'closed' && (item.responses.length !== item.sourceSnapshots.length || item.responses.some(row => row.status === 'pending'))) invalid('responses', '對帳完成狀態無法確認。');
+  if (item.status === 'closed' && (item.responses.length !== item.sourceSnapshots.length || item.responses.some(row => ['pending', 'partial'].includes(row.status)))) invalid('responses', '對帳完成狀態無法確認。');
   if (item.status === 'cancelled' && !item.note.trim()) invalid('note', '取消原因無法確認。');
   if (payload) {
     if (item.version !== (original ? original.version + 1 : 1) || Object.entries(payload).some(([key, value]) => key !== 'version' && !same(item[key], value))
@@ -151,18 +163,24 @@ export function createClaimResponseEditor(existing, billingDocumentId) {
   const controls = [{ name: 'responseSourceReference', label: '收到回應的共同依據', type: 'textarea', required: true, maxLength: 2000, wide: true },
     { name: 'reference', label: '本筆人工外部回應編號或依據', type: 'textarea', required: true, maxLength: 2000, wide: true },
     { name: 'status', label: '人工記錄回應結果', type: 'select', required: true, options: Object.entries(claimResponseStatuses).map(([value, label]) => ({ value, label })) },
-    { name: 'amount', label: '回應接受金額（元）', inputMode: 'decimal', required: true, maxLength: 20, help: `接受須等於保存來源 ${formatBillingCents(source.amountCents)} 元；退件與待定填0。` },
-    { name: 'reason', label: '退件原因或回應說明', type: 'textarea', maxLength: 10000, wide: true, help: '退件必須填寫人工收到的原因。' }];
-  return { initial, initialDisplay: { ...baseline }, fields: controls, buildPayload(values) {
+    { name: 'amount', label: '回應接受金額（元）', inputMode: 'decimal', required: true, maxLength: 20, help: `全額接受須等於原額 ${formatBillingCents(source.amountCents)} 元；部分核付填本筆累計已核金額，大於0且小於原額。每次修改取代累計值，不會加總歷次金額。退件與待定填0。` },
+    { name: 'reason', label: '退件原因或回應說明', type: 'textarea', maxLength: 10000, wide: true, help: '部分核付、退件及原部分核付改存全額／待定須填說明；差額尚待確認，不推定退件或退款。' }];
+  return { initial, initialDisplay: { ...baseline }, fields: controls, sourceAmountCents: source.amountCents,
+    previewUnconfirmedAmountCents(values) {
+      try {
+        const amountCents = parseBillingMoney(text(values, 'amount'), { key: 'amount', maxCents: Number.MAX_SAFE_INTEGER });
+        return claimUnconfirmedAmountCents(source, { billingDocumentId, reference: '顯示預覽', status: text(values, 'status'), amountCents, reason: '顯示預覽' });
+      } catch { return null; }
+    }, buildPayload(values) {
     if (!closed(values, controls.map(field => field.name))) invalid('responses', '回應表單包含未知或缺少欄位。');
     const value = key => text(values, key) === baseline[key] ? (key === 'responseSourceReference' ? existing.responseSourceReference : old?.[key] ?? initial[key]) : text(values, key);
     const reference = value('reference'), reason = value('reason'), responseSourceReference = value('responseSourceReference'), status = text(values, 'status');
     if (!responseSourceReference.trim() || responseSourceReference.length > 2000) invalid('responseSourceReference', '請填寫收到回應的共同依據。');
     if (!reference.trim() || reference.length > 2000) invalid('reference', '請填寫本筆人工回應依據。');
     if (!Object.hasOwn(claimResponseStatuses, status)) invalid('status', '請選擇回應結果。');
-    if (reason.length > 10000 || (status === 'rejected' && !reason.trim())) invalid('reason', '退件須填寫原因。');
+    if (reason.length > 10000 || ((['partial', 'rejected'].includes(status) || (old?.status === 'partial' && ['accepted', 'pending'].includes(status))) && !reason.trim())) invalid('reason', '部分核付、退件及訂正原部分核付須填寫說明。');
     const amountCents = parseBillingMoney(text(values, 'amount'), { key: 'amount', maxCents: Number.MAX_SAFE_INTEGER });
-    if (amountCents !== (status === 'accepted' ? source.amountCents : 0)) invalid('amount', '接受須等於來源金額；退件與待定請填0。');
+    if (status === 'partial' ? amountCents <= 0 || amountCents >= source.amountCents : amountCents !== (status === 'accepted' ? source.amountCents : 0)) invalid('amount', '全額接受須等於原額；部分核付须大於0且小於原額；退件與待定請填0。');
     const response = { billingDocumentId, reference, status, amountCents, reason };
     const responses = old ? existing.responses.map(row => row.billingDocumentId === billingDocumentId ? response : structuredClone(row)) : [...structuredClone(existing.responses), response];
     const payload = {}; if (existing.status !== 'reconciling') payload.status = 'reconciling';

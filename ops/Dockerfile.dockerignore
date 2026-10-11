@@ -1,0 +1,31 @@
+# Dockerfile-specific exclusions apply even without a root .dockerignore.
+# Dockerfile also copies only named source paths, never the entire workspace.
+.git
+.env*
+data
+outputs
+backups
+notes
+.tools
+.audit-private
+node_modules
+tests
+*.sqlite
+*.sqlite-*
+*.db
+*.db-*
+*.pem
+*.key
+*.p12
+*.pfx
+*.log
+**/.env*
+**/*.sqlite
+**/*.sqlite-*
+**/*.db
+**/*.db-*
+**/*.pem
+**/*.key
+**/*.p12
+**/*.pfx
+**/*.log

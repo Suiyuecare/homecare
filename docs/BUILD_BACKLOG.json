@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "version": "0.78.1",
-  "status": "local-partial",
+  "version": "0.80.0",
+  "status": "local-slices-accepted-formal-system-pending",
   "purpose": "public-project-roadmap",
   "notice": "獨立本機測試系統，使用合成資料；本文件不包含原平台盤點、私人開通或完整開發追溯，亦不宣稱全部功能等價或正式部署完成。",
   "acceptedLocalCapabilities": [
@@ -192,9 +192,10 @@
       "summary": "正式薪資、出勤、例休與假額"
     },
     {
-      "id": "scoring",
+      "id": "assessment-scoring",
       "status": "needs-contract",
-      "summary": "正式評分與資格認定"
+      "summary": "正式評鑑評分規則；員工資格認定另需機構核定",
+      "legacyAlias": "scoring"
     },
     {
       "id": "external-integration",
@@ -218,8 +219,128 @@
     }
   ],
   "evidencePolicy": "本機能力已有合成驗收；公開副本、CI、部署與 UAT 各自以實際來源、命令、退出碼及可取得產物驗收。",
-  "pendingLocalCapabilities": [],
-  "fullRegression": {
+  "pendingLocalCapabilities": [
+    {
+      "id": "CP05",
+      "summary": "正式核銷、退件、部分核付與介接",
+      "localStatus": "manual-partial-slice-implemented-exact-head-acceptance-required",
+      "formalStatus": "claim-format-response-and-test-adapter-required",
+      "scope": "docs/COMPLETION_ACCEPTANCE_SCOPE.md",
+      "existingLocalToolsPreserved": true,
+      "localScope": "docs/CLAIM_BATCHES_SCOPE.md",
+      "formalWorkflowImplemented": false
+    },
+    {
+      "id": "CP06",
+      "summary": "原16表單／52報表／28匯出的完整逐項對照",
+      "localStatus": "new-formal-workflow-not-implemented",
+      "formalStatus": "approved-definitions-formulas-and-samples-required",
+      "scope": "docs/COMPLETION_ACCEPTANCE_SCOPE.md",
+      "existingLocalToolsPreserved": true
+    },
+    {
+      "id": "CP07",
+      "summary": "行動定位、簽名與離線",
+      "localStatus": "new-formal-workflow-not-implemented",
+      "formalStatus": "consent-retention-revocation-policy-and-device-uat-required",
+      "scope": "docs/COMPLETION_ACCEPTANCE_SCOPE.md",
+      "existingLocalToolsPreserved": true
+    },
+    {
+      "id": "CP08",
+      "summary": "跨機構身分去重與分享",
+      "localStatus": "new-formal-workflow-not-implemented",
+      "formalStatus": "identity-mask-download-and-sharing-matrix-required",
+      "scope": "docs/COMPLETION_ACCEPTANCE_SCOPE.md",
+      "existingLocalToolsPreserved": true
+    }
+  ],
+  "completionPackages": {
+    "version": "0.80.0",
+    "status": "local-slices-accepted-formal-workflows-pending",
+    "plan": "docs/COMPLETION_EXECUTION_PLAN.md",
+    "productionDeployed": false,
+    "packages": [
+      {
+        "id": "CP01",
+        "summary": "帳號停用／復職／調職、居服員Portal員工綁定與逐版歷程",
+        "localStatus": "accepted-local-slice-formal-package-pending",
+        "scope": "docs/ACCOUNT_ADMINISTRATION_SCOPE.md",
+        "formalStatus": "portal-production-grants-and-four-role-business-uat-pending"
+      },
+      {
+        "id": "CP02",
+        "summary": "官方39個BA／AA碼價格與條件試算，固定清冊與原核閱來源",
+        "localStatus": "accepted-local-slice-formal-package-pending",
+        "formalStatus": "quota-ledger-and-cross-record-eligibility-pending",
+        "scope": "docs/LTC_CODE_CALCULATION_SCOPE.md"
+      },
+      {
+        "id": "CP03",
+        "summary": "精確時薪／固定金額／核定基數比例試算",
+        "localStatus": "accepted-local-slice-formal-package-pending",
+        "formalStatus": "split-basis-individual-rates-and-labor-rules-pending",
+        "scope": "docs/CALCULATION_ENGINE_SCOPE.md"
+      },
+      {
+        "id": "CP04",
+        "summary": "已開立帳單／已關帳薪資的獨立人工更正單",
+        "localStatus": "accepted-local-slice-formal-package-pending",
+        "formalStatus": "settlement-ledger-refund-payment-policy-pending",
+        "scope": "docs/FINANCIAL_ADJUSTMENTS_SCOPE.md"
+      },
+      {
+        "id": "CP05",
+        "summary": "正式核銷、退件、部分核付與介接",
+        "localStatus": "accepted-local-partial-slice-formal-workflow-pending",
+        "formalStatus": "claim-format-response-and-test-adapter-required",
+        "scope": "docs/COMPLETION_ACCEPTANCE_SCOPE.md",
+        "existingLocalToolsPreserved": true,
+        "localScope": "docs/CLAIM_BATCHES_SCOPE.md",
+        "formalWorkflowImplemented": false
+      },
+      {
+        "id": "CP06",
+        "summary": "原16表單／52報表／28匯出的完整逐項對照",
+        "localStatus": "new-formal-workflow-not-implemented",
+        "formalStatus": "approved-definitions-formulas-and-samples-required",
+        "scope": "docs/COMPLETION_ACCEPTANCE_SCOPE.md",
+        "existingLocalToolsPreserved": true
+      },
+      {
+        "id": "CP07",
+        "summary": "行動定位、簽名與離線",
+        "localStatus": "new-formal-workflow-not-implemented",
+        "formalStatus": "consent-retention-revocation-policy-and-device-uat-required",
+        "scope": "docs/COMPLETION_ACCEPTANCE_SCOPE.md",
+        "existingLocalToolsPreserved": true
+      },
+      {
+        "id": "CP08",
+        "summary": "跨機構身分去重與分享",
+        "localStatus": "new-formal-workflow-not-implemented",
+        "formalStatus": "identity-mask-download-and-sharing-matrix-required",
+        "scope": "docs/COMPLETION_ACCEPTANCE_SCOPE.md",
+        "existingLocalToolsPreserved": true
+      },
+      {
+        "id": "CP09",
+        "summary": "完整十三表合成加密還原，清登入／停綁定／換key／重新核對授權",
+        "localStatus": "accepted-local-slice-formal-package-pending",
+        "formalStatus": "migration-and-operator-dr-pending",
+        "scope": "docs/SYNTHETIC_ENCRYPTED_PORTAL_RECOVERY_SCOPE.md"
+      },
+      {
+        "id": "CP10",
+        "summary": "零寫入就緒檢查、受限容器與HTTPS交接配置",
+        "localStatus": "accepted-local-slice-formal-package-pending",
+        "formalStatus": "build-persistence-https-portal-real-uat-pending",
+        "scope": "docs/OPERATIONS_READINESS_SCOPE.md"
+      }
+    ],
+    "entireFormalSystemComplete": false
+  },
+  "fullRegressionBaseline": {
     "version": "0.78.1",
     "configuredCommands": 90,
     "status": "local-verified",
@@ -228,5 +349,57 @@
     "unitPassed": 2060,
     "nativePassCoverage": 90,
     "privacy": "public-program-synthetic-tests-and-documents-only"
+  },
+  "fullRegression": {
+    "version": "0.79.0",
+    "status": "local-native-regression-accepted",
+    "configuredCommands": 99,
+    "originalFailuresRetained": true,
+    "sourceRecoveredAgainstArchivedSha256": 544,
+    "productionDeployed": false,
+    "requiredCommands": 98,
+    "runtimeCommands": 97,
+    "publicDocumentsFrozenDuringVerification": true,
+    "nativePassCoverage": 99,
+    "runtimeNativePassCoverage": 97,
+    "unitPassedEachNode": 2233,
+    "syntaxModulesEachNode": 535,
+    "frozenExecutableFiles": 548,
+    "frozenPublicInputFiles": 674,
+    "eachRuntimeExactlyOnce": true,
+    "fourRoleRouteChecks": 192,
+    "layoutChecks": 500,
+    "actuallyViewedPNGs": 57,
+    "publicRelease": "same-commit-ci-required",
+    "metadataUpdatesAfterExecutableVerification": true
+  },
+  "completionExtension": {
+    "version": "0.80.0",
+    "status": "local-focused-accepted-same-head-ci-required",
+    "slices": [
+      "manual-cumulative-partial-response-and-unconfirmed-remainder",
+      "selected-organization-active-account-guard"
+    ],
+    "fullRegressionConfiguration": "premium-ui.json",
+    "sourceEvidence": "same-head-GitHub-CI",
+    "legacyFullRegressionPreserved": "fullRegression version0.79.0",
+    "productionDeployed": false,
+    "entireFormalSystemComplete": false,
+    "backgroundScheduling": "stopped_by_user",
+    "localFocused": {
+      "syntheticOnly": true,
+      "relatedUnitFiles": 7,
+      "relatedTestsEachNode": 71,
+      "syntaxModulesEachNode": 538,
+      "claimLegacyBrowserGates": 9,
+      "partialBrowserGates": 11,
+      "groupOverviewBrowserGates": 13,
+      "partialOriginalPngActuallyReviewed": 9,
+      "claimPublicInputsUnchanged": 679,
+      "claimExecutableInputsUnchanged": 551,
+      "groupScopedEvidenceOnly": true,
+      "originalFailuresPreserved": true,
+      "sameHeadFullCIRequired": true
+    }
   }
 }

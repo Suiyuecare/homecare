@@ -139,8 +139,10 @@ function valueNode(field, value, lookups) {
     { label: '保存來源金額', render: row => formatTrialPriceCents(row.amountCents) }, { key: 'billingDocumentId', label: '保存帳單識別碼' }, { key: 'caseId', label: '保存個案識別碼' },
   ], value);
   if (field.type === 'claim-responses' && Array.isArray(value)) return value.length ? table([
-    { key: 'billingDocumentId', label: '保存帳單識別碼' }, { label: '人工記錄回應', render: row => ({ accepted: '人工記錄接受', rejected: '人工記錄退件', pending: '人工記錄待定' }[row.status] || row.status) },
-    { label: '保存回應金額', render: row => formatTrialPriceCents(row.amountCents) },
+    { key: 'billingDocumentId', label: '保存帳單識別碼' }, { label: '人工記錄回應', render: row => ({ accepted: '人工記錄接受', partial: '人工記錄部分核付（累計）', rejected: '人工記錄退件', pending: '人工記錄待定' }[row.status] || row.status) },
+    ...(value.some(row => row.status === 'partial') ? [{ label: '保存原來源金額', render: row => formatTrialPriceCents(row.sourceAmountCents) }] : []),
+    { label: '保存累計接受金額', render: row => formatTrialPriceCents(row.amountCents) },
+    ...(value.some(row => row.status === 'partial') ? [{ label: '保存尚待確認差額', render: row => formatTrialPriceCents(row.unconfirmedAmountCents) }] : []),
     { label: '本筆人工回應依據', render: row => el('span', { class: 'pre-wrap' }, row.reference) }, { label: '保存原因', render: row => el('span', { class: 'pre-wrap' }, row.reason) },
   ], value) : el('p', { class: 'muted' }, '此版本尚無保存回應。');
   if (field.type === 'claim-summary' && Array.isArray(value)) return table([{ key: 'label', label: '核对項目' }, { label: '保存值', render: row => row.isMoney ? formatTrialPriceCents(row.value) : row.value }], value);
