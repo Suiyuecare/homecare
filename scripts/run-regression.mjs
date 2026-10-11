@@ -55,7 +55,7 @@ async function main() {
       const diagnosticToken = randomBytes(12).toString('hex');
       const tail = (await readFile(log, 'utf8')).slice(-12000);
       console.log('::stop-commands::' + diagnosticToken);
-      console.error('Synthetic failure output (' + name + ', last 12000 characters):\n' + tail);
+      console.log('Synthetic failure output (' + name + ', last 12000 characters):\n' + tail);
       console.log('::' + diagnosticToken + '::');
     }
   }

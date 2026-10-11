@@ -118,7 +118,9 @@ try{
   const py=process.env.HOME_CARE_QA_PYTHON || 'python3';const audit=spawnSync(py,['-c',`import json,pathlib,re,sys,logging,unicodedata,pdfplumber
 logging.getLogger('pdfminer').setLevel(logging.ERROR)
 p=pathlib.Path(sys.argv[1]); expected=json.loads((p/'pdf-expected.json').read_text()); findings=[]
-norm=lambda s: re.sub(r'\\s+','',unicodedata.normalize('NFKC',s))
+# Noto CJK PDF glyph alias; Unicode 17 Equivalent_Unified_Ideograph: 2ED1 -> 9577.
+# https://www.unicode.org/Public/17.0.0/ucd/EquivalentUnifiedIdeograph.txt
+norm=lambda s: re.sub(r'\\s+','',unicodedata.normalize('NFKC',s).replace('\\u2ed1','\\u9577'))
 with pdfplumber.open(p/'synthetic-training-report.pdf') as pdf:
  texts=[page.extract_text(use_text_flow=True) or '' for page in pdf.pages]; combined='\\n\\n'.join(texts); compact=norm(combined)
  (p/'pdf-text.txt').write_text(combined)

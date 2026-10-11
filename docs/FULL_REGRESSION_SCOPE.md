@@ -21,3 +21,15 @@
 ## CI 曝露的執行環境需求錯誤
 
 原22.13宣告缺少目前原子交易守門所需的SQLite isTransaction，第一次GitHub全量驗證實際2060項中116項失敗，Node24的2060項通過；原失敗保留。支援環境現在明確為Node22.16+（22.x）與24.x，最低版也跑完整測試。啟動先以短暫記憶體資料庫確認能力，不支援即於建立資料目錄或開啟持久資料庫前拒絕；原子性守門全部保留。[Node SQLite官方文件](https://nodejs.org/download/release/v22.16.0/docs/api/sqlite.html#databaseistransaction)。
+
+## Linux 報表文字驗收的字碼等價
+
+四套員工／訓練／請假／證照報表的 Linux 原始失敗 PDF 已逐份核對：完整長欄位可見、順序與全部邊界正確，但 Noto CJK 字型的 PDF ToUnicode 將「長」映為 U+2ED1「⻑」。既有 NFKC 不會將此補充部首轉回 U+9577。只在 PDF 驗收的文字比較加入這一個已證明的等價映射；依據 [Unicode 17 Equivalent Unified Ideograph](https://www.unicode.org/Public/17.0.0/ucd/EquivalentUnifiedIdeograph.txt)。原始 PDF、擷取文字、資料、CSV 與畫面皆不改動。
+
+四份同一位元組原 PDF 在原驗收下均退出 1，加入該映射後全部完整驗收退出 0；仍要求全部40列各一次、每個保存欄位的完整連續文字、每頁重複表頭、A4邊界和無背景／隱藏資料。原失敗與字碼／像素證據另存，不以縮短字串、刪除斷言或放寬時間限制換取通過。個別 Linux 流程與最終全量 CI 以對應提交的 Actions 結果為準。
+
+## Portal 還原與 CI 診斷的非同步邊界
+
+一次公開完整 CI 的 Portal 合成還原於 G8 失敗，原非零退出碼保留；相同流程獨立 Linux 診斷的 G1–G8 完整通過，原始失敗的精確位置因當次只存私人錯誤雜湊而無法確認，不宣稱已證明其原因。程式檢視找到具體的驗收缺口：工作台標題會先於資料及個案／員工參照讀取出現。測試現在另要求這些讀取完成後才顯示的「工作摘要」，再進行快照、撤權、重載或換庫，並在未來失敗時只輸出測試程式碼位置。十三表唯讀、原cookie／期限、nonce與binding、BLOB和回復／提升的原斷言及逾時均保持；沒有自動重試。最終接受仍以相同提交完整 CI 的結果為準。
+
+CI 的截尾診斷及停用／恢復 workflow commands 標記改由同一 stdout 串流順序輸出，避免 stdout／stderr 合併時的重新排序；原生退出碼、12000字元上限、加密演練診斷抑制與stdin臨時口令清零保持。
