@@ -36,3 +36,14 @@ jobs:
         env:
           HOME_CARE_QA_PYTHON: /tmp/homecare-qa-python/bin/python3
         run: node tests/${{ matrix.report }}-e2e.mjs
+      - name: Preserve failed synthetic PDF and text only
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: synthetic-${{ matrix.report }}-${{ github.sha }}
+          retention-days: 1
+          if-no-files-found: error
+          path: |
+            outputs/software/${{ matrix.report }}-qa/synthetic-${{ matrix.report }}.pdf
+            outputs/software/${{ matrix.report }}-qa/pdf-expected.json
+            outputs/software/${{ matrix.report }}-qa/pdf-text.txt
