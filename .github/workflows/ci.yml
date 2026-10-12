@@ -98,3 +98,5 @@ jobs:
             outputs/software/custom-form-package-qa/**/*.png
             outputs/software/legacy-migrations-qa/attempt-*/browser.json
             outputs/software/legacy-migrations-qa/attempt-*/*.png
+            outputs/software/legacy-history-qa/attempt-*/browser.json
+            outputs/software/legacy-history-qa/attempt-*/*.png

@@ -36,6 +36,7 @@ import { guardInstitutionAdminAccess, isInstitutionAdminEntity, institutionAdmin
 import {DatabaseSync} from 'node:sqlite';
 import {assertProductionRecoveryStartAllowed} from './production-backup.mjs';
 import {guardLegacyOperationalImport,listLegacyImportBatches,readLegacyImportBatch,readLegacyImportedSource} from './legacy-operational-import.mjs';
+import {guardLegacyHistoryAccess,listLegacyHistoryBatches,readLegacyHistoryBatch,readLegacyHistoryRow} from './legacy-history-import.mjs';
 import {randomBytes,scryptSync,timingSafeEqual,createHash} from 'node:crypto';
 import {mkdirSync,chmodSync,existsSync,readFileSync,statSync,realpathSync} from 'node:fs';
 import path from 'node:path';
@@ -149,6 +150,22 @@ export function createApp({dbPath,host='127.0.0.1',port=Number(process.env.PORT|
    if(pathname==='/api/logout'&&req.method==='POST'){const s=session(req);if(!s)fail(401,'AUTH_REQUIRED','請先登入');csrf(req,s);db.prepare('DELETE FROM sessions WHERE token_hash=?').run(s.token_hash);res.setHeader('Set-Cookie',`suiyue_session=; ${cookieAttributes()}; Max-Age=0`);return send(res,200,{ok:true});}
    if(pathname.startsWith('/api/')){
     const ctx=auth(req);if(mutating)csrf(req,ctx.session);
+    if(/^\/api\/legacy-history(?:\/|$)/.test(pathname)){
+     guardLegacyHistoryAccess(db,ctx);
+     if(req.method!=='GET')fail(405,'METHOD_NOT_ALLOWED','歷史原始紀錄只支援唯讀查詢；匯入由受控工具執行。');
+     const historyPage=()=>{
+      const values={page:1,pageSize:25};
+      for(const key of url.searchParams.keys())if(!['page','pageSize'].includes(key)||url.searchParams.getAll(key).length!==1)fail(422,'INVALID_QUERY','歷史原始清單僅接受不重複的分頁欄位。');
+      for(const key of ['page','pageSize'])if(url.searchParams.has(key)){const raw=url.searchParams.get(key);if(!/^[1-9]\d*$/.test(raw)||!Number.isSafeInteger(Number(raw))||(key==='pageSize'&&Number(raw)>100))fail(422,'INVALID_QUERY','請使用有效分頁與每頁1至100筆。');values[key]=Number(raw);}
+      return values;
+     };
+     if(pathname==='/api/legacy-history')return send(res,200,listLegacyHistoryBatches(db,ctx,historyPage()));
+     const batch=pathname.match(/^\/api\/legacy-history\/batches\/([a-f0-9-]+)$/);
+     if(batch)return send(res,200,readLegacyHistoryBatch(db,ctx,batch[1],historyPage()));
+     const row=pathname.match(/^\/api\/legacy-history\/rows\/([a-f0-9-]+)$/);
+     if(row){if([...url.searchParams.keys()].length)fail(422,'INVALID_QUERY','單筆原始紀錄不接受查詢欄位。');return send(res,200,readLegacyHistoryRow(db,ctx,row[1]));}
+     fail(404,'NOT_FOUND','找不到歷史原始紀錄。');
+    }
     if(/^\/api\/legacy-migrations(?:\/|$)/.test(pathname)){
      guardLegacyOperationalImport(db,ctx);
      if(req.method!=='GET')fail(405,'METHOD_NOT_ALLOWED','移轉紀錄只支援唯讀查詢；匯入由受控工具執行。');

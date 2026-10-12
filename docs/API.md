@@ -734,3 +734,35 @@ Portal十三表加密還原是零參數、合成資料、自有暫存路徑的 C
 - `scripts/monitor-runtime-readiness.mjs` 只對明確 loopback port GET `/ready`，預設一次、最多60次，間隔1–60秒；每次5秒／4KiB，固定 NDJSON與退出碼。拒絕 redirect、外部TCP、DNS目標、4310及未知回覆，中止取消HTTP和間隔。沒有背景排程、外部通知、DB寫入、TLS／容量或業務UAT證明。
 
 上述 CLI 沒有 HTTP 掛載。技術規格、退出碼、私人資料限制與正式核定界線見 [備份](PRODUCTION_BACKUP_SCOPE.md)、[封存](LEGACY_MIGRATION_SCOPE.md)、[發布手冊](LAUNCH_RUNBOOK.md)。本輪只記錄本機合成分項結果；候選完整回歸、同提交CI、正式主機／Portal、全量移轉對帳、公司金鑰與四角色營運UAT另驗。依使用者要求不执行掃毒或漏洞掃描，原登入、CSRF、角色與機構隔離驗收保持。
+
+## 0.83 歷史原始紀錄
+
+獨立唯讀 namespace `/api/legacy-history`；只有目前同機構有效admin，先確認session、會員及帳號生命週期，其他三角色403、未登入401。不依來源職稱或email廣開權限。查閱原欄位可能涉及敏感資料，不能沿其他一般報表角色放行。
+
+下表的`F`在每個envelope及BatchMeta都是四個固定false欄位：`sourceSystemComplete / operationalConversionCompleted / approvalCompleted / payrollApproved`。
+
+| 路徑 | closed成功回應 |
+| --- | --- |
+| `GET /api/legacy-history?page=1&pageSize=25` | `{orgId,items,total,page,pageSize,...F}`，items為BatchMeta[] |
+| `GET /api/legacy-history/batches/:id?page=1&pageSize=25` | `{orgId,item,records,total,page,pageSize,...F}`，item為BatchMeta、records為RowSummary[] |
+| `GET /api/legacy-history/rows/:id` | `{orgId,item,batch,...F}`，item為RowSummary加完整columns、batch為BatchMeta |
+
+清單及批次只接受不重複的canonical正整數page／pageSize，預設1／25、pageSize最大100，起點`(page-1)*pageSize`與終點`page*pageSize`都須safe integer；單列無query。HTTP未知／重複／非canonical參數422 `INVALID_QUERY`，domain不安全起訖422 `LEGACY_HISTORY_QUERY_INVALID`。同機構未知或跨機構ID404，來源／head／稽核等不一致409 `LEGACY_HISTORY_STATE_INVALID`。非GET仍先走目前session及寫入Origin／CSRF守衛，再405；未知namespace子路徑404。不提供HTTP preview／commit／匯出／核閱、任意原檔或DB路徑。
+
+BatchMeta完整欄位：`id / orgId / version / createdAt / updatedAt / provider / tenant / sourceHash / payloadHash / archiveManifestSha256 / archiveId / importedBy / importedAt / rowCount / categories / reportingPeriods / status / ...F`。status固定`historical-original-records`、version固定1。categories為唯一排序已知類別字串；reportingPeriods為唯一排序`YYYY-MM`字串（year0001～9999），忽略原列null，空陣列僅表示來源未提供月份。八種category：`service-export / employee-profile / case-profile / care-plan-history / fa-export / company-settings / form-record / attachment-metadata`。
+
+RowSummary完整欄位：`id / orgId / version / createdAt / updatedAt / batchId / category / reportingPeriod / sourceNativeId / sourceCreatedAt / caseId / employeeId / sourceFileId / sourceFileSha256 / locator / identityKind / caseReference / employeeReference`。sourceNativeId／sourceCreatedAt是原字串或null，空字串保持原文；來源月份可null，不推定服務日或時區。identityKind固定`archive-locator`，平台UUID只是原檔SHA／位置的封存定位識別，不冒充來源事件UUID。
+
+locator閉合為`{kind:'worksheet-row',sheetIndex,rowNumber}`（真正Excel位置，兩者1-based）或`{kind:'json-pointer',pointer}`（真正JSON位置，RFC6901原文）。只顯示文字，不執行pointer／link。caseReference為null或`{id,name,caseNo,version,status}`，employeeReference為null或`{id,name,employeeNo,version,status}`；僅目前已驗同機構完整head摘要，允許合法closed個案／inactive員工，case supervisor也須同機構合法employee，不帶電話、身分碼、email或帳號權限。原來源與後來主檔合法維護分開，不宣稱外部同步。
+
+單列columns完整1～500個`{columnIndex,label,raw,formula,cached}`，五欄必有、index唯一、重複label保留。raw／cached僅null、boolean、string或finite number（整數safe、拒-0），formula為string或null。scalar型別、空文字、null、CRLF／CR／NUL後綴、公式原文及快取值不截斷；HTML、公式及URL只呈現文字，不評算、不執行或變成下載連結，不將原價當新核定價格。
+
+global list只核對當頁batch metadata、目前／immutable head、來源選取摘要及audit；內部audit的`metadataHash=legacyHistoryHash(batchData)`綁定完整metadata，不加入公開DTO。即使外部同步改目前data與head但不改audit，合法月份摘要變動也拒409。列表可見不表示全部子列已驗；批次／單列明細先驗整批最多1000列、payloadHash、完整head／版本／audit、columns layouts及目前已核對父reference，再分頁或回一列，offpage損壞仍拒絕。這些GET與拒絕不寫十三表、歷程、價格或權限。
+
+### 受控operator保存
+
+`scripts/legacy-history-import.mjs`只有受控本機preview／commit；需既有私人DB、目前有效admin、真正封存capability及外部manifest SHA，不初始化schema、讀任意HTTP路徑或建立帳號。封閉封包`format:'suiyue-legacy-history-import-v1' / provider / tenant / archiveManifestSha256 / sourceFiles / sourceHash / records`，每批1～1000列、1～16原檔、UTF-8 JSON最大32MiB；sourceFiles只opaque fileId／SHA，不公開私人path。來源ID可null，同原檔定位不能跨批再建一列。
+
+preview零SQL寫入；commit重新核對來源、角色、同機構主檔及preview hash，再以BEGIN IMMEDIATE全批原子保存records／versions／audit，任何衝突rollback；同sourceHash／payloadHash合法重送不新增，差異拒絕。原身份、附件、冪等等保護表及既有業務列不變。共用header layout只減少重複儲存，完整scalar會復原並重新核對；`storageEstimate:{kind:'stored-json-columns-only',bytes,layoutCount}`只估這批records／versions／audit的JSON bytes，不含SQLite頁／index／WAL、原件及加密備份／隔離恢復，不承諾實際容量。
+
+歷史原列保存不等於新排班、已核閱服務、財務、薪資、全部原資料已移轉或原表單／附件完整對等。完整格式、錯誤、CLI與容量／驗收界線見[LEGACY_HISTORY_SCOPE.md](LEGACY_HISTORY_SCOPE.md)；本機分項、完整同提交CI與正式營運驗收各自保存，沒有HTTP正式導入或部署證明。

@@ -68,7 +68,7 @@ Python 套件可安裝在自行管理的虛擬環境。Poppler 請透過作業�
 pnpm test:e2e:visual-refresh
 ```
 
-此套使用API建立合成資料與隨機記憶體服務，涵蓋48個登錄頁面、四角色及六種管理者寬度、44px主要動作、16px手機輸入、導覽／Escape／焦點、空資料、失敗重試與輸入保留；完整業務表／附件及核閱快照唯讀比對。預設只驗目前原始碼，不需要私人fixture或正式帳號。產生的16張主要畫面必須另做真實像素檢視，不能稱48頁逐張截圖。共用樣式大幅改動時需重驗premium-ui.json全部配置及七種PDF報表。
+此套使用API建立合成資料與隨機記憶體服務，按測試內登錄頁面核對四角色及六種管理者寬度、44px主要動作、16px手機輸入、導覽／Escape／焦點、空資料、失敗重試與輸入保留；完整業務表／附件及核閱快照唯讀比對。0.83新增管理者「歷史原始紀錄」為第51個登錄頁面，是否全過仍取本輪實際結果，不由登錄推定。預設只驗目前原始碼，不需要私人fixture或正式帳號。產生的16張主要畫面必須另做真實像素檢視，不等於全部頁面逐張截圖。共用樣式大幅改動時需重驗premium-ui.json全部配置及七種PDF報表。
 
 員工三類保存紀錄索引合成瀏覽器驗證：`pnpm test:e2e:employee-record-index`。來源契約見 `docs/EMPLOYEE_RECORD_INDEX_SCOPE.md`；僅記憶體資料庫與隨機loopback。
 
@@ -104,3 +104,18 @@ The manual **Report diagnostics** workflow runs the four compact report suites d
 人工部分回應及群組逐機構有效帳號守門需在整合來源執行程式、HTTP及桌機／手機browser。原部分金額accepted仍拒絕；新增partial具精確範圍與必填說明，部分不能closed、v1舊匯出不變、v2差額可核對、累計取代不重加、過時／撤權重送不寫入。選取的其他機構被停用但仍保留admin membership時，完整總覽／明細／CSV／列印拒絕，壞head閉鎖且GET零寫入；明確復職後才可重查。
 
 完整公開回歸由同提交的Homecare checks核對兩版Node及所有配置runtime；結果取實際logs與native results，不挪用0.79完整回歸數字。既有原始失敗、fixture修正、安裝缺依賴及舊輸出守衛紀錄皆保留。個案／帳單及十三表schema、原歷程、私人data／binding不由測試變更；測試只用合成隔離資料。
+
+## 0.83 歷史原始紀錄的驗收
+
+```sh
+node --test --test-concurrency=2 tests/legacy-history-import.test.mjs tests/legacy-history-cli.test.mjs tests/legacy-history-frontend.test.mjs tests/legacy-history-http.test.mjs
+pnpm test:e2e:legacy-history
+```
+
+後端及CLI使用真實合成JSON原件、受控封存與既有有效合成admin；沒有正式DB或任意HTTP匯入。前端驗closed DTO、四個固定false旗標、月份排序與缺件、完整500欄scalar／CRLF／NUL／公式原文及archive-locator。HTTP驗三個真GET、fresh角色／停用／跨機構、重複及未知query、unsafe分頁起訖、POST405、unknownpath404、父head與batch audit metadataHash損壞拒絕，以及全部十三表／total_changes零寫入。
+
+瀏覽器使用自有記憶體DB、隨機loopback及真正JSON定位，每次建立新UUID attempt目錄。涵蓋列表及批內25筆server分頁、原ID缺件、目前已核對主檔摘要、全部500原欄、桌機與390px長文尾端／44px關閉鈕、錯誤／重試／權限、七種已載入與在途情境撤除、真實Abort、晚回應、防重送、Escape及原觸發鈕回焦。忙碌檢查鎖定原DOM按鈕，不重新用會改名的role locator選另一列；等待原requestfailed promise的斷言仍保留。原G11失敗與修正前來源守衛反例均保存，不以修正重跑宣稱原失敗不存在。
+
+本機分項原生結果為兩Node各27項domain／CLI、14項前端與12項HTTP；新瀏覽器15關及14張原PNG已逐張實看。這些結果只對各自實際消費的來源有效。工作台舊格式完整ISO日期、秒數及時區不換行、文字蓋住個案及員工姓名的CSS修正整合後，需以新凍結來源重跑歷史頁、shift-span及visual；舊CSS畫面不替代最終整批。完整命令數、全部程式測試與同提交CI取最終實際紀錄，不沿用0.82。
+
+`premium-ui.json` 登錄 required `legacyHistory`；CI只在成功時收 `outputs/software/legacy-history-qa/attempt-*/browser.json`及該attempt的PNG。browser.json只含合成stage、method／path／query trace、來源hash與檢查結果，不收 body／cookie／password／金鑰；不公開failure.json、原生log、fixture、DB、封存原件或私人收據。官方premium靜態auditor未完成時明示待驗，不得列為通過。原來源逐列對帳、營運轉換、財務／薪資核定、完整表單／附件、容量／持久主機與正式UAT另驗；本輪不執行掃毒或漏洞掃描。

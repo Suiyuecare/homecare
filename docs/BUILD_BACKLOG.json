@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0.82.0",
+  "version": "0.83.0",
   "status": "local-slices-accepted-formal-system-pending",
   "purpose": "public-project-roadmap",
   "notice": "獨立本機測試系統，使用合成資料；本文件不包含原平台盤點、私人開通或完整開發追溯，亦不宣稱全部功能等價或正式部署完成。",
@@ -215,6 +215,19 @@
       "contract": "docs/LAUNCH_RUNBOOK.md",
       "status": "local-focused-verified",
       "syntheticOnly": true,
+      "originalParityVerified": false,
+      "productionDeployed": false
+    },
+    {
+      "id": "legacy-history-readonly",
+      "summary": "同機構目前有效admin查閱已封存歷史批次／原月份與完整scalar原欄，原ID缺件明示、四false旗標、非營運轉換",
+      "contract": "docs/LEGACY_HISTORY_SCOPE.md",
+      "status": "local-focused-verified-full-batch-and-same-head-ci-pending",
+      "syntheticOnly": true,
+      "sourceSystemComplete": false,
+      "operationalConversionCompleted": false,
+      "approvalCompleted": false,
+      "payrollApproved": false,
       "originalParityVerified": false,
       "productionDeployed": false
     }
@@ -616,5 +629,60 @@
       "contactSheets": 8,
       "importantNarrowOriginalsAlsoReviewed": true
     }
+  },
+  "historicalOriginalRecords083": {
+    "version": "0.83.0",
+    "status": "local-focused-accepted-full-batch-and-same-head-ci-pending",
+    "syntheticOnly": true,
+    "newRequiredCommand": "legacyHistory",
+    "page": "/legacy-history",
+    "pageRoles": [
+      "admin"
+    ],
+    "scopeFiles": [
+      "docs/LEGACY_HISTORY_SCOPE.md",
+      "docs/API.md"
+    ],
+    "localFocused": {
+      "domainAndCliTestsEachNode": 27,
+      "frontendContractTestsEachNode": 14,
+      "realHttpTestsEachNode": 12,
+      "browserGates": 15,
+      "browserNativeExit": 0,
+      "actuallyViewedSyntheticPng": 14,
+      "consumerSourceHashesUnchangedPerRun": true,
+      "fullPublicInputUnchangedClaimed": false
+    },
+    "currentSharedCssFinalBrowserRequired": true,
+    "relatedDashboardTimeWrapCounterexample": "legacy-full-iso-date-seconds-offset-must-not-cover-case-or-employee-name",
+    "fullRegressionStatus": "pending-final-freeze-and-fresh-run",
+    "fullConfiguredCommandCount": "derive-from-final-frozen-premium-ui-and-actual-results",
+    "sameHeadCIRequired": true,
+    "originalFailuresPreserved": true,
+    "metadataIntegrity": "batch-audit-metadataHash-required-global-list-does-not-scan-all-child-rows",
+    "sourceSystemComplete": false,
+    "operationalConversionCompleted": false,
+    "approvalCompleted": false,
+    "payrollApproved": false,
+    "realAccountsOrSourceRecordsIncluded": false,
+    "entireFormalSystemComplete": false,
+    "productionDeployed": false,
+    "automationResumed": false,
+    "antivirusOrVulnerabilityScansPerformed": false,
+    "officialStaticUiAuditor": {
+      "status": "not-completed-for-new-page",
+      "accepted": false
+    },
+    "formalGatesPending": [
+      "full-source-semantic-reconciliation",
+      "all-deep-forms-and-original-attachments",
+      "large-real-data-storage-and-backup-capacity",
+      "approved-operational-service-conversion",
+      "formal-financial-and-payroll-rules",
+      "four-role-operational-uat",
+      "persistent-host-and-https",
+      "formal-portal-and-fresh-authority",
+      "key-retention-and-live-recovery-cutover"
+    ]
   }
 }
