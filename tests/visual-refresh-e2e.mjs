@@ -34,6 +34,7 @@ const routeDefinitions = [
   ['/surveys', '本機匿名填答與QR', '問卷與 QR 填答'],
   ['/group-overview', '群組營運總覽', '群組營運總覽'],
   ['/service-payroll','服務轉薪資','服務轉薪資'],
+  ['/employee-payroll','員工薪資規則與月試算','員工薪資規則與月試算'],
   ['/service-billing','服務轉帳單','服務轉帳單'],
   ['/shift-substitution','人工代班申請','人工代班申請'], ['/contract-deadlines','契約期限提醒','契約期限提醒'], ['/internal-notifications','內部通知與本人回執','站內通知與回覆'],
   ['/institution-holidays','機構人工假日','機構人工假日'],
@@ -60,6 +61,7 @@ const routeDefinitions = [
 ];
 const permitted = (role, route) => {
   if (route === '/account-administration') return role === 'admin';
+  if (route === '/employee-payroll') return ['admin', 'finance'].includes(role);
   if (['/calculations', '/ltc-codes', '/financial-adjustments'].includes(route)) return ['admin', 'finance'].includes(role);
   if (route === '/surveys') return ['admin', 'supervisor'].includes(role);
   if (route === '/group-overview') return role === 'admin';
@@ -214,7 +216,7 @@ try {
   assert.equal(app.db.prepare('SELECT COUNT(*) n FROM certification_attachment_files WHERE length(content)>0').get().n, 1);
   assert(app.db.prepare("SELECT data FROM records WHERE entity='service-records'").all().some(row => Object.hasOwn(JSON.parse(row.data), 'billingSnapshot')));
   routeDefinitions.push(['/cases/' + fixture.mainCase.id, fixture.mainCase.name, '個案管理']);
-  assert.equal(routeDefinitions.length, 48);
+  assert.equal(routeDefinitions.length, 49);
   mark('G1 owned memory/random loopback with reusable identical synthetic rows, four real auth roles, BLOBs and approved snapshot');
 
   await readOnly('G2 paired eight-state desktop/mobile capture', async () => {

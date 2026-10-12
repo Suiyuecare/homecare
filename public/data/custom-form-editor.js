@@ -1,4 +1,4 @@
-import { FORM_TYPES, formClosed, formArray, formId, formFailure, isCustomFormDate, assertFormDefinition, assertFormAnswers, assertFormTemplateRecord,
+import { FORM_TYPES, FORM_TYPE_LABELS, formClosed, formArray, formId, formFailure, isCustomFormDate, assertFormDefinition, assertFormAnswers, assertFormTemplateRecord,
   assertFormRecord, assertFormTemplateSnapshot, captureFormTemplate, visibleFormFields } from './custom-form-engine.js';
 const own = (value, key) => Object.hasOwn(value, key);
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
@@ -82,7 +82,7 @@ export function customFormFieldEditor(template, original, index = template.field
     conditionValue: typeof original?.visibleIf?.equals === 'boolean' ? '' : baselineText(original?.visibleIf?.equals || ''),
     conditionChoice: typeof original?.visibleIf?.equals === 'boolean' ? String(original.visibleIf.equals) : original?.visibleIf?.equals || '' };
   const fields = [{ name: 'key', label: '題項代碼', required: true, readOnly: !!original, maxLength: 50, help: '英文字母開頭，可加數字與底線；發布後不能修改。' },
-    { name: 'label', label: '題項名稱', required: true, maxLength: 200 }, { name: 'type', label: '題項型別', type: 'select', required: true, options: FORM_TYPES.map(value => ({ value, label: ({ text: '短文字', textarea: '長文字', number: '十進位數值文字', date: '日期', select: '單選', multiselect: '多選', boolean: '是／否' })[value] })) },
+    { name: 'label', label: '題項名稱', required: true, maxLength: 200 }, { name: 'type', label: '題項型別', type: 'select', required: true, options: FORM_TYPES.map(value => ({ value, label: FORM_TYPE_LABELS[value] })) },
     { name: 'groupId', label: '群組', type: 'select', options: template.groups.map(group => ({ value: group.id, label: group.label })) },
     { name: 'required', label: '提交時必填', type: 'checkbox' }, { name: 'options', label: '單選／多選選項', type: 'textarea', wide: true,
       help: '每行一個「代碼｜顯示名稱」，例如 yes｜同意；只用於單選與多選。' },

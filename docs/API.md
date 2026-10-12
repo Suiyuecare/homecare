@@ -698,3 +698,10 @@ Portal十三表加密還原是零參數、合成資料、自有暫存路徑的 C
 同一人工回應PATCH可帶Idempotency-Key，同payload同key重送回原版；每次仍檢查目前權限與來源可見，後續版本已變更則409 CLAIM_RECEIPT_STALE，不能回傳過時成功。現在快照含partial時JSON/CSV格式標記為local-homecare-claim-v2，逐筆附unconfirmedAmountCents；沒有partial仍維持原v1。詳見docs/CLAIM_BATCHES_SCOPE.md，不將人工金額當正式核付、收款或退款。
 
 群組總覽／明細／CSV對目前與每個選取機構確認membership管理者角色及有效account lifecycle，任一停用或失效則整個查詢拒絕。未知／損壞lifecycle head沿既有ACCOUNT_STATE_INVALID拒絕；列印仍先重新讀取同一完整總覽。正式跨機構主身分去重、分享及遮罩規則沒有由此新增。
+
+
+## 0.81 員工規則與模板套件
+
+員工薪資規則使用GET/POST /api/employee-payroll/profiles、GET/PATCH /api/employee-payroll/profiles/:id及GET :id/history；管理者維護、管理者與財務只讀／試算，其他角色拒絕。POST/PATCH需重送鍵、完整閉合參數及CAS，核定內容鎖定。候選GET /api/employee-payroll/candidates要求員工／月份並分頁；POST /api/employee-payroll/preview只接受{profile:{id,version},month,sources:[{id,version}]}，明確1至100來源、原核閱快照、BigInt逐筆進位及選取來源合計、封閉快照與SHA。實收介接缺漏不能用其他金額替代。詳細契約見EMPLOYEE_PAYROLL_SCOPE.md。
+
+模板套件沿既有form-templates API，沒有新端點或資料遷移。嚴格本機UTF-8 JSON定義／完整性／重複鍵檢查後，以新代碼、名稱建立revision1的新draft；完整預覽與明確核對、fresh下載前授權／版次、stable POST重送及ACK確認，不搬移填答、附件、機構或權限。詳細契約見CUSTOM_FORM_PACKAGE_SCOPE.md。

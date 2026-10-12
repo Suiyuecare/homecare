@@ -401,5 +401,38 @@
       "originalFailuresPreserved": true,
       "sameHeadFullCIRequired": true
     }
+  },
+  "followupExtension081": {
+    "version": "0.81.0",
+    "status": "local-slices-accepted-formal-packages-pending",
+    "slices": [
+      "employee-effective-payroll-profiles-and-selected-source-month-preview",
+      "portable-custom-form-definition-draft-import-export",
+      "native-synthetic-process-restart-proof"
+    ],
+    "configuredCommands": 101,
+    "runtimeCommands": 99,
+    "registeredPages": 49,
+    "requirements": "docs/USER_REQUIRED_INPUTS.md",
+    "formalPackagesPending": 8,
+    "productionDeployed": false,
+    "entireFormalSystemComplete": false,
+    "backgroundScheduling": "stopped_by_user",
+    "acceptedAt": "2026-10-12T04:27:56.492049+00:00",
+    "syntheticOnly": true,
+    "unitPassedEachNode": 2310,
+    "javascriptModules": 552,
+    "allRuntimeExactlyOnce": true,
+    "publicInputCount": 696,
+    "executableInputCount": 565,
+    "fourRoleRouteChecks": 196,
+    "layoutChecks": 510,
+    "actuallyViewedNamedPng": 88,
+    "distinctPngBytesReviewed": 86,
+    "originalFailuresPreserved": true,
+    "postAcceptanceExecutableSourcesUnchanged": true,
+    "sameHeadCIRequired": true,
+    "originalParityVerified": false,
+    "automationResumed": false
   }
 }

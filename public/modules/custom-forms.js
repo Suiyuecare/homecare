@@ -1,12 +1,25 @@
-import { api, el, button, pageHeader, table, badge, openForm, openDetails, confirmAction, toast, today, getContext, searchBox, pagination, errorState } from '../ui.js';
+import { api, el, button, pageHeader, table, badge, openForm, openDetails, confirmAction, toast, today, getContext, searchBox, pagination, errorState, downloadCustomFormPackageText } from '../ui.js';
 import { openRecordHistory } from './history.js';
-import { FORM_TYPES, FORM_TEMPLATE_STATUSES, FORM_RECORD_STATUSES, assertFormDefinition, assertFormTemplateRecord, assertFormRecord, captureFormTemplate, assertFormAnswers, customFormValueText } from '../data/custom-form-engine.js';
+import { FORM_TYPES, FORM_TYPE_LABELS, FORM_TEMPLATE_STATUSES, FORM_RECORD_STATUSES, assertFormDefinition, assertFormTemplateRecord, assertFormRecord, captureFormTemplate, assertFormAnswers, customFormValueText } from '../data/custom-form-engine.js';
 import { confirmCustomFormSave, createCustomFormRecordEditor, customFormFieldEditor } from '../data/custom-form-editor.js';
+import { CUSTOM_FORM_PACKAGE_MAX_BYTES, createCustomFormPackage, readCustomFormPackage, customFormPackageDraft } from '../data/custom-form-package.js';
 
 const org = () => getContext().organizationId || getContext().orgId;
 const contextKey = () => { const ctx = getContext(); return JSON.stringify([ctx.user?.id, org(), ctx.role, ctx.user?.employeeId]); };
 const notice = text => el('p', { class: 'notice', role: 'note' }, text);
 const actions = (...items) => el('div', { class: 'actions row-actions', 'data-no-print': true }, ...items.filter(Boolean));
+const packagePreview = packageValue => {
+  const definition = packageValue.definition, groups = new Map(definition.groups.map(group => [group.id, group.label]));
+  return el('section', {}, notice('完整性碼只檢查檔案損毀，不代表官方核定或可信作者。請完整核對文字；說明、題名或備註可能含人工輸入的個資。'),
+    el('h3', {}, definition.name), el('p', {}, `來源模板代碼：${definition.code} · 群組 ${definition.groups.length} 個 · 題項 ${definition.fields.length} 題`),
+    el('p', { class: 'pre-wrap' }, `完整說明：${definition.description || '未填寫'}`),
+    table([{ key: 'id', label: '群組代碼' }, { key: 'label', label: '完整群組名稱' }], definition.groups, { caption: '模板完整群組', emptyText: '此模板沒有群組。' }),
+    table([{ key: 'key', label: '題項代碼' }, { key: 'label', label: '完整題項名稱' }, { label: '題型', render: field => FORM_TYPE_LABELS[field.type] },
+      { label: '群組', render: field => groups.get(field.groupId) || '無群組' }, { label: '提交時必填', render: field => field.required ? '是' : '否' },
+      { label: '完整選項', render: field => field.options.map(option => `${option.value}：${option.label}`).join('、') || '無' },
+      { label: '顯示條件', render: field => field.visibleIf ? `${field.visibleIf.field} 精確等於 ${typeof field.visibleIf.equals === 'boolean' ? field.visibleIf.equals ? '是' : '否' : field.visibleIf.equals}` : '一律顯示' }], definition.fields, { caption: '模板完整題項定義' }),
+    el('p', { class: 'pre-wrap' }, `完整備註：${definition.note || '未填寫'}`), el('p', { class: 'pre-wrap' }, `檔案完整性碼：${packageValue.sha256}`));
+};
 const abort = () => { throw new DOMException('目前操作已失效，請重新讀取。', 'AbortError'); };
 const copy = value => structuredClone(value);
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
@@ -47,22 +60,55 @@ export async function mountCustomForms(container, { isCurrent = () => true } = {
   const content = el('section', { class: 'panel', 'aria-live': 'polite' }), footer = el('div', { class: 'list-footer' });
   const read = async (kind, id, signal, current) => { const result = await api(`/api/${kind}/${encodeURIComponent(id)}`, { signal }); if (!current()) abort(); return check(kind, result.item); };
   const actionRead = async (trigger, action) => {
-    const request = sequence, control = new AbortController(), current = () => alive() && sequence === request && (!trigger || trigger.isConnected);
+    const request = sequence, stamp = content.dataset.renderVersion, control = new AbortController(), current = () => alive() && sequence === request && content.dataset.renderVersion === stamp && (!trigger || trigger.isConnected);
     const invalidate = () => { if (!current()) control.abort(); }, observer = new MutationObserver(invalidate);
     observer.observe(container, { childList: true, subtree: true, attributes: true, attributeFilter: ['data-render-version'] });
     window.addEventListener('session-updated', invalidate); window.addEventListener('hashchange', invalidate);
     try { if (!current()) return; await action(control.signal, current); }
     finally { control.abort(); observer.disconnect(); window.removeEventListener('session-updated', invalidate); window.removeEventListener('hashchange', invalidate); }
   };
-  const save = async (kind, original, payload, owner, snapshot) => {
+  const save = async (kind, original, payload, owner, snapshot, confirmationField) => {
     const sent = original ? { ...payload, version: original.version } : payload;
     let headers;
     if (!original) { let keys = writeKeys.get(owner.signal); if (!keys) { keys = new Map(); writeKeys.set(owner.signal, keys); } const signature = JSON.stringify([kind, sent]); if (!keys.has(signature)) keys.set(signature, crypto.randomUUID()); headers = { 'Idempotency-Key': keys.get(signature) }; }
     const result = await api(original ? `/api/${kind}/${encodeURIComponent(original.id)}` : `/api/${kind}`, { method: original ? 'PATCH' : 'POST', body: sent, signal: owner.signal, headers });
-    if (!owner.isCurrent()) abort(); return confirmCustomFormSave(result, { entity: kind, orgId: org(), original, payload, snapshot });
+    if (!owner.isCurrent()) abort();
+    try { return confirmCustomFormSave(result, { entity: kind, orgId: org(), original, payload, snapshot }); }
+    catch (cause) { if (!confirmationField) throw cause; const error = new Error('無法確認儲存結果或模板內容；請保留輸入並重新讀取，或以相同內容重試。'); error.code = 'FORM_RECEIPT_UNCONFIRMED'; error.fields = { [confirmationField]: error.message }; throw error; }
   };
   const fresh = async (kind, row, signal, current) => { const item = await read(kind, row.id, signal, current); if (item.version !== row.version) throw new Error('內容已更新，請重新讀取後操作。'); return item; };
   const afterSave = async (saved, message) => { if (saved && alive()) { await load(); if (alive()) toast(message, 'success'); } };
+  const exportTemplate = (row, trigger) => actionRead(trigger, async (signal, current) => {
+    const template = await fresh('form-templates', row, signal, current), packageValue = await createCustomFormPackage(template, org());
+    if (!current()) abort();
+    const checked = await openForm({ title: '核對模板套件下載', isCurrent: current, submitLabel: '下載模板套件',
+      fields: [{ name: 'reviewed', label: '我已核對完整模板說明、題項及備註，適合下載保存', type: 'checkbox', required: true,
+        help: '檔案只含模板定義；說明或題名中的人工文字仍可能含個資。完整性碼只檢查檔案損毀，不代表官方核定。' }],
+      initial: { reviewed: false },
+      beforeFields: packagePreview(packageValue),
+      onSubmit: async (values, owner) => { if (!values.reviewed) throw new Error('請先核對模板文字，再明確勾選下載確認。');
+        await fresh('form-templates', template, owner.signal, owner.isCurrent); if (!owner.isCurrent()) abort();
+        downloadCustomFormPackageText(JSON.stringify(packageValue), { filename: `歲悅-${template.code}-模板.json`, signal: owner.signal, isCurrent: owner.isCurrent });
+      } });
+    if (checked && current()) toast('已下載模板套件；不含填答、個案或附件。', 'success');
+  });
+  const importTemplate = trigger => actionRead(trigger, async (_signal, current) => {
+    const packageValue = await openForm({ title: '選擇模板套件', returnSubmitResult: true, isCurrent: current, submitLabel: '核對模板套件',
+      fields: [{ name: 'file', label: 'UTF-8 JSON 模板套件', type: 'file', required: true, accept: '.json,application/json', filePolicy: 'custom-form-package-json', maxFileBytes: CUSTOM_FORM_PACKAGE_MAX_BYTES,
+        help: '只接收本系統的模板定義套件，最多 4 MiB；不匯入填答、個案、附件或來源機構權限。' }],
+      onSubmit: async (values, owner) => { const bytes = new Uint8Array(await values.file.arrayBuffer()); if (!owner.isCurrent()) abort(); const parsed = await readCustomFormPackage(bytes); if (!owner.isCurrent()) abort(); return parsed; } });
+    if (!packageValue || !current()) return;
+    const definition = packageValue.definition;
+    const saved = await openForm({ title: '匯入為新模板草稿', isCurrent: current, submitLabel: '建立新模板草稿', initial: { code: '', name: '', reviewed: false },
+      fields: [{ name: 'code', label: '新模板代碼', required: true, maxLength: 100, help: `請使用不同於來源「${definition.code}」的代碼；不會覆寫任何模板。` },
+        { name: 'name', label: '新模板名稱', required: true, maxLength: 200 }, { name: 'reviewed', label: '我已核對模板文字，確認建立新的機構自訂草稿', type: 'checkbox', required: true, wide: true }],
+      beforeFields: el('section', {}, notice('新草稿須另行檢查及發布；來源權限、修訂歷程、填答及附件不匯入。'), packagePreview(packageValue)),
+      onSubmit: async (values, owner) => { if (!values.reviewed) throw new Error('請核對模板內容並明確確認建立新草稿。');
+        try { const payload = customFormPackageDraft(packageValue, { code: values.code, name: values.name }); await save('form-templates', undefined, payload, owner, undefined, 'code'); }
+        catch (error) { if (error.code === 'DUPLICATE_FORM_REVISION') error.message += ' 請保留輸入，改用尚未建立的新模板代碼。';
+          if (error.code === 'CUSTOM_FORM_PACKAGE_INVALID') error.fields = { code: error.message }; throw error; }
+      } }); await afterSave(saved, '已匯入新模板草稿；尚未發布');
+  });
   const createTemplate = (previous, trigger) => actionRead(trigger, async (signal, current) => {
     const prior = previous ? await fresh('form-templates', previous, signal, current) : undefined;
     if (prior && !['published', 'inactive'].includes(prior.status)) throw new Error('請先發布前版模板，再建立新版草稿。');
@@ -195,6 +241,7 @@ export async function mountCustomForms(container, { isCurrent = () => true } = {
           entity === 'form-templates' && row.status === 'draft' && safeButton('發布並鎖定', trigger => changeTemplateState(row, 'published', trigger), 'primary'),
           entity === 'form-templates' && row.status !== 'draft' && safeButton('建立新版', trigger => createTemplate(row, trigger)),
           entity === 'form-templates' && row.status === 'published' && safeButton('停用', trigger => changeTemplateState(row, 'inactive', trigger), 'danger'),
+          entity === 'form-templates' && safeButton('下載模板套件', trigger => exportTemplate(row, trigger)),
           safeButton('歷程', trigger => actionRead(trigger, async (signal, current) => openRecordHistory({ entity, id: row.id, isCurrent: current })))) }], result.items,
       { caption: entity === 'form-templates' ? '機構自訂模板' : '個案自訂填答', emptyText: entity === 'form-templates' ? '尚無自訂模板；請新增模板草稿。' : '尚無填答；請先發布模板後新增填答。' }));
       footer.append(pagination({ page, pageSize: 25, total: result.total, onChange: next => { page = next; void load(); } }));
@@ -204,7 +251,9 @@ export async function mountCustomForms(container, { isCurrent = () => true } = {
   const statusSelect = el('select', { class: 'input', 'aria-label': '表單狀態' });
   const setStatusOptions = () => statusSelect.replaceChildren(el('option', { value: '' }, '全部狀態'), ...Object.entries(entity === 'form-templates' ? FORM_TEMPLATE_STATUSES : FORM_RECORD_STATUSES).map(([value, label]) => el('option', { value }, label)));
   mode.addEventListener('change', () => { entity = mode.value; page = 1; status = ''; setStatusOptions(); void load(); }); statusSelect.addEventListener('change', () => { status = statusSelect.value; page = 1; void load(); }); setStatusOptions();
-  container.replaceChildren(pageHeader('自訂表單', '依機構自訂題項保存填答；模板及填答發布／提交後鎖定，正式16種模板另行核定。', safeButton('新增', trigger => entity === 'form-templates' ? createTemplate(undefined, trigger) : editRecord(undefined, trigger), 'primary')),
+  const importButton = safeButton('匯入模板套件', importTemplate);
+  mode.addEventListener('change', () => { importButton.hidden = entity !== 'form-templates'; });
+  container.replaceChildren(pageHeader('自訂表單', '依機構自訂題項保存填答；模板及填答發布／提交後鎖定，正式16種模板另行核定。', [safeButton('新增', trigger => entity === 'form-templates' ? createTemplate(undefined, trigger) : editRecord(undefined, trigger), 'primary'), importButton]),
     el('div', { class: 'filters' }, mode, statusSelect, searchBox({label:'搜尋自訂表單',placeholder:'搜尋模板名稱、代碼或備註',onSearch:value => { if(alive()){query = value; page = 1; void load();} }})), content, footer);
   await load();
 }

@@ -3,6 +3,7 @@ import { api, el, button, badge, pageHeader, table, getContext, setContext, crea
 import { renderOperations } from './modules/operations.js';
 import { renderAdmin } from './modules/admin.js';
 import { renderPersonnel } from './modules/personnel.js';
+import { mountEmployeePayroll } from './views/employee-payroll.js';
 import { icon } from './icons.js';
 const app = document.querySelector('#app');
 document.querySelector('.skip-link[href="#main-content"]')?.addEventListener('click', event => {
@@ -53,7 +54,7 @@ const navItems = [
   ['/shift-substitution', '人工代班申請', 'leave'], ['/contract-deadlines', '契約期限提醒', 'calendar'], ['/internal-notifications', '站內通知與回覆', 'announcement'],
   ['/attendance-exceptions', '人工出勤例外', 'leave'], ['/institution-holidays', '機構人工假日', 'calendar'], ['/training-credits', '年度人工積分', 'book'], ['/institution-calendar', '機構行事曆', 'calendar'], ['/internal-tasks', '內部待辦', 'clipboard'], ['/complaints', '申訴案件', 'clipboard'], ['/business-rules', '業務規則設定', 'settings'],
   ['紀錄與報表', '/assessments', '評估表單', 'clipboard'], ['/custom-forms', '自訂表單', 'clipboard'], ['/supervisory-visits', '督導訪視查詢', 'visit'], ['/needs-assessments', '需求評估查詢', 'search'], ['/case-followup-worklist', '人工追蹤查詢', 'activity'], ['/reports', '報表中心', 'reports'], ['/group-overview', '群組營運總覽', 'reports'], ['/surveys', '問卷與 QR 填答', 'clipboard'],
-  ['財務作業', '/service-billing', '服務轉帳單', 'reports'], ['/billing-documents', '人工帳單與收款', 'reports'], ['/service-payroll', '服務轉薪資', 'reports'], ['/payroll-statements', '人工薪資結算', 'reports'], ['/claim-batches', '離線核銷與人工對帳', 'reports'], ['/calculations', '計價與薪資試算', 'reports'], ['/ltc-codes', 'BA／AA 清冊與試算', 'reports'], ['/financial-adjustments', '財務更正調整單', 'reports'],
+  ['財務作業', '/service-billing', '服務轉帳單', 'reports'], ['/billing-documents', '人工帳單與收款', 'reports'], ['/service-payroll', '服務轉薪資', 'reports'], ['/payroll-statements', '人工薪資結算', 'reports'], ['/claim-batches', '離線核銷與人工對帳', 'reports'], ['/calculations', '計價與薪資試算', 'reports'], ['/ltc-codes', 'BA／AA 清冊與試算', 'reports'], ['/employee-payroll', '員工薪資規則與月試算', 'reports'], ['/financial-adjustments', '財務更正調整單', 'reports'],
   ['系統管理', '/settings', '機構設定', 'settings'], ['/account-administration', '帳號與權限', 'users'], ['/local-imports', '本機資料匯入', 'layers'], ['/audit', '異動紀錄', 'history'], ['/help', '使用說明', 'help']
 ];
 const names = Object.fromEntries(navItems.map(item => item.length === 4 ? [item[1], item[2]] : [item[0], item[1]]));
@@ -65,7 +66,7 @@ function brand(workspaceLabel = '') {
 function canView(route) {
   const role = getContext().role;
   if (route === '/account-administration') return role === 'admin';
-  if (['/calculations', '/ltc-codes', '/financial-adjustments'].includes(route)) return ['admin', 'finance'].includes(role);
+  if (['/calculations', '/ltc-codes', '/employee-payroll', '/financial-adjustments'].includes(route)) return ['admin', 'finance'].includes(role);
   if (route === '/surveys') return ['admin', 'supervisor'].includes(role);
   if (route === '/group-overview') return role === 'admin';
   if (route === '/shift-substitution') return ['admin','supervisor','caregiver'].includes(role);
@@ -286,6 +287,7 @@ async function renderRoute() {
     loading.remove();
     if (route === '/') await dashboard(container);
     else if (route === '/help') help(container);
+    else if (route === '/employee-payroll') await mountEmployeePayroll(container, { isCurrent: () => token === routeVersion });
     else if (['/cases', '/plans', '/shifts', '/records', '/my-services'].includes(base)) await renderOperations(route, container);
     else if (['/certifications', '/training'].includes(base)) await renderPersonnel(route, container);
     else if (['/account-administration', '/calculations', '/ltc-codes', '/financial-adjustments', '/surveys', '/group-overview', '/service-payroll', '/service-billing', '/shift-substitution', '/contract-deadlines', '/internal-notifications', '/local-imports', '/attendance-exceptions', '/institution-holidays', '/training-credits', '/shift-series', '/case-contracts', '/internal-tasks', '/custom-forms', '/claim-batches', '/billing-documents', '/payroll-statements', '/business-rules', '/institution-calendar', '/complaints', '/personal-calendar', '/employees', '/interviews', '/service-items', '/leave', '/assessments', '/supervisory-visits', '/needs-assessments', '/case-followup-worklist', '/announcements', '/reports', '/settings', '/audit'].includes(base)) await renderAdmin(route, container);

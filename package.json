@@ -1,6 +1,6 @@
 {
   "name": "suiyue-home-care",
-  "version": "0.80.0",
+  "version": "0.81.0",
   "private": true,
   "type": "module",
   "engines": {
@@ -111,7 +111,9 @@
     "rehearse:runtime-probes": "node scripts/rehearse-runtime-probes.mjs",
     "rehearse:synthetic-encrypted-portal-backup": "node scripts/rehearse-synthetic-encrypted-portal-backup.mjs",
     "check:runtime-readiness": "node scripts/check-runtime-readiness.mjs",
-    "test:e2e:settings-create-safety": "node tests/settings-create-safety-e2e.mjs"
+    "test:e2e:settings-create-safety": "node tests/settings-create-safety-e2e.mjs",
+    "test:e2e:employee-payroll": "node tests/employee-payroll-e2e.mjs",
+    "test:e2e:custom-form-package": "node tests/custom-form-package-e2e.mjs"
   },
   "packageManager": "pnpm@11.21.0",
   "devDependencies": {

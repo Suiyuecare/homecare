@@ -29,3 +29,13 @@ Portal handoff 只認明確預先開通的 issuer／Google subject／Auth ID／e
 正式支付、薪資、資格、FA 介接、評分、定位與離線政策仍依核定依據實作，不能以本機人工作業或合成演練推定正式營運驗收。
 
 本輪94項配置與2060項程式測試及修復紀錄見 [全系統回歸範圍](docs/FULL_REGRESSION_SCOPE.md)。GitHub CI以同一提交的Actions實際結果確認。
+
+## 0.81 接續功能與正式資料
+
+「員工薪資規則與月試算」可按員工與期間保存時薪或拆帳設定，明確核定後試算所選已核閱服務；介面輸入元及百分比。實收介接、正式扣項及發薪另驗，不把選取來源合計當成完整月薪。
+
+「自訂表單」可完整核對並下載模板套件，嚴格驗證後匯入新的草稿，不搬移填答、附件、機構或權限，也不覆寫舊模板。
+
+一次需提供或核定的八類資料見 [USER_REQUIRED_INPUTS.md](docs/USER_REQUIRED_INPUTS.md)；工程與正式驗收界限見 [COMPLETION_ACCEPTANCE_SCOPE.md](docs/COMPLETION_ACCEPTANCE_SCOPE.md)。新功能分別以 `pnpm test:e2e:employee-payroll`、`pnpm test:e2e:custom-form-package` 重跑，完整配置仍由 `pnpm test:regression` 驗證。合成原生程序重啟亦納入完整程式測試；這不證明正式主機或容器重建已通過。
+
+本機0.81完整回歸已通過（兩Node版本各2,310項、99個runtime、49頁四角色及六寬度）；相同提交CI與正式部署各自驗收，八類正式工作包仍待核定。

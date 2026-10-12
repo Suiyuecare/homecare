@@ -106,6 +106,15 @@ export function readApprovedCalculationSource(db, ctx, selection, { fail = defau
   return immutableCalculationCopy(sourceRecord(db, ctx, selection, fail));
 }
 
+/** Verify an ineligible demonstration completely before excluding it from a candidate list. */
+export function readVerifiedSyntheticDemoCalculationSource(db, ctx, selection, { fail = defaultFail } = {}) {
+  guardCalculationAccess(db, ctx, fail);
+  if (!closed(selection, ['id', 'version']) || !ref(selection.id) || !safe(selection.version, 1)) invalid(fail, '來源識別與版次必須明確指定。');
+  const record = requireVersion(readRecord(db, ctx.orgId, 'service-records', selection.id, fail), selection.version, fail);
+  mapped(() => assertSyntheticDemoCalculationSource(record), fail); sourceParents(db, ctx, record, fail);
+  return immutableCalculationCopy(record);
+}
+
 export function calculationPreviewQuery(params, fail = defaultFail) {
   if (!(params instanceof URLSearchParams) || [...params.keys()].length) invalid(fail, '試算操作不接受查詢欄位。');
   return {};

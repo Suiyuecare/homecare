@@ -115,7 +115,9 @@
     "financialAdjustments",
     "runtimeProbes",
     "syntheticEncryptedPortalBackup",
-    "settingsCreateSafety"
+    "settingsCreateSafety",
+    "employeePayroll",
+    "customFormPackage"
   ],
   "commands": {
     "check": "node scripts/check-source.mjs",
@@ -216,7 +218,9 @@
     "financialAdjustments": "node tests/financial-adjustments-e2e.mjs",
     "runtimeProbes": "node scripts/rehearse-runtime-probes.mjs",
     "syntheticEncryptedPortalBackup": "node scripts/rehearse-synthetic-encrypted-portal-backup.mjs",
-    "settingsCreateSafety": "node tests/settings-create-safety-e2e.mjs"
+    "settingsCreateSafety": "node tests/settings-create-safety-e2e.mjs",
+    "employeePayroll": "node tests/employee-payroll-e2e.mjs",
+    "customFormPackage": "node tests/custom-form-package-e2e.mjs"
   },
   "evidence": {
     "crudFullFlow": "tests/e2e.mjs",

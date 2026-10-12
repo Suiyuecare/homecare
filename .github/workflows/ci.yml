@@ -92,3 +92,7 @@ jobs:
             outputs/software/settings-create-safety-qa/**/*.png
             outputs/software/claim-partial-reconciliation-qa/**/result.json
             outputs/software/claim-partial-reconciliation-qa/**/*.png
+            outputs/software/employee-payroll-qa/**/result.json
+            outputs/software/employee-payroll-qa/**/*.png
+            outputs/software/custom-form-package-qa/**/browser-*.json
+            outputs/software/custom-form-package-qa/**/*.png

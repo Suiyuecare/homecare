@@ -1,5 +1,6 @@
 // Typed company forms. No scoring, expression evaluator or official template defaults.
 export const FORM_TYPES = Object.freeze(['text', 'textarea', 'number', 'date', 'select', 'multiselect', 'boolean']);
+export const FORM_TYPE_LABELS = Object.freeze({ text: '短文字', textarea: '長文字', number: '十進位數值文字', date: '日期', select: '單選', multiselect: '多選', boolean: '是／否' });
 export const FORM_MAX_SCHEMA_LENGTH = 1000000;
 export const FORM_MAX_ANSWERS_LENGTH = 600000;
 export const FORM_TEMPLATE_STATUSES = Object.freeze({ draft: '草稿', published: '已發布', inactive: '已停用' });
