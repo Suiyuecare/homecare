@@ -96,3 +96,5 @@ jobs:
             outputs/software/employee-payroll-qa/**/*.png
             outputs/software/custom-form-package-qa/**/browser-*.json
             outputs/software/custom-form-package-qa/**/*.png
+            outputs/software/legacy-migrations-qa/attempt-*/browser.json
+            outputs/software/legacy-migrations-qa/attempt-*/*.png
