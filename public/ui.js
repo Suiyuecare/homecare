@@ -297,14 +297,16 @@ function createDialog(title) {
     const available = node => node?.isConnected && node !== document.body && node.getClientRects().length
       && !node.matches(':disabled') && !node.closest('[hidden],[inert],[aria-hidden="true"]')
       && (!parent || parent.contains(node));
-    if (available(trigger)) trigger.focus();
+    // Native close is queued. Keep a valid focus the user moved to after close()
+    // instead of sending the next keystroke back to the old dialog trigger.
+    if (!available(document.activeElement) && available(trigger)) trigger.focus();
     // A submitting parent form temporarily disables its trigger before opening
     // confirmation. Return to its available controls instead of leaving focus
     // on the page behind the still-open modal.
-    if (parent && !parent.contains(document.activeElement)) {
+    if (parent && !available(document.activeElement)) {
       const target = [...parent.querySelectorAll('button,input,select,textarea,a[href],[tabindex]')].find(available) || parent;
       target.focus();
-    } else if (!parent && !available(trigger)) document.querySelector('main h1')?.focus();
+    } else if (!parent && !available(document.activeElement)) document.querySelector('main h1')?.focus();
   }, { once: true });
   return dialog;
 }

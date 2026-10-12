@@ -39,3 +39,12 @@ Portal handoff 只認明確預先開通的 issuer／Google subject／Auth ID／e
 一次需提供或核定的八類資料見 [USER_REQUIRED_INPUTS.md](docs/USER_REQUIRED_INPUTS.md)；工程與正式驗收界限見 [COMPLETION_ACCEPTANCE_SCOPE.md](docs/COMPLETION_ACCEPTANCE_SCOPE.md)。新功能分別以 `pnpm test:e2e:employee-payroll`、`pnpm test:e2e:custom-form-package` 重跑，完整配置仍由 `pnpm test:regression` 驗證。合成原生程序重啟亦納入完整程式測試；這不證明正式主機或容器重建已通過。
 
 本機0.81完整回歸已通過（兩Node版本各2,310項、99個runtime、49頁四角色及六寬度）；相同提交CI與正式部署各自驗收，八類正式工作包仍待核定。
+
+
+## 0.81.1 視窗焦點與完整驗收
+
+修正原生視窗關閉事件搶回已移至搜尋欄的焦點，仍保留父視窗、Escape、忙碌與撤權守衛。個人行事曆保留原14關並新增原生事件交錯G15；成功儲存測試等精確刷新回應及原視窗DOM移除後，才清理攔截。
+
+Node22與24各2,310項測試、552份JavaScript語法檢查及99個runtime六組恰好一次全部原生退出0；49頁四角色196項、六寬度510項版面檢查及88個命名PNG已完成核對。696個公開輸入／565個可執行輸入整批前後相同。
+
+原main失敗、本輪G10失敗及休眠中斷紀錄均保留；G10原失敗與攔截時序的精確因果仍未確證，不能宣稱由重跑證實。正式八類核定資料、公司Portal、持久主機及部署仍未完成；背景排程保持停止。相同提交的公開CI需另以實際GitHub紀錄驗證。
