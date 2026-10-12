@@ -684,5 +684,27 @@
       "formal-portal-and-fresh-authority",
       "key-retention-and-live-recovery-cutover"
     ]
+  },
+  "dashboardTimeWrap0821": {
+    "version": "0.82.1",
+    "status": "same-commit-ci-accepted-main-ci-pending",
+    "problem": "Legacy complete ISO date/time text overflows dashboard time grid and covers case and employee names.",
+    "change": "Wrap complete original time text inside its grid cell; preserve original dates, seconds, offsets and all data.",
+    "counterexample": "Deterministic browser-today legacy ISO shift without endDate; original geometry assertions remain.",
+    "localChecks": {
+      "shiftSpanGates": 9,
+      "visualRouteRoleChecks": 200,
+      "visualLayoutChecks": 520,
+      "dashboardOriginalImagesReviewed": [
+        "desktop",
+        "375px",
+        "390px"
+      ]
+    },
+    "originalFailuresPreserved": true,
+    "productionDeployed": false,
+    "acceptedCommit": "85da37638ef476c26fa4b62979afcfb118caa97b",
+    "acceptedCiRun": "https://github.com/Suiyuecare/homecare/actions/runs/38280069213",
+    "acceptedRuntimeCount": 100
   }
 }
