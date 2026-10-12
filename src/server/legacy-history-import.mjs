@@ -105,6 +105,21 @@ function verifyAudit(db, ctx, entity, identity, action, actorId, expected) {
   const rows = db.prepare('SELECT user_id,hex(CAST(detail AS BLOB)) AS detailHex FROM audit WHERE org_id=? AND entity=? AND record_id=? AND action=?').all(ctx.orgId, entity, identity, action);
   if (rows.length !== 1 || rows[0].user_id !== actorId || !isDeepStrictEqual(jsonHex(rows[0].detailHex), expected)) invalid();
 }
+function batchRowAudits(db, ctx, records) {
+  // A request-local, bounded lookup preserves the per-row proof without N
+  // scans of the organization's audit history. Never cache across requests.
+  const identities = records.map(value => value.item.id);
+  if (!identities.length || identities.length > LEGACY_HISTORY_MAX_RECORDS || new Set(identities).size !== identities.length) invalid();
+  const rows = db.prepare(`SELECT record_id,user_id,hex(CAST(detail AS BLOB)) AS detailHex FROM audit WHERE org_id=? AND entity=? AND action=? AND record_id IN (${identities.map(() => '?').join(',')}) LIMIT ?`).all(ctx.orgId, ROW, 'record.history-import', ...identities, identities.length + 1);
+  if (rows.length !== identities.length) invalid();
+  const allowed = new Set(identities), result = new Map();
+  for (const row of rows) {
+    if (!allowed.has(row.record_id) || result.has(row.record_id)) invalid();
+    result.set(row.record_id, row);
+  }
+  if (result.size !== identities.length) invalid();
+  return result;
+}
 function validLayouts(layouts) {
   historyDenseList(layouts, LEGACY_HISTORY_MAX_RECORDS);
   const unique = new Set();
@@ -159,9 +174,11 @@ function loadBatch(db, ctx, identity, required = true) {
     if (legacyHistoryHash(payload) !== data.payloadHash || !isDeepStrictEqual([...new Set(payload.records.map(record => record.category))].sort(), data.categories) || !isDeepStrictEqual([...new Set(payload.records.map(record => record.reportingPeriod).filter(period => period !== null))].sort(), data.reportingPeriods) || new Set(records.map(value => value.data.layoutIndex)).size !== data.layouts.length) invalid();
     const count = db.prepare("SELECT COUNT(*) AS count FROM records WHERE org_id=? AND entity=? AND json_extract(data,'$.batchId')=?").get(ctx.orgId, ROW, identity).count;
     if (count !== records.length) invalid();
+    const audits = batchRowAudits(db, ctx, records);
     for (const value of records) {
       reference(db, ctx, 'cases', value.record.caseId, cache); reference(db, ctx, 'employees', value.record.employeeId, cache);
-      verifyAudit(db, ctx, ROW, value.item.id, 'record.history-import', data.importedBy, { version: 1, batchId: identity, rowId: value.item.id, sourceHash: data.sourceHash, payloadHash: data.payloadHash });
+      const row = audits.get(value.item.id), expected = { version: 1, batchId: identity, rowId: value.item.id, sourceHash: data.sourceHash, payloadHash: data.payloadHash };
+      if (!row || row.user_id !== data.importedBy || !isDeepStrictEqual(jsonHex(row.detailHex), expected)) invalid();
     }
     return { ...meta, records, cache };
   } catch { invalid(); }

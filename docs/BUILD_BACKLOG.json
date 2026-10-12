@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0.83.0",
+  "version": "0.83.1",
   "status": "local-slices-accepted-formal-system-pending",
   "purpose": "public-project-roadmap",
   "notice": "獨立本機測試系統，使用合成資料；本文件不包含原平台盤點、私人開通或完整開發追溯，亦不宣稱全部功能等價或正式部署完成。",
@@ -706,5 +706,20 @@
     "acceptedCommit": "85da37638ef476c26fa4b62979afcfb118caa97b",
     "acceptedCiRun": "https://github.com/Suiyuecare/homecare/actions/runs/38280069213",
     "acceptedRuntimeCount": 100
+  },
+  "historyAuditReads0831": {
+    "version": "0.83.1",
+    "status": "focused-accepted-full-regression-and-same-commit-ci-pending",
+    "change": "Bounded request-local audit lookup followed by original per-row proof validation.",
+    "schemaChanged": false,
+    "crossRequestCache": false,
+    "auditReadQueriesConstantBound": 4,
+    "counterexampleRows": 200,
+    "originalCounterexampleNativeExit": 1,
+    "offPageMissingDuplicateWrongActorAndFreshRequestChangesRejected": true,
+    "priorReleaseCommit": "5ad6efc6a62eb589fc168353089255765a0c6c5b",
+    "priorReleaseCi": "https://github.com/Suiyuecare/homecare/actions/runs/38284122263",
+    "priorReleaseRuntimeCount": 101,
+    "productionDeployed": false
   }
 }
