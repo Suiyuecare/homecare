@@ -118,7 +118,8 @@
     "settingsCreateSafety",
     "employeePayroll",
     "customFormPackage",
-    "legacyMigrations"
+    "legacyMigrations",
+    "legacyHistory"
   ],
   "commands": {
     "check": "node scripts/check-source.mjs",
@@ -222,7 +223,8 @@
     "settingsCreateSafety": "node tests/settings-create-safety-e2e.mjs",
     "employeePayroll": "node tests/employee-payroll-e2e.mjs",
     "customFormPackage": "node tests/custom-form-package-e2e.mjs",
-    "legacyMigrations": "node tests/legacy-migrations-e2e.mjs"
+    "legacyMigrations": "node tests/legacy-migrations-e2e.mjs",
+    "legacyHistory": "node tests/legacy-history-e2e.mjs"
   },
   "evidence": {
     "crudFullFlow": "tests/e2e.mjs",
@@ -277,6 +279,7 @@
     "runtimeProbes": "scripts/rehearse-runtime-probes.mjs",
     "syntheticEncryptedPortalBackup": "scripts/rehearse-synthetic-encrypted-portal-backup.mjs",
     "settingsCreateSafety": "tests/settings-create-safety-e2e.mjs",
-    "legacyMigrations": "tests/legacy-migrations-e2e.mjs"
+    "legacyMigrations": "tests/legacy-migrations-e2e.mjs",
+    "legacyHistory": "tests/legacy-history-e2e.mjs"
   }
 }
