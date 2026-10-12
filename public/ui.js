@@ -71,6 +71,11 @@ function pickedFileError(file, { accept = ATTACHMENT_FILE_ACCEPT, maxFileBytes =
     if (file.type && !['text/csv','application/csv','text/plain','application/vnd.ms-excel'].includes(file.type)) return 'CSV檔案格式無法確認，請重新選檔。';
     return null;
   }
+  if (filePolicy === 'custom-form-package-json') {
+    if (extension !== 'json' || !allowed.includes('.json')) return '請選擇 JSON 模板套件。';
+    if (file.type && !['application/json', 'text/json', 'text/plain'].includes(file.type)) return '模板套件格式無法確認，請重新選檔。';
+    return null;
+  }
   if (!attachmentTypes[extension] || !allowed.includes(`.${extension}`)) return '請選擇 PDF、PNG 或 JPEG 檔案。';
   if (file.type && file.type !== attachmentTypes[extension]) return '檔案格式與副檔名不一致，請重新選檔。';
   return null;
@@ -179,6 +184,18 @@ export async function downloadCsv(path, { filename = '報表.csv', signal, isCur
     if (error instanceof TypeError) throw new Error('目前無法連線，請確認網路後重試。');
     throw error;
   } finally { clearTimeout(timeout); signal?.removeEventListener('abort', externalAbort); }
+}
+// The template package is already a freshly authorized, verified definition.
+// This opt-in keeps local file delivery under the existing UI/context owner.
+export function downloadCustomFormPackageText(text, { filename = '自訂模板.json', signal, isCurrent = () => true } = {}) {
+  const startedContext = context;
+  const guard = () => { if (signal?.aborted || context !== startedContext || !isCurrent()) throw new DOMException('操作已取消', 'AbortError'); };
+  guard();
+  if (typeof text !== 'string' || !text.length || new TextEncoder().encode(text).byteLength > 4 * 1024 * 1024) throw new Error('模板套件內容無法完整下載。');
+  const safeName = String(filename).replace(/[\x00-\x1f\x7f/\\]/g, '_').slice(0, 175).replace(/\.json$/i, '') + '.json';
+  const url = URL.createObjectURL(new Blob([text], { type: 'application/json;charset=utf-8' }));
+  try { guard(); const link = el('a', { href: url, download: safeName }); document.body.append(link); link.click(); link.remove(); }
+  finally { setTimeout(() => URL.revokeObjectURL(url), 2000); }
 }
 export async function api(path, options = {}) {
   if (!path.startsWith('/api/')) path = `/api/${path.replace(/^\//, '')}`;
@@ -333,7 +350,8 @@ export function openDetails({ title, load, wide = false, printable = false, isCu
       if (print) { print.disabled = true; print.setAttribute('aria-busy', 'true'); }
       body.replaceChildren(el('p', { role: 'status' }, loadingText));
       try {
-        const content = await load(controller.signal, { reload: () => reload(), isCurrent: current });
+        const content = await load(controller.signal, { reload: () => reload(), isCurrent: current,
+          close: () => { if (!current() || readBusy) return false; dialog.close(); return true; } });
         if (!current()) return;
         body.replaceChildren(content);
         printReady = true;
@@ -421,7 +439,7 @@ export function confirmAction({ title, message, confirmLabel = '確認', danger 
     }
   });
 }
-export function createForm({ fields, initial = {}, onSubmit, onChange, submitLabel = '儲存', onCancel, cancelLabel = '取消', onPreview, previewLabel = '預覽', previewInstruction = '請先預覽，確認日期與衝突後再建立。', previewRequiredMessage = '請先重新預覽並處理衝突，再建立全部班次。', lockDuringSubmit = false, readOnlySubmission = false }) {
+export function createForm({ fields, initial = {}, onSubmit, onChange, submitLabel = '儲存', onCancel, cancelLabel = '取消', onPreview, previewLabel = '預覽', previewInstruction = '請先預覽，確認日期與衝突後再建立。', previewRequiredMessage = '請先重新預覽並處理衝突，再建立全部班次。', lockDuringSubmit = false, readOnlySubmission = false, beforeFields }) {
   const form = el('form', { noValidate: true, class: 'app-form' });
   const summary = el('div', { class: 'form-summary', role: 'alert', hidden: true });
   const grid = el('div', { class: 'form-grid' }); const controls = new Map(); const errors = new Map(); const descriptors = new Map(); const groups = new Map(); const hiddenControls = new Map();
@@ -531,7 +549,7 @@ export function createForm({ fields, initial = {}, onSubmit, onChange, submitLab
   const previewRegion = onPreview ? el('section', { class: 'form-preview', 'aria-label': `${previewLabel}結果`, 'aria-live': 'polite', tabindex: '-1' }, el('p', { class: 'notice' }, previewInstruction)) : null;
   let previewButton;
   const footer = el('div', { class: 'dialog-footer' }, onCancel && button(cancelLabel, onCancel, { variant: 'outline' }), onPreview && (previewButton = button(previewLabel, () => preview(), { variant: 'outline' })), submit);
-  form.append(summary, grid, ...(previewRegion ? [previewRegion] : []), footer);
+  form.append(summary, ...(beforeFields instanceof Node ? [beforeFields] : []), grid, ...(previewRegion ? [previewRegion] : []), footer);
   if (onPreview) submit.disabled = true;
   invalidatePreview = (content) => {
     if (!onPreview) return;

@@ -2,6 +2,7 @@ import { accountMembershipActive, guardAccountAdministration, accountAdministrat
 import { confirmSettingsUser, confirmSettingsOrganization, confirmSettingsDemo } from '../../public/data/settings-create-core.js';
 import { createReadinessProbe, readinessOptionsFromEnv } from './readiness.mjs';
 import { guardCalculationAccess, calculationCandidateQuery, calculationPreviewQuery, listCalculationCandidates, previewCalculation } from './calculation-engine.mjs';
+import { guardEmployeePayrollAccess, employeePayrollQuery, validateEmployeePayrollPayload, listEmployeePayrollProfiles, readEmployeePayrollProfile, readEmployeePayrollHistory, preflightEmployeePayrollReceipt, commitEmployeePayrollProfile, confirmEmployeePayrollResponse, listEmployeePayrollCandidates, previewEmployeePayroll } from './employee-payroll.mjs';
 import { ltcCatalogQuery, listLtcCatalog, previewLtcCodeCalculation } from './ltc-code-calculation.mjs';
 import { guardFinancialAdjustmentAccess, financialAdjustmentQuery, listFinancialAdjustments, readFinancialAdjustment, readFinancialAdjustmentHistory, validateFinancialAdjustmentCreate, validateFinancialAdjustmentDraft, validateFinancialAdjustmentTransition, commitFinancialAdjustmentCreate, commitFinancialAdjustmentDraft, commitFinancialAdjustmentSubmit, commitFinancialAdjustmentReview, preflightFinancialAdjustmentReceipt, confirmFinancialAdjustmentResponse } from './financial-adjustments.mjs';
 import { handlePublicSurvey, isPublicSurveyNamespace } from './survey-http.mjs';
@@ -145,6 +146,31 @@ export function createApp({dbPath,host='127.0.0.1',port=Number(process.env.PORT|
    if(pathname==='/api/logout'&&req.method==='POST'){const s=session(req);if(!s)fail(401,'AUTH_REQUIRED','請先登入');csrf(req,s);db.prepare('DELETE FROM sessions WHERE token_hash=?').run(s.token_hash);res.setHeader('Set-Cookie',`suiyue_session=; ${cookieAttributes()}; Max-Age=0`);return send(res,200,{ok:true});}
    if(pathname.startsWith('/api/')){
     const ctx=auth(req);if(mutating)csrf(req,ctx.session);
+    if(/^\/api\/employee-payroll(?:\/|$)/.test(pathname)){
+     guardEmployeePayrollAccess(db,ctx);
+     if(pathname==='/api/employee-payroll/candidates'){
+      if(req.method!=='GET')fail(405,'METHOD_NOT_ALLOWED','薪資來源候選只支援GET');
+      return send(res,200,listEmployeePayrollCandidates(db,ctx,employeePayrollQuery(url.searchParams,'candidates')));
+     }
+     if(pathname==='/api/employee-payroll/preview'){
+      if(req.method!=='POST')fail(405,'METHOD_NOT_ALLOWED','月薪資試算只支援POST');
+      employeePayrollQuery(url.searchParams);const payload=await body(req,1024*1024),fresh=auth(req);csrf(req,fresh.session);guardEmployeePayrollAccess(db,fresh);
+      return send(res,200,previewEmployeePayroll(db,fresh,payload));
+     }
+     const match=pathname.match(/^\/api\/employee-payroll\/profiles(?:\/([a-f0-9-]+))?(?:\/(history))?$/);
+     if(!match)fail(404,'NOT_FOUND','找不到員工薪資設定入口');
+     const[,profileId,history]=match;
+     if(history&&!profileId)fail(404,'NOT_FOUND','找不到薪資設定歷程入口');
+     if(req.method==='GET'){const query=employeePayrollQuery(url.searchParams,profileId?'single':'list');return send(res,200,!profileId?listEmployeePayrollProfiles(db,ctx,query):history?readEmployeePayrollHistory(db,ctx,profileId):readEmployeePayrollProfile(db,ctx,profileId));}
+     guardEmployeePayrollAccess(db,ctx,true);employeePayrollQuery(url.searchParams);
+     const create=req.method==='POST'&&!profileId&&!history,update=req.method==='PATCH'&&profileId&&!history;
+     if(!create&&!update)fail(405,'METHOD_NOT_ALLOWED','請沿員工薪資草稿、核定與停用流程操作');
+     if(!req.headers['idempotency-key'])fail(422,'IDEMPOTENCY_REQUIRED','薪資設定保存必須提供重送鍵');
+     const payload=await body(req);validateEmployeePayrollPayload(payload,!!update);let checked=ctx;
+     const freshContext=()=>{const fresh=auth(req);csrf(req,fresh.session);guardEmployeePayrollAccess(db,fresh,true);return fresh;};
+     const result=idem(req,ctx,payload,()=>({status:create?201:200,value:commitEmployeePayrollProfile(db,checked,profileId,payload)}),()=>{checked=freshContext();preflightEmployeePayrollReceipt(db,checked,profileId);});
+     return send(res,result.status,confirmEmployeePayrollResponse(db,freshContext(),result.value));
+    }
     if(/^\/api\/financial-adjustments(?:\/|$)/.test(pathname)){
      guardFinancialAdjustmentAccess(db,ctx);
      const match=pathname.match(/^\/api\/financial-adjustments(?:\/([a-f0-9-]+))?(?:\/(history|submit|review))?$/);
