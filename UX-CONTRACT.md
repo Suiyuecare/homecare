@@ -345,3 +345,15 @@ loaded／pending 的本人、機構、角色、員工、hash、父 render 與外
 ### 0.79 唯讀試算與表單 owner
 
 兩個試算頁沿用 `ui.createForm` 的明確 `readOnlySubmission: true` 變體。只有此布林值、沒有預覽、沒有鎖定寫入時，等待期間的動態欄位才可隨目前輸入同步；預覽與保存表單保持原鎖定。改值遞增輸入序號，舊回覆不能呈現為目前結果，伺服器試算不寫入資料。`openForm` 在保存、明確放棄及 owner 失效时同步清理監聽器；仍有效的未保存內容保留原生離頁提醒。
+
+## 0.82 管理者移轉紀錄與 operator 邊界
+
+| Capability | Canonical owner | Source of truth | Allowed variants | Verification |
+| --- | --- | --- | --- | --- |
+| 移轉來源唯讀核對 | public/modules/legacy-migrations.js / public/ui.js openDetails、table、pagination | docs/LEGACY_MIGRATIONS_UI_SCOPE.md / docs/LEGACY_OPERATIONAL_IMPORT_SCOPE.md / docs/API.md | 管理者同機構、批次25筆server分頁、原欄位與目前主檔有限比較 | fresh GET、closed DTO、完整原文、撤權清除、Abort／晚回覆、Escape回焦、1440／390 |
+
+頁面流程：管理者批次清單 → 查看批次當頁來源 → 每次重新讀取完整來源及目前主檔。沒有表單、新帳號、編輯、下載、列印或任意 operator 路徑欄位。derived 員工編號必須明示替代；來源快照與目前主檔的差異只涵蓋已對應欄位，不表示原平台即時同步或全部來源完成。
+
+原欄位 label/raw/formula/cached 全部只呈現文字，保留重複標籤、型別、原時間與長文；未知nested或不可信2xx拒絕整份內容。新鮮401／403清空父清單及所有依附視窗，其它錯誤保留人工重新讀取，不自动無限重試。完整primitive／outer／render守門及canonical native dialog負責取消與回焦；相同primitive巢狀物件替換保持有效。桌機／390表格自身橫捲、dialog自身縱捲，長文尾端不可落在sticky footer後。
+
+備份、封存、營運匯入與有限次監看CLI只供受控操作者，不掛HTTP，不在公開UI暴露DB／來源路徑、key、原檔名或來源帳密。恢復待核定副本在持久DB開啟前拒絕；備份、工具成功或readiness200不等同正式恢復或營運UAT。`legacyMigrations`已登錄required合成命令；14關瀏覽器與13張畫面是分項證據，整體候選／同提交CI各自確認。原失敗與無完整報告的官方靜態UI auditor逾時保留；本輪不執行掃毒或漏洞掃描。

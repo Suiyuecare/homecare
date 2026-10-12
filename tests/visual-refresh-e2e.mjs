@@ -42,7 +42,7 @@ const routeDefinitions = [
   ['/shift-series','永久週期排班','永久週期排班'],
   ['/case-contracts','個案契約與期限','契約與期限'],
   ['/internal-tasks','內部待辦','內部待辦'],
-  ['/local-imports','本機資料匯入','本機資料匯入'], ['/attendance-exceptions','人工出勤例外','人工出勤例外'],
+  ['/local-imports','本機資料匯入','本機資料匯入'], ['/legacy-migrations','移轉紀錄','移轉紀錄'], ['/attendance-exceptions','人工出勤例外','人工出勤例外'],
   ['/custom-forms','自訂表單','自訂表單'],
   ['/claim-batches', '離線核銷與人工對帳', '離線核銷與人工對帳'],
   ['/billing-documents', '人工帳單與收款', '人工帳單與收款'], ['/payroll-statements', '人工薪資結算', '人工薪資結算'],
@@ -68,7 +68,7 @@ const permitted = (role, route) => {
   if(route==='/shift-substitution')return ['admin','supervisor','caregiver'].includes(role);
   if(route==='/contract-deadlines')return ['admin','supervisor'].includes(role);
   if(route==='/internal-notifications')return true;
-  if(route==='/local-imports')return role==='admin';
+  if(['/local-imports','/legacy-migrations'].includes(route))return role==='admin';
   if(route==='/attendance-exceptions')return ['admin','supervisor','caregiver'].includes(role);
   if(route==='/institution-holidays')return ['admin','supervisor'].includes(role);
   if(route==='/training-credits')return ['admin','supervisor','caregiver'].includes(role);
@@ -216,7 +216,7 @@ try {
   assert.equal(app.db.prepare('SELECT COUNT(*) n FROM certification_attachment_files WHERE length(content)>0').get().n, 1);
   assert(app.db.prepare("SELECT data FROM records WHERE entity='service-records'").all().some(row => Object.hasOwn(JSON.parse(row.data), 'billingSnapshot')));
   routeDefinitions.push(['/cases/' + fixture.mainCase.id, fixture.mainCase.name, '個案管理']);
-  assert.equal(routeDefinitions.length, 49);
+  assert.equal(routeDefinitions.length, 50);
   mark('G1 owned memory/random loopback with reusable identical synthetic rows, four real auth roles, BLOBs and approved snapshot');
 
   await readOnly('G2 paired eight-state desktop/mobile capture', async () => {

@@ -295,3 +295,11 @@ canonical元件及CSS/tokens保持；僅services的preserveWhenDisabled opt-in�
 ## 共用介面修復（0.78）
 
 忙碌狀態保留按鈕尺寸，但原文字立即隱藏，不與「處理中」疊字。非互動通知保留 aria-live／原位置及時效，不能攔截底層按鈕的滑鼠或觸控。列印 html 畫布及紙本背景採白色；螢幕 APM 色彩、表格欄寬與共用幾何不變。
+
+## 0.82 管理者移轉核對
+
+「移轉紀錄」沿 APM CIS、唯一 styles.css token、ui.js pageHeader／table／pagination／errorState／guardedRead openDetails，不新增配色、字型或 modal owner。先看本批移轉來源與筆數，再明確查看來源原文、原建立時間及目前主檔已對應欄位；技術識別與 SHA 放於原生 details，避免搶占主要核對內容。
+
+來源與目前資料採兩區呈現，差異附文字；derived 編號與未核定時薪清楚說明。原欄位不截斷、不計算、不製作連結；重複欄名按 columnIndex 辨識，空文字／null／false／0 分開。桌機1440與手機390維持表內橫捲、原生 dialog 自身縱捲與44px sticky關閉操作，長原文尾端須以實際 glyph位置、可見區域、hit-test及像素确认。
+
+只目前有效 admin 可見；新鮮401／403立即撤除清單和依附視窗。本人／機構／角色／員工／hash／父render／outer owner失效撤去 loaded／pending，取消請求，晚回覆不復活。沿可焦點 aria-busy／aria-disabled read 按鈕及 canonical Escape／關閉回焦，不另造焦點控制器。13項純契約及14關合成browser、13張1440／390 PNG已分項驗證；官方靜態UI auditor本輪native124無完整報告，不能稱通過，完整回歸／CI／現場UAT另驗。

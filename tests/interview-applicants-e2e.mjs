@@ -119,7 +119,7 @@ const shot = async (page, name) => {
 const deferred = () => { let resolve; const promise = new Promise(done => { resolve = done; }); return { promise, resolve }; };
 const bounded = (promise, label) => Promise.race([promise, new Promise((_, reject) => { const timer = setTimeout(() => reject(new Error('Timeout: ' + label)), 15000); timer.unref(); })]);
 const held = async (page, predicate) => {
-  const arrived = deferred(), release = deferred(), handled = deferred(); let used = false, finished = false;
+  const arrived = deferred(), release = deferred(), handled = deferred(); let used = false, released = false, disposed = false;
   const handler = async route => {
     if (used || !predicate(route.request())) return route.continue(); used = true;
     try { const response = await route.fetch(); arrived.resolve(); await release.promise; await route.fulfill({ response }); }
@@ -127,7 +127,9 @@ const held = async (page, predicate) => {
     finally { handled.resolve(); }
   };
   await page.route('**/api/' + entity + '**', handler);
-  return { arrived: arrived.promise, async finish() { if (finished) return; finished = true; release.resolve(); if (used) await bounded(handled.promise, 'held response'); await page.unroute('**/api/' + entity + '**', handler); } };
+  const releaseResponse = async () => { if (released) return; released = true; release.resolve(); if (used) await bounded(handled.promise, 'held response'); };
+  const dispose = async () => { if (disposed) return; disposed = true; await page.unroute('**/api/' + entity + '**', handler); };
+  return { arrived: arrived.promise, release: releaseResponse, dispose, async finish() { await releaseResponse(); await dispose(); } };
 };
 const mutateContext = async (page, kind, foreignOrg) => page.evaluate(async ({ kind, foreignOrg }) => {
   const ui = await import('/ui.js'), current = ui.getContext();
@@ -307,7 +309,13 @@ try {
   try {
     await saveButton.click(); await bounded(slow.arrived, 'busy server commit'); assert(await saveButton.isDisabled()); same(await saveButton.boundingBox(), originalGeometry, 'Busy original button geometry');
     await saveButton.evaluate(n => { n.click(); n.click(); }); await cancelButton.evaluate(n => n.click()); await admin.keyboard.press('Escape'); assert(await d.isVisible()); assert.equal(busyPosts, 1); await shot(admin, 'busy-desktop.png');
-    await slow.finish(); await d.waitFor({ state: 'detached' }); saved = await get(saved);
+    const nativeNode = await d.elementHandle();
+    const refreshed = admin.waitForResponse(r => r.request().method() === 'GET' && new URL(r.url()).pathname === '/api/' + entity);
+    await slow.release();
+    const refresh = await refreshed; assert.equal(refresh.status(), 200, await refresh.text()); assert.equal(await refresh.finished(), null);
+    const result = await refresh.json(); assert(result.items.some(item => item.id === saved.id && item.note === '合成busy明確保存'));
+    await admin.waitForFunction(node => !node.isConnected, nativeNode); await nativeNode.dispose();
+    await slow.dispose(); saved = await get(saved);
   } finally { await slow.finish(); admin.off('request', countBusy); }
   mark('G9 same原生button busy防重與尺寸／cancel/Escape鎖定／真提交一次');
 

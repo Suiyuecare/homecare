@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0.80.0",
+  "version": "0.82.0",
   "status": "local-slices-accepted-formal-system-pending",
   "purpose": "public-project-roadmap",
   "notice": "獨立本機測試系統，使用合成資料；本文件不包含原平台盤點、私人開通或完整開發追溯，亦不宣稱全部功能等價或正式部署完成。",
@@ -172,6 +172,51 @@
       "status": "local-verified",
       "originalParityVerified": false,
       "productionDeployed": false
+    },
+    {
+      "id": "production-backup-isolated-recovery",
+      "summary": "受控十三表一致快照、加密驗證、隔離恢復與待核定標記；不啟用舊登入",
+      "contract": "docs/PRODUCTION_BACKUP_SCOPE.md",
+      "status": "local-focused-verified",
+      "syntheticOnly": true,
+      "originalParityVerified": false,
+      "productionDeployed": false
+    },
+    {
+      "id": "legacy-source-archive",
+      "summary": "私人原始檔bytes封存、匿名SHA256 manifest及verified-file reader；未知覆蓋明示",
+      "contract": "docs/LEGACY_MIGRATION_SCOPE.md",
+      "status": "local-focused-verified",
+      "syntheticOnly": true,
+      "originalParityVerified": false,
+      "productionDeployed": false
+    },
+    {
+      "id": "legacy-operational-first-slice",
+      "summary": "核對cases／employees零寫入預覽、整批原子新增與來源完整scalar；不建立帳號或薪資",
+      "contract": "docs/LEGACY_OPERATIONAL_IMPORT_SCOPE.md",
+      "status": "local-focused-verified",
+      "syntheticOnly": true,
+      "originalParityVerified": false,
+      "productionDeployed": false
+    },
+    {
+      "id": "legacy-migrations-readonly",
+      "summary": "同機構admin三GET與25筆分頁核對原欄位／目前主檔，公式不執行、撤權清除",
+      "contract": "docs/LEGACY_MIGRATIONS_UI_SCOPE.md",
+      "status": "local-focused-verified",
+      "syntheticOnly": true,
+      "originalParityVerified": false,
+      "productionDeployed": false
+    },
+    {
+      "id": "bounded-runtime-monitor",
+      "summary": "有限次loopback就緒檢查及固定診斷；不建立背景排程、通知或切流",
+      "contract": "docs/LAUNCH_RUNBOOK.md",
+      "status": "local-focused-verified",
+      "syntheticOnly": true,
+      "originalParityVerified": false,
+      "productionDeployed": false
     }
   ],
   "authentication": {
@@ -200,7 +245,7 @@
     {
       "id": "external-integration",
       "status": "needs-contract",
-      "summary": "外部介接、正式資料移轉與完整工作流程等價"
+      "summary": "來源封存與個案／員工首切片已實作；全量來源移轉對帳、外部介接與完整工作流程等價仍待核定"
     },
     {
       "id": "hosting-https-portal-real-uat",
@@ -210,7 +255,7 @@
     {
       "id": "operational-data-protection",
       "status": "needs-contract",
-      "summary": "加密、保存期限、營運備份與災難復原"
+      "summary": "受控加密備份與隔離恢復工具已實作；公司金鑰、保存、即時授權對帳與正式災難復原仍待核定"
     },
     {
       "id": "shared-calendar",
@@ -256,7 +301,7 @@
     }
   ],
   "completionPackages": {
-    "version": "0.80.0",
+    "version": "0.82.0",
     "status": "local-slices-accepted-formal-workflows-pending",
     "plan": "docs/COMPLETION_EXECUTION_PLAN.md",
     "productionDeployed": false,
@@ -327,15 +372,26 @@
         "id": "CP09",
         "summary": "完整十三表合成加密還原，清登入／停綁定／換key／重新核對授權",
         "localStatus": "accepted-local-slice-formal-package-pending",
-        "formalStatus": "migration-and-operator-dr-pending",
-        "scope": "docs/SYNTHETIC_ENCRYPTED_PORTAL_RECOVERY_SCOPE.md"
+        "formalStatus": "fresh-authority-key-retention-full-migration-reconciliation-and-operator-dr-pending",
+        "scope": "docs/SYNTHETIC_ENCRYPTED_PORTAL_RECOVERY_SCOPE.md",
+        "additionalLocalScopes": [
+          "docs/PRODUCTION_BACKUP_SCOPE.md",
+          "docs/LEGACY_MIGRATION_SCOPE.md",
+          "docs/LEGACY_OPERATIONAL_IMPORT_SCOPE.md",
+          "docs/LEGACY_MIGRATIONS_UI_SCOPE.md"
+        ],
+        "localScope082": "controlled-thirteen-table-backup-isolated-recovery-source-archive-and-cases-employees-first-slice"
       },
       {
         "id": "CP10",
         "summary": "零寫入就緒檢查、受限容器與HTTPS交接配置",
         "localStatus": "accepted-local-slice-formal-package-pending",
         "formalStatus": "build-persistence-https-portal-real-uat-pending",
-        "scope": "docs/OPERATIONS_READINESS_SCOPE.md"
+        "scope": "docs/OPERATIONS_READINESS_SCOPE.md",
+        "additionalLocalScopes": [
+          "docs/LAUNCH_RUNBOOK.md"
+        ],
+        "localScope082": "bounded-loopback-readiness-monitor-and-pending-recovery-startup-guard"
       }
     ],
     "entireFormalSystemComplete": false
@@ -468,5 +524,97 @@
     "originalG10FailureExactCauseStillInference": true,
     "postAcceptanceExecutableSourcesUnchanged": true,
     "sameHeadCIRequired": true
+  },
+  "operationsAndMigration082": {
+    "version": "0.82.0",
+    "status": "local-final-unit-and-selected-runtime-accepted-same-head-ci-pending",
+    "syntheticOnly": true,
+    "configuredCommands": 102,
+    "requiredCommands": 101,
+    "runtimeCommands": 100,
+    "newRequiredCommand": "legacyMigrations",
+    "scopeFiles": [
+      "docs/PRODUCTION_BACKUP_SCOPE.md",
+      "docs/LEGACY_MIGRATION_SCOPE.md",
+      "docs/LEGACY_OPERATIONAL_IMPORT_SCOPE.md",
+      "docs/LEGACY_MIGRATIONS_UI_SCOPE.md",
+      "docs/LAUNCH_RUNBOOK.md"
+    ],
+    "localFocused": {
+      "backupTestsEachNode": 27,
+      "archiveAndOperationalImportTestsEachNode": 67,
+      "monitorAndReadinessTestsEachNode": 33,
+      "migrationHttpTestsEachNode": 10,
+      "migrationFrontendTestsEachNode": 13,
+      "migrationBrowserGates": 14,
+      "actuallyViewedSyntheticPng": 13
+    },
+    "recoveryRuntimeGuard": "implemented-before-persistent-mkdir-DatabaseSync-initDb",
+    "recoveryRuntimeIntegrationTests": "tests/production-recovery-runtime.test.mjs",
+    "recoveryRuntimeFinalNativeResult": "passed-in-two-node-full-unit-2445",
+    "fullRegressionStatus": "98-full-batch-plus-2-final-focused-reruns-not-a-single-final-source-full-batch",
+    "sameHeadCIRequired": true,
+    "originalFailuresPreserved": true,
+    "officialStaticUiAuditor": {
+      "status": "timed-out-no-complete-report",
+      "nativeExitCode": 124,
+      "accepted": false
+    },
+    "antivirusOrVulnerabilityScansPerformed": false,
+    "requiredAuthorizationAndIntegrityTestsPreserved": true,
+    "privateMigrationDirectoryIgnored": ".migration-private/",
+    "realAccountsOrSourceRecordsIncluded": false,
+    "sourceSystemComplete": false,
+    "formalBusinessImportAndUatComplete": false,
+    "productionDeployed": false,
+    "entireFormalSystemComplete": false,
+    "automationResumed": false,
+    "formalGatesPending": [
+      "persistent-host-and-https",
+      "formal-portal-and-fresh-authority",
+      "key-retention-and-approved-rpo-rto",
+      "live-recovery-cutover",
+      "full-source-reconciliation",
+      "four-role-operational-uat",
+      "approved-financial-rules",
+      "original-form-report-export-parity"
+    ],
+    "fullUnit": {
+      "node22Passed": 2445,
+      "node24Passed": 2445,
+      "nativeExitCodeEachNode": 0,
+      "includesRecoveryRuntimeIntegrationTests": 2
+    },
+    "syntaxCheck": {
+      "node24Modules": 579,
+      "node24NativeExitCode": 0,
+      "node22Modules": 579,
+      "node22NativeExitCode": 0
+    },
+    "metadataUpdatedAfterFocusedSourceVerification": true,
+    "registeredPages": 50,
+    "finalLocalRuntime": {
+      "totalSelected": 100,
+      "fullBatchPassed": 98,
+      "focusedFinalPassed": 2,
+      "selectedNativeExitCodeEach": 0,
+      "productExecutableSourcesUnchanged": true,
+      "onlyChangedTests": [
+        "tests/interview-applicants-e2e.mjs",
+        "tests/announcement-page-receipts-e2e.mjs"
+      ],
+      "singleFinalSourceCompleteBatchClaimed": false,
+      "timeoutsSoleRootCauseEstablished": false
+    },
+    "visualRegression": {
+      "registeredPages": 50,
+      "fourRoleChecks": 200,
+      "layoutChecks": 520,
+      "widths": 6,
+      "mainScreenshots": 16,
+      "contactSheetReviewedSyntheticPng": 55,
+      "contactSheets": 8,
+      "importantNarrowOriginalsAlsoReviewed": true
+    }
   }
 }

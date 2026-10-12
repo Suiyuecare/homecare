@@ -16,6 +16,7 @@ node_modules
 outputs/
 notes/
 .audit-private/
+.migration-private/
 .tools/
 backups/
 *.log

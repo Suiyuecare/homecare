@@ -705,3 +705,32 @@ Portal十三表加密還原是零參數、合成資料、自有暫存路徑的 C
 員工薪資規則使用GET/POST /api/employee-payroll/profiles、GET/PATCH /api/employee-payroll/profiles/:id及GET :id/history；管理者維護、管理者與財務只讀／試算，其他角色拒絕。POST/PATCH需重送鍵、完整閉合參數及CAS，核定內容鎖定。候選GET /api/employee-payroll/candidates要求員工／月份並分頁；POST /api/employee-payroll/preview只接受{profile:{id,version},month,sources:[{id,version}]}，明確1至100來源、原核閱快照、BigInt逐筆進位及選取來源合計、封閉快照與SHA。實收介接缺漏不能用其他金額替代。詳細契約見EMPLOYEE_PAYROLL_SCOPE.md。
 
 模板套件沿既有form-templates API，沒有新端點或資料遷移。嚴格本機UTF-8 JSON定義／完整性／重複鍵檢查後，以新代碼、名稱建立revision1的新draft；完整預覽與明確核對、fresh下載前授權／版次、stable POST重送及ACK確認，不搬移填答、附件、機構或權限。詳細契約見CUSTOM_FORM_PACKAGE_SCOPE.md。
+
+## 0.82 受控移轉閱讀與營運工具
+
+### 管理者移轉紀錄
+
+只有目前同機構有效 `admin` 可讀以下三個 GET；督導、财務、居服員、未登入與跨機構拒絕。先核對目前會員／帳號 lifecycle，再核對批次、全部 mapping、目前 target head、原 target version 1與稽核；有壞 child 時整批拒絕，不能藉分頁隱藏。所有回應固定 `sourceSystemComplete:false`。
+
+| 路徑 | 成功回應 |
+| --- | --- |
+| `GET /api/legacy-migrations?page=1&pageSize=25` | `{orgId,items,total,page,pageSize,sourceSystemComplete:false}`，items 是完整批次摘要 |
+| `GET /api/legacy-migrations/batches/:id?page=1&pageSize=25` | `{orgId,item,records,total,page,pageSize,sourceSystemComplete:false}`，records 是當頁來源摘要 |
+| `GET /api/legacy-migrations/records/:mappingId` | `{orgId,item,batch,currentTarget,sourceSystemComplete:false}`，item 含原對應 data 與全部 scalar columns |
+
+清單及批次只接受單一 canonical 正整數 `page`／`pageSize`，預設 1／25，pageSize 最大100；範圍起點與終點須為安全整數。單筆不接受 query。重複／未知 HTTP query 為422 `INVALID_QUERY`，domain 不安全分頁為422 `LEGACY_IMPORT_QUERY_INVALID`；失效資料為409 `LEGACY_IMPORT_STATE_INVALID`、不可取得為404，角色拒絕403、未登入401。其他方法仍走原 session／Origin／CSRF 守門後拒絕405，不提供 HTTP 匯入、任意 source／DB 路徑或網頁備份。
+
+批次包含 id/orgId/version/createdAt/updatedAt、provider/tenant、sourceHash/payloadHash/archiveManifestSha256/archiveId、importedBy/importedAt、importedCount/caseCount/employeeCount、`status:operational-first-slice`、`operationalImportCompleted:true`。這個完成旗標只指本批主檔保存，不等於全部原系統完成。
+
+來源摘要含 id/orgId/version/createdAt/updatedAt/batchId、entity、24hex sourceId、targetId、name、businessNo、businessNoOrigin、sourceCreatedAt、sourceFileId、rowNumber。原建立時間保持字串／空文字／null，不替換為新系統日期。完整 columns 按 columnIndex 保存 label/raw/formula/cached；重複 label 可保留，scalar 型別、空值、換行與 NUL 後綴不截斷。公式、HTML及URL不執行；來源缺員工編號須明確 derived 替代，不冒充原編號。
+
+來源 data 不含員工時薪；currentTarget 是目前主檔，可能包含後來合法維護的試算時薪。只比較已對應欄位，不覆寫來源、不宣稱原平台同步；個案目前 supervisorId 若有值仍須為同機構完整員工 head，inactive 員工可讀。完整契約見 [操作匯入](LEGACY_OPERATIONAL_IMPORT_SCOPE.md) 及 [唯讀介面](LEGACY_MIGRATIONS_UI_SCOPE.md)。
+
+### 本機 operator 工具
+
+- `scripts/legacy-migration-archive.mjs` 的 capture／verify 封存所有 regular 原檔 bytes，匿名 manifest 保存 opaque 檔案 ID、大小與 SHA256；原檔名對應由 Git 外私人 receipt 保存。拒絕 links、逃逸、input/output 重疊、非私人目錄、半成品及 SHA不符；verified-file reader 需外部 manifest SHA與 fileId，完整封存再驗後 bounded 讀取。未知缺件／範圍明示，不宣稱檔案內容或全量業務已匯入。
+- `scripts/legacy-operational-import.mjs` 只操作明確既有私人 DB／來源封存及既有有效 admin。先零 SQL 写入 preview，再用預覽 SHA 執行 BEGIN IMMEDIATE 整批新增 cases／employees、來源 mapping／完整 scalar、不可變版本與稽核；任一衝突全批 rollback，不覆寫資料。同 sourceHash／payloadHash重送只確認原批次，來源或權限變動須重新預覽。不建立帳號、會員、Portal 綁定或核定薪資。
+- `scripts/production-backup.mjs` 支援 backup／verify／restore-isolated／prepare-reconcile。十三表完整型別、歷程、快照及附件 proof 經一致 SQLite online backup、AES-256-GCM 認證、私人檔與非覆寫原子發布；key 只由私人檔／stdin 提供。隔離副本先清 session、停 binding、保存 `RECOVERY_PENDING.json`；對帳準備永遠保持 `productionReady:false`，不視為外部即時授權核定。`createApp` 在持久 mkdir／DatabaseSync／initDb 前檢查此標記及 file/directory alias，拒絕待核定副本。沒有 live restore／activate HTTP API。
+- `scripts/monitor-runtime-readiness.mjs` 只對明確 loopback port GET `/ready`，預設一次、最多60次，間隔1–60秒；每次5秒／4KiB，固定 NDJSON與退出碼。拒絕 redirect、外部TCP、DNS目標、4310及未知回覆，中止取消HTTP和間隔。沒有背景排程、外部通知、DB寫入、TLS／容量或業務UAT證明。
+
+上述 CLI 沒有 HTTP 掛載。技術規格、退出碼、私人資料限制與正式核定界線見 [備份](PRODUCTION_BACKUP_SCOPE.md)、[封存](LEGACY_MIGRATION_SCOPE.md)、[發布手冊](LAUNCH_RUNBOOK.md)。本輪只記錄本機合成分項結果；候選完整回歸、同提交CI、正式主機／Portal、全量移轉對帳、公司金鑰與四角色營運UAT另驗。依使用者要求不执行掃毒或漏洞掃描，原登入、CSRF、角色與機構隔離驗收保持。
