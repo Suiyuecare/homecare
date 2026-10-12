@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0.82.0",
+  "version": "0.82.1",
   "status": "local-slices-accepted-formal-system-pending",
   "purpose": "public-project-roadmap",
   "notice": "獨立本機測試系統，使用合成資料；本文件不包含原平台盤點、私人開通或完整開發追溯，亦不宣稱全部功能等價或正式部署完成。",
@@ -616,5 +616,24 @@
       "contactSheets": 8,
       "importantNarrowOriginalsAlsoReviewed": true
     }
+  },
+  "dashboardTimeWrap0821": {
+    "version": "0.82.1",
+    "status": "local-regression-accepted-same-commit-ci-pending",
+    "problem": "Legacy complete ISO date/time text overflows dashboard time grid and covers case and employee names.",
+    "change": "Wrap complete original time text inside its grid cell; preserve original dates, seconds, offsets and all data.",
+    "counterexample": "Deterministic browser-today legacy ISO shift without endDate; original geometry assertions remain.",
+    "localChecks": {
+      "shiftSpanGates": 9,
+      "visualRouteRoleChecks": 200,
+      "visualLayoutChecks": 520,
+      "dashboardOriginalImagesReviewed": [
+        "desktop",
+        "375px",
+        "390px"
+      ]
+    },
+    "originalFailuresPreserved": true,
+    "productionDeployed": false
   }
 }
