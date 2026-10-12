@@ -35,6 +35,46 @@ function rewriteHead(db, id, mutate) {
   db.prepare('UPDATE records SET data=? WHERE id=?').run(JSON.stringify(data), id);
   db.prepare('UPDATE record_versions SET snapshot=? WHERE record_id=? AND version=?').run(JSON.stringify({ ...data, id, orgId: row.org_id, version: row.version, createdAt: row.created_at, updatedAt: row.updated_at }), id, row.version);
 }
+function measuredAuditReads(db) {
+  let reads = 0;
+  const measured = new Proxy(db, { get(target, property) {
+    if (property === 'prepare') return sql => {
+      const statement = target.prepare(sql), auditRead = /\bselect\b/i.test(sql) && /\baudit\b/i.test(sql);
+      return new Proxy(statement, { get(value, key) {
+        const member = Reflect.get(value, key, value);
+        if (typeof member !== 'function') return member;
+        return (...args) => { if (auditRead && ['get', 'all', 'iterate'].includes(key)) reads++; return member.apply(value, args); };
+      } });
+    };
+    const member = Reflect.get(target, property, target); return typeof member === 'function' ? member.bind(target) : member;
+  } });
+  return { db: measured, count: () => reads, reset: () => { reads = 0; } };
+}
+
+test('audit query executions remain bounded for a 200-row complete batch and single offpage row read', t => {
+  const f = fixture(t, { count: 200, commit: true }), measure = measuredAuditReads(f.db), batch = readLegacyHistoryBatch(measure.db, f.ctx, f.receipt.batchId, { page: 1, pageSize: 1 });
+  assert.equal(batch.total, 200); assert.equal(batch.records.length, 1); assert(measure.count() <= 4, 'audit reads must remain bounded, got ' + measure.count());
+  const rowId = legacyHistoryRowId(f.ctx.orgId, f.payload.provider, f.payload.tenant, f.payload.sourceFiles[0].sha256, f.payload.records[199].locator);
+  measure.reset(); assert.equal(readLegacyHistoryRow(measure.db, f.ctx, rowId).item.locator.pointer, '/rows/199'); assert(measure.count() <= 4, 'single-row audit reads must remain bounded, got ' + measure.count());
+});
+
+test('offpage missing duplicate and wrong-actor audits reject the entire batch without writes', t => {
+  for (const mode of ['missing', 'duplicate', 'wrong-actor']) {
+    const f = fixture(t, { count: 100, commit: true }), rowId = legacyHistoryRowId(f.ctx.orgId, f.payload.provider, f.payload.tenant, f.payload.sourceFiles[0].sha256, f.payload.records[99].locator);
+    const original = f.db.prepare("SELECT * FROM audit WHERE entity='legacy-history-rows' AND record_id=?").get(rowId);
+    if (mode === 'missing') f.db.prepare('DELETE FROM audit WHERE id=?').run(original.id);
+    if (mode === 'duplicate') f.db.prepare('INSERT INTO audit VALUES(?,?,?,?,?,?,?,?)').run(randomUUID(), original.org_id, original.user_id, original.action, original.entity, original.record_id, original.detail, original.created_at);
+    if (mode === 'wrong-actor') f.db.prepare('UPDATE audit SET user_id=? WHERE id=?').run(randomUUID(), original.id);
+    const before = f.state(), changes = f.changes();
+    fails(() => readLegacyHistoryBatch(f.db, f.ctx, f.receipt.batchId, { page: 1, pageSize: 1 }), 'LEGACY_HISTORY_STATE_INVALID'); fails(() => readLegacyHistoryRow(f.db, f.ctx, rowId), 'LEGACY_HISTORY_STATE_INVALID'); assert.deepEqual(f.state(), before); assert.equal(f.changes(), changes);
+  }
+});
+
+test('audit data and privileges are freshly checked across requests after a successful read', t => {
+  const f = fixture(t, { count: 100, commit: true }), batch = readLegacyHistoryBatch(f.db, f.ctx, f.receipt.batchId, { page: 1, pageSize: 1 }), rowId = legacyHistoryRowId(f.ctx.orgId, f.payload.provider, f.payload.tenant, f.payload.sourceFiles[0].sha256, f.payload.records[99].locator);
+  f.db.prepare('UPDATE audit SET detail=? WHERE record_id=?').run('{}', rowId); fails(() => readLegacyHistoryBatch(f.db, f.ctx, f.receipt.batchId, { page: 1, pageSize: 1 }), 'LEGACY_HISTORY_STATE_INVALID'); fails(() => readLegacyHistoryRow(f.db, f.ctx, batch.records[0].id), 'LEGACY_HISTORY_STATE_INVALID');
+  f.db.prepare('UPDATE memberships SET role=? WHERE org_id=? AND user_id=?').run('finance', f.ctx.orgId, f.ctx.user.id); fails(() => readLegacyHistoryBatch(f.db, f.ctx, f.receipt.batchId), 'ROLE_FORBIDDEN');
+});
 
 test('zero-write preview and atomic historical storage preserve exact complete columns and all existing rows', t => {
   const f = fixture(t, { columnCount: 8 });

@@ -766,3 +766,5 @@ global list只核對當頁batch metadata、目前／immutable head、來源選�
 preview零SQL寫入；commit重新核對來源、角色、同機構主檔及preview hash，再以BEGIN IMMEDIATE全批原子保存records／versions／audit，任何衝突rollback；同sourceHash／payloadHash合法重送不新增，差異拒絕。原身份、附件、冪等等保護表及既有業務列不變。共用header layout只減少重複儲存，完整scalar會復原並重新核對；`storageEstimate:{kind:'stored-json-columns-only',bytes,layoutCount}`只估這批records／versions／audit的JSON bytes，不含SQLite頁／index／WAL、原件及加密備份／隔離恢復，不承諾實際容量。
 
 歷史原列保存不等於新排班、已核閱服務、財務、薪資、全部原資料已移轉或原表單／附件完整對等。完整格式、錯誤、CLI與容量／驗收界線見[LEGACY_HISTORY_SCOPE.md](LEGACY_HISTORY_SCOPE.md)；本機分項、完整同提交CI與正式營運驗收各自保存，沒有HTTP正式導入或部署證明。
+
+0.83.1明細以當次讀取的bounded整批稽核查詢取代逐列查詢；最多1000列、N+1稽核上限、相同org／entity／action及逐列user／detail唯一性全部保留。Map不跨請求，schema與所有公開DTO、拒絕及四個false保持原契約。

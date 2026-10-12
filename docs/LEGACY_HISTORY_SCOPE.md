@@ -77,3 +77,7 @@ node scripts/legacy-history-import.mjs commit  --source <same-payload.json> --db
 合成驗收涵蓋零寫預覽、原子 rollback、exact replay、CAS、同原列跨批防重、來源 SHA／capability、目前角色與撤權、跨機構／異類／損壞父頭、完整分頁前驗證、損壞 layout／audit／metadata、有限 scalar／UTF-8／重複鍵及所有保護表／既有列保持不變。純 JSON shared fixture 位於 tests/helpers/legacy-history-fixture.mjs，使用真正 `/rows/n` 位置。
 
 本輪 1,000×58 欄合成容量、兩 Node domain／CLI 與 HTTP／瀏覽器整合證據須分别登记；過去 0.82 CI 不充當本輪驗收。約九萬真實列的容量、正式來源逐列語意核對、完整制度／附件、權限 UAT、可持久主機／HTTPS／Portal 發布、正式薪資／核銷核定及復原均另待完成，未因此標示正式可用。
+
+## 0.83.1 稽核讀取成本
+
+每批最多1000列的稽核以同機構、entity、action及完整列識別一次讀取，最多取N+1項，當次Map逐列核對原user及完整detail。缺件、重複、錯actor、頁外損壞及下次撤權／稽核修改仍拒絕；不跨請求快取、不改schema或四個false。200列SQL成本反例在原版原生退出1；修正版兩Node各30項分項通過。完整同提交回歸另驗，私人資料量量測不作正式SLA或發布證明。
