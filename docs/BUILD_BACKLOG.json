@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0.83.1",
+  "version": "0.83.2",
   "status": "local-slices-accepted-formal-system-pending",
   "purpose": "public-project-roadmap",
   "notice": "獨立本機測試系統，使用合成資料；本文件不包含原平台盤點、私人開通或完整開發追溯，亦不宣稱全部功能等價或正式部署完成。",
@@ -721,5 +721,21 @@
     "priorReleaseCi": "https://github.com/Suiyuecare/homecare/actions/runs/38284122263",
     "priorReleaseRuntimeCount": 101,
     "productionDeployed": false
+  },
+  "backupTemporarySpace0832": {
+    "version": "0.83.2",
+    "status": "focused_passed_full_and_ci_pending",
+    "change": "release only captured workarea plaintext after completed encryption before authenticated reopen",
+    "backupFormatChanged": false,
+    "sourceOrKeyModified": false,
+    "workareaDatabaseSizedCopiesBefore": 4,
+    "workareaDatabaseSizedCopiesAfter": 3,
+    "callerAndOwnedMapAndCurrentIdentityRequired": true,
+    "ownedRootPathRequired": true,
+    "unlinkAndSyncBeforeTrackingReleased": true,
+    "focusedPerNode": 34,
+    "fullSameCommitCiPending": true,
+    "originalFailureUniqueCauseConfirmed": false,
+    "formalCapacityOrSlaEstablished": false
   }
 }

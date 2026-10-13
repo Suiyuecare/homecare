@@ -103,6 +103,18 @@ export function makeWorkspace(parent) {
       if (statMaybe(p)) owned.set(p, identity(privateFile(p)));
     }
   };
+  const discardOwned = (path, expected) => {
+    verify();
+    // An adopted sidecar may be outside this root. Never discard it, or
+    // accept a caller's replacement identity in place of our captured lease.
+    if (typeof path !== 'string' || dirname(path) !== root || !owned.has(path)) fail('UNSAFE_PATH');
+    const lease = owned.get(path);
+    if (!sameIdentity(expected, lease)) fail('UNSAFE_PATH');
+    privateFile(path, { expected: lease });
+    unlinkSync(path);
+    syncPrivateDirectory(root, rootLease);
+    owned.delete(path);
+  };
   const cleanup = () => {
     try {
       verify();
@@ -113,7 +125,7 @@ export function makeWorkspace(parent) {
       rmdirSync(root); syncPrivateDirectory(parent, parentLease);
     } catch { /* Do not follow replacements or delete another file identity. */ }
   };
-  return { root, create, verify, adoptSidecars, cleanup };
+  return { root, create, verify, adoptSidecars, discardOwned, cleanup };
 }
 export function requireNewFile(path) {
   canonicalPath(path); privateDirectory(dirname(path));
