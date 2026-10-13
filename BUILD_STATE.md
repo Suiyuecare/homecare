@@ -1,3 +1,15 @@
+# 0.83.3 備份串流讀取器（本機完整驗收完成，同提交 CI 待驗）
+
+解密器沿用 v1 envelope 和原 writer，將有界 proof 留在記憶體，資料庫串流僅寫入一份新建私人候選檔。GCM tag 與來源檔案 lease 通過前，不解析 proof JSON、不開 SQLite、不發布資料；損壞 framing 延後到認證後拒絕。proof 上限 1 MiB，資料庫沿原 maxBytes 上限，記憶體不隨整個資料庫大小分配。
+
+目標為取消 authenticated.payload 這份重複明文。令 D 為資料庫 bytes、E 為加密 envelope bytes：讀取驗證期間的工作區由兩份明文縮為一份，連同已存在的 envelope，由約 2D+E 降為 D+E。這是待實測的工作檔界線，不包括原資料庫、WAL、SQLite 執行期、隔離 quarantine journal、其他副本及容量餘量，也不是整機 RAM／磁碟或正式 SLA 保證。
+
+本輪兩 Node 的公開分項各 47 項及獨立 4 項整合（其中含 36 個 framing／key／tag 交叉案例）皆原生退出 0。獨立使用前版 8aa69ea writer 的合成 v1 檔：D=4,354,048、E=4,356,371 bytes，create 實測由 13,066,614 降為 8,710,419，verify 由 8,710,243 降為 4,354,048；完整型別、4 MiB 合成 BLOB、nonce、來源／WAL／caller key 均保持，隔離後 sessions 清空、bindings 全停用、runtime 禁啟動。錯誤 key／tag、來源替換及候選 write／fsync／identity 失敗均通過拒絕與原件保護驗證。
+
+原公開分項 41／43、SQLite observer 未被 builtin export 同步、worktree 缺依賴的失敗仍保存；僅修正觀察器與接入既有依賴，沒有放寬產品斷言。獨立 harness 首輪未帶舊版 public/data 相依檔而退出 1，也原樣保留；补齊同 Git HEAD 公開相依檔後兩 Node 原生退出 0。完整 Node22.23.2／24.19.0 各 2521 項程式測試及 595 份語法原生退出 0，全部測試來源前後 SHA 一致；同提交八工作 CI 仍待核對，沒有新 UI、HTTP endpoint、掃毒或部署。
+
+前版 0.83.2 的 PR7 已合併至 8aa69ea2e9151711a16e7a47948ca5eb90bc073b；PR 與主線 CI 八工作均通過，兩 Node 各 2510 項程式測試／592 份語法，101 個 runtime 命令及相同 Git tree 的 artifact 已核對。以下舊段落保留當時候選／失敗紀錄；它們不取代本輪驗收。
+
 # 0.83.2 備份暫存副本與新增時間一致性修正（分項完成，整批與同提交 CI 待驗）
 
 加密已完整結束並關閉讀寫描述元後，先丟棄本次工作區自行建立的明文快照，再重開密文驗證；原來源、WAL、呼叫者金鑰、十三表 proof、AES-GCM 標記、v1格式與隔離恢復守門保持。捨棄須同時符合工作區根路徑、原 owned Map lease、caller expected及目前檔案身份；外部或被替換項目拒絕刪除，unlink及目錄sync成功後才解除追蹤。沒有HTTP掛載或一般管理者刪除功能。

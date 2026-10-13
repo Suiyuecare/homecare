@@ -1,3 +1,7 @@
+## 0.83.3 受控備份串流讀取（本機已驗，同提交 CI 待驗）
+
+不新增或修改 HTTP API、CLI 引數、公開 backup 函式或 v1 wire 格式。`openArchive` 把解密 bytes 分為最多 1 MiB 的 proof buffer 與一份 `0600` 候選資料庫；framing 錯誤延後到 GCM final 與來源 lease 驗證後處理，proof JSON／SQLite 不提前解析。原資料庫上限、十三表完整驗證、私有路徑／非覆寫及 quarantine 守門保持。實際驗收與容量界線見 [受控備份規格](PRODUCTION_BACKUP_SCOPE.md)；本輪兩 Node 各 2521 項完整測試／595 份語法及分項 47 項已通過，同提交 CI 尚待核對。
+
 # 本機測試版資料與API契約
 
 Node 22內建HTTP與SQLite；伺服器預設只監聽127.0.0.1。所有正式業務資料留在本機SQLite，不使用原平台API。

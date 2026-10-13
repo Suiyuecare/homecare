@@ -6,6 +6,7 @@ import * as sqlite from 'node:sqlite';
 import { accountMembershipActive } from './account-administration.mjs';
 import { inspectProductionDatabase } from './production-backup-inspection.mjs';
 import { failProductionBackup as fail, guardProductionBackup } from './production-backup-errors.mjs';
+import { createProductionPayloadSink } from './production-backup-payload.mjs';
 import {
   canonicalPath, privateDirectory, privateFile, sourceLease, openPrivateRead,
   readExact, writeAll, makeWorkspace, requireNewFile, createIsolationDirectory,
@@ -151,61 +152,54 @@ function parseHeader(bytes) {
   return { ...h, iv };
 }
 function openArchive(backupPath, key, workspace, maximum) {
-  let h, payload, snapshot;
+  let h, sink, snapshot;
   const chunk = Buffer.alloc(CHUNK);
   try {
     h = openPrivateRead(backupPath, maximum + PROOF_LIMIT + HEADER_LIMIT + 32);
-    payload = workspace.create('authenticated.payload');
     if (h.size < MAGIC.length + 4 + 16 + 104) fail('ENVELOPE_INVALID');
     const prefix = readExact(h.fd, MAGIC.length + 4, 0);
     if (!prefix.subarray(0, MAGIC.length).equals(MAGIC)) fail('ENVELOPE_INVALID');
     const headerLength = prefix.readUInt32BE(MAGIC.length);
     if (headerLength < 1 || headerLength > HEADER_LIMIT) fail('ENVELOPE_INVALID');
     const hb = readExact(h.fd, headerLength, prefix.length), header = parseHeader(hb), start = prefix.length + headerLength, end = h.size - 16;
-    if (end - start < 104 || end - start > maximum + PROOF_LIMIT + 4) fail('CAPACITY_EXCEEDED');
+    if (end < start) fail('ENVELOPE_INVALID');
+    if (end - start > maximum + PROOF_LIMIT + 4) fail('CAPACITY_EXCEEDED');
     const tag = readExact(h.fd, 16, end), archiveDigest = createHash('sha256'); archiveDigest.update(prefix).update(hb);
     const decipher = createDecipheriv('aes-256-gcm', key, header.iv);
     decipher.setAAD(Buffer.concat([prefix, hb])); decipher.setAuthTag(tag);
+    const digest = createHash('sha256');
+    sink = createProductionPayloadSink({ maximum, proofLimit: PROOF_LIMIT, writeDatabase(bytes) {
+      // This is an unpublished byte sink, not an opened SQLite database.
+      snapshot ??= workspace.create('restored.sqlite');
+      writeAll(snapshot.fd, bytes); digest.update(bytes);
+    } });
     let offset = start;
     while (offset < end) {
       const n = readSync(h.fd, chunk, 0, Math.min(CHUNK, end - offset), offset);
       if (!n) fail('BACKUP_CHANGED');
       archiveDigest.update(chunk.subarray(0, n));
       const plain = decipher.update(chunk.subarray(0, n));
-      try { writeAll(payload.fd, plain); } finally { plain.fill(0); }
+      try { sink.push(plain); } finally { plain.fill(0); }
       offset += n;
     }
     let final;
     try { final = decipher.final(); } catch { fail('AUTHENTICATION_FAILED'); }
-    try { writeAll(payload.fd, final); } finally { final.fill(0); }
+    try { sink.push(final); } finally { final.fill(0); }
     archiveDigest.update(tag);
-    fsyncSync(payload.fd); h.verify(); closeSync(payload.fd); payload.fd = null;
+    h.verify();
     // No database/proof is parsed or published until the GCM tag is accepted.
-    const ph = openPrivateRead(payload.path, maximum + PROOF_LIMIT + 4);
-    try {
-      const proofLength = readExact(ph.fd, 4, 0).readUInt32BE();
-      if (!proofLength || proofLength > PROOF_LIMIT || ph.size - 4 - proofLength < 100 || ph.size - 4 - proofLength > maximum) fail('ENVELOPE_INVALID');
-      const pb = readExact(ph.fd, proofLength, 4); let proof;
-      try { proof = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(pb)); closed(proof, ['format', 'createdAt', 'inspection', 'databaseSha256', 'databaseBytes']); }
-      catch { fail('ENVELOPE_INVALID'); }
-      if (proof.format !== 'suiyue-production-backup-proof-v1' || proof.createdAt !== header.createdAt || !digestValid(proof.databaseSha256) || proof.databaseBytes !== ph.size - 4 - proofLength || !encode(proof).equals(pb)) fail('ENVELOPE_INVALID');
-      snapshot = workspace.create('restored.sqlite'); const digest = createHash('sha256'); let offset = 4 + proofLength;
-      while (offset < ph.size) {
-        const n = readSync(ph.fd, chunk, 0, Math.min(CHUNK, ph.size - offset), offset);
-        if (!n) fail('BACKUP_CHANGED');
-        writeAll(snapshot.fd, chunk.subarray(0, n)); digest.update(chunk.subarray(0, n)); offset += n;
-      }
-      ph.verify(); fsyncSync(snapshot.fd); closeSync(snapshot.fd); snapshot.fd = null;
-      if (digest.digest('hex') !== proof.databaseSha256) fail('SNAPSHOT_CHANGED');
-      noSidecars(snapshot.path);
-      const inspection = inspectClosed(snapshot.path); assertInspectionEqual(inspection, proof.inspection);
-      h.verify(); return { path: snapshot.path, identity: snapshot.identity, proof, inspection, encryptedSha256: archiveDigest.digest('hex') };
-    } finally { closeSync(ph.fd); }
+    const { proofBytes: pb, databaseBytes } = sink.finishAuthenticated(); let proof;
+    try { proof = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(pb)); closed(proof, ['format', 'createdAt', 'inspection', 'databaseSha256', 'databaseBytes']); }
+    catch { fail('ENVELOPE_INVALID'); }
+    if (proof.format !== 'suiyue-production-backup-proof-v1' || proof.createdAt !== header.createdAt || !digestValid(proof.databaseSha256) || proof.databaseBytes !== databaseBytes || !encode(proof).equals(pb)) fail('ENVELOPE_INVALID');
+    fsyncSync(snapshot.fd); closeSync(snapshot.fd); snapshot.fd = null;
+    if (digest.digest('hex') !== proof.databaseSha256) fail('SNAPSHOT_CHANGED');
+    privateFile(snapshot.path, { maximum, expected: snapshot.identity }); noSidecars(snapshot.path);
+    const inspection = inspectClosed(snapshot.path); assertInspectionEqual(inspection, proof.inspection);
+    h.verify(); return { path: snapshot.path, identity: snapshot.identity, proof, inspection, encryptedSha256: archiveDigest.digest('hex') };
   } finally {
-    chunk.fill(0); if (h) closeSync(h.fd);
-    if (payload && payload.fd !== null) closeSync(payload.fd);
+    chunk.fill(0); sink?.destroy(); if (h) closeSync(h.fd);
     if (snapshot?.fd !== null && snapshot?.fd !== undefined) closeSync(snapshot.fd);
-    if (payload) workspace.adoptSidecars(payload.path);
     if (snapshot) workspace.adoptSidecars(snapshot.path);
   }
 }

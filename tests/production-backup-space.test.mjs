@@ -41,12 +41,15 @@ function database(t) {
 test('backup releases its captured plaintext before decryption while preserving exact thirteen-table source and v1 restore', async t => {
   const f = database(t), before = inspectProductionDatabase(f.db), keyBefore = Buffer.from(f.key), originalOpen = fs.openSync, originalWrite = fs.writeSync;
   const databaseBytes = f.db.prepare('PRAGMA page_count').get().page_count * f.db.prepare('PRAGMA page_size').get().page_size;
-  let authenticatedOpens = 0, snapshotBeforeFirstAuth, workspaceRoot, peakDatabaseCopies = 0;
+  let authenticatedOpens = 0, candidateOpens = 0, snapshotBeforeFirstCandidate, workspaceRoot, peakDatabaseCopies = 0;
   t.mock.method(fs, 'openSync', function(path, ...args) {
     if (typeof path === 'string' && path.endsWith('/authenticated.payload') && (args[0] & fs.constants.O_CREAT)) {
       authenticatedOpens++;
+    }
+    if (typeof path === 'string' && path.endsWith('/restored.sqlite') && (args[0] & fs.constants.O_CREAT)) {
+      candidateOpens++;
       workspaceRoot = path.slice(0, path.lastIndexOf('/'));
-      if (authenticatedOpens === 1) snapshotBeforeFirstAuth = fs.existsSync(join(workspaceRoot, 'snapshot.sqlite'));
+      if (candidateOpens === 1) snapshotBeforeFirstCandidate = fs.existsSync(join(workspaceRoot, 'snapshot.sqlite'));
     }
     return originalOpen.call(this, path, ...args);
   });
@@ -63,9 +66,9 @@ test('backup releases its captured plaintext before decryption while preserving 
   const result = await createProductionBackup({ databasePath: f.path, outputPath: f.backupPath, key: f.key });
   assert.equal(result.format, 'suiyue-production-encrypted-sqlite-v1'); assert(result.verified);
   process.stdout.write('# owned workarea measured peak database-sized copies: ' + peakDatabaseCopies + '\n');
-  assert.equal(snapshotBeforeFirstAuth, false, 'captured plaintext must be gone before authenticated payload allocation');
-  assert.equal(peakDatabaseCopies, 3, 'verified backup must never retain a fourth database-sized workarea copy');
-  assert.equal(authenticatedOpens, 1); assert.deepEqual(inspectProductionDatabase(f.db), before); assert(f.key.equals(keyBefore));
+  assert.equal(snapshotBeforeFirstCandidate, false, 'captured plaintext must be gone before candidate allocation');
+  assert.equal(peakDatabaseCopies, 2, 'verified backup retains only its encrypted archive and one candidate database');
+  assert.equal(authenticatedOpens, 0); assert.equal(candidateOpens, 1); assert.deepEqual(inspectProductionDatabase(f.db), before); assert(f.key.equals(keyBefore));
   assert((await verifyProductionBackup({ backupPath: f.backupPath, key: f.key })).verified);
   const destinationDirectory = join(f.root, 'isolated');
   const restored = await restoreProductionBackupIsolated({ backupPath: f.backupPath, destinationDirectory, key: f.key });
@@ -73,7 +76,7 @@ test('backup releases its captured plaintext before decryption while preserving 
   const db = new DatabaseSync(join(destinationDirectory, 'isolated.sqlite'), { readOnly: true });
   try { const after = inspectProductionDatabase(db); for (const name of Object.keys(before.tables)) if (!['sessions', 'portal_identity_bindings'].includes(name)) assert.deepEqual(after.tables[name], before.tables[name]); assert.equal(db.prepare('SELECT count(*) n FROM portal_identity_bindings WHERE active<>0').get().n, 0); }
   finally { db.close(); }
-  assert.equal(authenticatedOpens, 3); assert.deepEqual(inspectProductionDatabase(f.db), before);
+  assert.equal(authenticatedOpens, 0); assert.equal(candidateOpens, 3); assert.deepEqual(inspectProductionDatabase(f.db), before);
   assert.deepEqual(fs.readdirSync(f.root).filter(name => name.startsWith('.homecare-backup-')), []);
 });
 
