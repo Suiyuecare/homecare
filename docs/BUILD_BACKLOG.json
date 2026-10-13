@@ -737,5 +737,18 @@
     "fullSameCommitCiPending": true,
     "originalFailureUniqueCauseConfirmed": false,
     "formalCapacityOrSlaEstablished": false
+  },
+  "recordCreationInstant0832": {
+    "version": "0.83.2",
+    "status": "focused_passed_full_and_ci_pending",
+    "change": "capture one creation instant per inserted record for response, persisted timestamps and first version",
+    "originalCounterexamples": 2,
+    "originalCounterexamplesExit": 1,
+    "focusedPerNode": 9,
+    "ackOrAuthorizationRelaxed": false,
+    "existingRecordsRewritten": false,
+    "originalCiRun": 38340424848,
+    "originalCiFailurePreserved": true,
+    "originalCiFailureUniqueCauseConfirmed": false
   }
 }
