@@ -1,3 +1,15 @@
+## 0.83.3 單一候選資料庫的串流讀取（本機完整已驗，同提交 CI 待驗）
+
+v1 magic、header、AAD、AES-256-GCM、加密 proof／SQLite wire 排列及 writer 保持。reader 只辨識前四個 framing bytes，將最多 1 MiB proof 留在自有 buffer，其後資料庫 bytes 寫入一份新建 `0600` 私人工作檔；這時尚未以 SQLite 開啟。每次使用後清零解密 chunk，自有 proof／prefix 在結束時清零。
+
+framing 為零、超限、截斷或資料庫超限時，reader 記錄無效狀態並繼續驗證 GCM；不因不可信長度分配大於上限的 proof，不寫超過 maxBytes 的 DB。錯 key／tag 先回 `AUTHENTICATION_FAILED`；完整認證後的損壞 framing 回 `ENVELOPE_INVALID`。明文 header、envelope 總容量與來源私人檔的原守門仍可先行拒絕。I/O 與私人路徑故障沿原固定錯誤守門，不保證取代實際 I/O 故障的錯誤優先序。
+
+GCM final 成功後先重新核對來源 lease，再檢查 framing、UTF-8、canonical JSON、proof／DB bytes／SHA 與精確十三表；候選檔 fsync、身份、無 sidecar、隔離清 sessions／停 bindings 及 `RECOVERY_PENDING` 的原流程保持。成功或失敗關閉自有 FD，只清理身份仍屬本操作的暫存；不刪除被替换的外部原件。
+
+空間驗收須用實際合成 v1 檔，同時觀察原版和候選 reader 的全部工作區檔案 bytes。D 表示資料庫、E 表示 envelope：verify 的工作區目標由约 2D 加 proof 縮為 D；若計已存在的 envelope，則约 2D+E 縮為 D+E。create 原本已在加密結束後釋放 snapshot，本次目標再從 E+2D 加 proof 降為 E+D。這不包含 caller 原DB／WAL、其他備份、SQLite cache／journal、隔離輸出或系統餘量；恢復 quarantine 可有短暫 journal，不宣稱完整程序任何時點均嚴格只占 D+E。
+
+驗收待辦：錯 key／tag 與 0–3 byte prefix、0／超限 proof、無效 JSON／UTF-8、短／超限 DB 的交叉反例；來源替換發生在認證和 proof 解析之間；写入／fsync／路径身份失敗的 FD 與原件保護；buffer 清零；舊 v1 真實跨版檔；十三表／附件／nonce 與隔離停權；新舊 workspace 實測。公開兩 Node 各 47 項分項及獨立各 4 項整合原生退出 0。獨立舊版 writer 的實際合成檔 D=4,354,048、E=4,356,371 bytes：原 create／verify 工作區峰值 13,066,614／8,710,243，候選 8,710,419／4,354,048；恰少一份 4,356,195 bytes 的舊明文 payload。4 MiB 合成 BLOB、13 表、quarantine、FD 故障與來源／候選身份替換另有完整保護斷言。完整兩 Node 各 2521 項程式測試／595 份語法原生退出 0，執行前後來源 SHA 一致。相同提交 CI 結果另補，不承接前版 CI 來宣稱本輪完成。
+
 ## 0.83.2 工作區副本釋放
 
 `createProductionBackup`在`encryptSnapshot`成功返回、快照讀取FD與密文寫入FD皆關閉後，呼叫工作區`discardOwned`丟棄這次捕捉的暫存明文。保存的十三表inspection、資料庫bytes／SHA及proof仍用於密文重開與完整比對。任何加密／釋放／重開失敗均不發布結果，不修改原來源或呼叫者金鑰；原v1格式、GCM接受後才解析DB、備份容量上限及隔離恢復禁啟動守門保持。

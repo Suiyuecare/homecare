@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "version": "0.83.2",
+  "version": "0.83.3",
   "status": "local-slices-accepted-formal-system-pending",
   "purpose": "public-project-roadmap",
   "notice": "獨立本機測試系統，使用合成資料；本文件不包含原平台盤點、私人開通或完整開發追溯，亦不宣稱全部功能等價或正式部署完成。",
@@ -750,5 +750,37 @@
     "originalCiRun": 38340424848,
     "originalCiFailurePreserved": true,
     "originalCiFailureUniqueCauseConfirmed": false
+  },
+  "backupStreamReader0833": {
+    "version": "0.83.3",
+    "status": "local_full_passed_same_commit_ci_pending",
+    "change": "separate bounded proof from a single private database candidate while preserving v1 writer and authenticated inspection",
+    "backupFormatChanged": false,
+    "proofLimitBytes": 1048576,
+    "proofOrSqliteParsedBeforeAuthentication": false,
+    "sourceLeaseBeforeProofParsing": true,
+    "databaseLimitUnchanged": true,
+    "syntheticIndependentOldV1AndSpaceEvidencePending": false,
+    "focusedPending": false,
+    "fullSameCommitCiPending": true,
+    "formalCapacityOrSlaEstablished": false,
+    "productionDeployed": false,
+    "focusedPerNode": 47,
+    "independentIntegrationPerNode": 4,
+    "independentAuthenticationCasesPerNode": 36,
+    "measuredSyntheticDatabaseBytes": 4354048,
+    "measuredSyntheticEnvelopeBytes": 4356371,
+    "measuredOldCreateWorkareaBytes": 13066614,
+    "measuredNewCreateWorkareaBytes": 8710419,
+    "measuredOldVerifyWorkareaBytes": 8710243,
+    "measuredNewVerifyWorkareaBytes": 4354048,
+    "originalObserverAndDependencyFailuresPreserved": true,
+    "fullPerNode": 2521,
+    "javascriptChecksPerNode": 595,
+    "localRuntimeVersions": [
+      "22.23.2",
+      "24.19.0"
+    ],
+    "fullSourceUnchanged": true
   }
 }
