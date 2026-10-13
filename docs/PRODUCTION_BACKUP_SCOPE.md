@@ -1,3 +1,11 @@
+## 0.83.2 工作區副本釋放
+
+`createProductionBackup`在`encryptSnapshot`成功返回、快照讀取FD與密文寫入FD皆關閉後，呼叫工作區`discardOwned`丟棄這次捕捉的暫存明文。保存的十三表inspection、資料庫bytes／SHA及proof仍用於密文重開與完整比對。任何加密／釋放／重開失敗均不發布結果，不修改原來源或呼叫者金鑰；原v1格式、GCM接受後才解析DB、備份容量上限及隔離恢復禁啟動守門保持。
+
+`discardOwned`只允許位於工作區根內、已捕捉且caller expected identity一致的檔案；目前路徑仍須通過原canonical／owner／600／single-link及captured inode／dev／uid守門。即使`adoptSidecars`曾登錄外部sidecar也不能捨棄；caller不能以新replacement identity取代原Map lease。unlink与根目錄sync成功後才移除追蹤；錯誤由原closed operator guard處理，沒有HTTP入口。
+
+新增合成實際FS寫入觀察器：原流程4份、修正後3份資料庫大小暫存檔；此数字只描述本次工作區，不計操作人員另留快照、原DB、其他備份、元資料或餘量，不是正式主機容量與SLA。Node22/24分項34項全過，完整回歸與CI另列；原錯誤及native非零保留，不能由后續成功推定先前操作失敗唯一成因。
+
 # 受控加密備份與隔離恢復
 
 本工具供操作人員指定現有居家系統 SQLite 資料庫進行備份與驗證。它使用獨立的正式備份格式，不限制資料庫來自合成 workspace；本次開發與測試仍只使用工具自行建立的合成資料。沒有讀取實際資料庫、既有私人備份或公司帳號綁定，也沒有正式切換服務。

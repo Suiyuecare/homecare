@@ -243,6 +243,9 @@ export async function createProductionBackup(options) {
       key = copyKey(options.key); workspace = makeWorkspace(dirname(options.outputPath));
       const snapshot = await captureCommitted(options.databasePath, workspace, maximum);
       const encrypted = encryptSnapshot(snapshot, key, workspace, new Date().toISOString());
+      // Encryption has finished and closed both descriptors. The immutable
+      // captured proof remains; reopening still authenticates every byte.
+      workspace.discardOwned(snapshot.path, snapshot.identity);
       const reopened = openArchive(encrypted.path, key, workspace, maximum);
       assertInspectionEqual(reopened.inspection, snapshot.inspection);
       const digest = fileDigest(encrypted.path, maximum + PROOF_LIMIT + HEADER_LIMIT + 32);
